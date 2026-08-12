@@ -1,0 +1,262 @@
+/* ===========================================================================
+   B안 "Studio" — 차분한 프리미엄
+   ---------------------------------------------------------------------------
+   경계선을 약하게 하고 부드러운 2겹 그림자로 면을 띄운다. 모서리는 넉넉하게,
+   상태색은 채도를 낮춰 화면이 조용하도록. 빨강은 정말 필요한 곳에만.
+   레이아웃(배치·크기·그리드)은 건드리지 않고 시각 속성만 덮어쓴다.
+   =========================================================================== */
+
+:root {
+  color-scheme: light;
+
+  --ink: #241e26;
+  --muted: #7a7079;
+  --line: #e7e2e4;
+  --canvas: #f4f2f3;
+  --panel: #ffffff;
+  --teal: #d0002a;
+  --teal-dark: #a80022;
+  --teal-soft: #fdf1f3;
+  --available: #1c7f60;
+  --occupied: #ce1a44;
+  --soon: #b07c12;
+
+  --b-radius: 14px;
+  --b-radius-sm: 9px;
+  --b-lift: 0 1px 2px #241e260a, 0 8px 24px #241e2610;
+  --b-lift-sm: 0 1px 2px #241e2608, 0 4px 12px #241e260d;
+  --b-tint-red: #fdeef1;
+  --b-tint-plum: #f1eef8;
+  --b-tint-green: #e8f4ef;
+  --b-chip: #f3f0f1;
+}
+
+body {
+  background: var(--canvas);
+  color: var(--ink);
+}
+
+.clock-block strong,
+.time-axis time,
+.timeline-event time,
+.schedule-date-switch strong,
+.weekly-room-event time {
+  font-variant-numeric: tabular-nums;
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+[role="option"]:focus-visible {
+  outline: 2px solid var(--teal);
+  outline-offset: 3px;
+}
+
+/* --- 상단바: 은은한 톤 하나로 정리 --------------------------------------- */
+.topbar {
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
+  box-shadow: none;
+}
+.topbar::before { display: none; }
+.topbar::after {
+  width: 100%;
+  height: 3px;
+  top: auto;
+  bottom: 0;
+  background: linear-gradient(90deg, var(--teal), #e8879c 38%, transparent 78%);
+}
+
+.header-my-bookings {
+  border-radius: 999px;
+}
+
+/* --- 두 개의 큰 판: 경계는 약하게, 면은 띄운다 --------------------------- */
+.booking-panel,
+.map-panel {
+  border: 1px solid var(--line);
+  border-top: 1px solid var(--line);
+  border-radius: var(--b-radius);
+  box-shadow: var(--b-lift);
+  background: var(--panel);
+}
+
+.booking-title p,
+.weekly-heading p,
+.section-heading p,
+.my-bookings-dialog-head p {
+  letter-spacing: 0.14em;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.booking-title > span,
+.section-heading > span {
+  border-radius: 999px;
+  background: var(--b-chip);
+  color: var(--muted);
+}
+
+/* --- 예약 양식 ------------------------------------------------------------ */
+.selected-room-summary {
+  border-radius: var(--b-radius-sm);
+  border: 1px solid var(--line);
+  background: #fbf9fa;
+  box-shadow: none;
+}
+.spec-row span {
+  border-radius: 999px;
+  background: var(--b-chip);
+}
+
+form input,
+form select {
+  border-radius: var(--b-radius-sm);
+  border: 1px solid var(--line);
+  background: #fbfafb;
+  box-shadow: none;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+form input:focus,
+form select:focus {
+  border-color: var(--teal);
+  background: var(--panel);
+}
+
+.duration-switch button,
+.repeat-cycle-switch button,
+.schedule-view-switch button,
+.floor-switch button,
+.schedule-floor-switch button,
+.schedule-date-switch button,
+.team-suggestions button {
+  border-radius: var(--b-radius-sm);
+}
+.duration-switch,
+.repeat-cycle-switch,
+.schedule-view-switch,
+.floor-switch,
+.schedule-date-switch,
+.schedule-calendar-picker,
+.map-toggle,
+.repeat-option,
+.repeat-settings,
+.notice,
+.team-suggestions {
+  border-radius: var(--b-radius-sm);
+}
+
+.duration-switch button.active,
+.repeat-cycle-switch button.active,
+.schedule-floor-switch button.active {
+  background: var(--teal);
+  border-color: var(--teal);
+  color: #fff;
+}
+
+.reserve-button {
+  border-radius: var(--b-radius-sm);
+  box-shadow: 0 8px 20px #d0002a26;
+}
+.reserve-button span { color: #ffd5dd; }
+.reserve-button:disabled {
+  background: #a9a1a6;
+  box-shadow: none;
+}
+.reserve-button:disabled span { color: #ece8ea; }
+
+/* --- 일정 보드 ------------------------------------------------------------ */
+.schedule-design-cards .week-timeline {
+  background: transparent;
+  gap: 10px;
+}
+.schedule-design-cards .time-axis,
+.schedule-design-cards .timeline-day {
+  border: 1px solid var(--line);
+  border-radius: var(--b-radius);
+  box-shadow: var(--b-lift-sm);
+}
+.timeline-day-head,
+.daily-room-head,
+.weekly-room-name {
+  background: #fbf9fa;
+}
+.timeline-day.daily-room.active .daily-room-head {
+  background: var(--b-tint-red);
+}
+
+/* 시간 괘선은 아주 옅게 — 조용한 배경이 되도록. */
+.schedule-design-cards .time-axis-body,
+.schedule-design-cards .timeline-day-body {
+  background-image:
+    linear-gradient(to bottom, transparent calc(5% - 1px), #f7f5f6 calc(5% - 1px), #f7f5f6 5%, transparent 5%),
+    linear-gradient(to bottom, transparent calc(10% - 1px), #eeeaec calc(10% - 1px), #eeeaec 10%, transparent 10%);
+}
+
+/* 예약 블록: 색면 위에 얇은 테두리, 그림자는 아주 낮게. */
+.schedule-design-cards .timeline-event,
+.timeline-event {
+  border-radius: var(--b-radius-sm);
+  border: 1px solid #f1d6dd;
+  background: var(--b-tint-red);
+  box-shadow: 0 2px 6px #241e260a;
+}
+.schedule-design-cards .timeline-event.tone-1,
+.timeline-event.tone-1 {
+  border-color: #ded6f0;
+  background: var(--b-tint-plum);
+}
+.timeline-event.tone-1 time { color: #5b4a91; }
+.schedule-design-cards .timeline-event.tone-2,
+.timeline-event.tone-2 {
+  border-color: #cfe6dc;
+  background: var(--b-tint-green);
+}
+.timeline-event:hover {
+  box-shadow: 0 6px 16px #241e2618;
+}
+
+.weekly-room-board,
+.weekly-room-head,
+.weekly-room-cell {
+  border-radius: var(--b-radius-sm);
+}
+.weekly-room-event {
+  border-radius: var(--b-radius-sm);
+  box-shadow: none;
+}
+.weekly-room-event.tone-1 {
+  background: var(--b-tint-plum);
+  color: #5b4a91;
+}
+.weekly-room-event.tone-2 {
+  background: var(--b-tint-green);
+  color: #16694e;
+}
+
+.schedule-availability,
+.schedule-drag-hint {
+  border-radius: 999px;
+}
+
+/* --- 떠 있는 요소 --------------------------------------------------------- */
+.reservation-hover-card,
+.room-popover,
+.my-bookings-dialog,
+.slot-confirmation {
+  border-radius: var(--b-radius);
+  border: 1px solid var(--line);
+  box-shadow: 0 2px 6px #241e260d, 0 18px 44px #241e2622;
+}
+.reservation-hover-card { border-top: 3px solid var(--teal); }
+.team-suggestions {
+  box-shadow: 0 2px 6px #241e260d, 0 14px 32px #241e261c;
+}
+
+.timeline-drag-selection {
+  border-radius: var(--b-radius-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+}

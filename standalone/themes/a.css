@@ -1,0 +1,248 @@
+/* ===========================================================================
+   A안 "Ledger" — 감사 장부의 정밀함
+   ---------------------------------------------------------------------------
+   그림자를 걷어내고 괘선(hairline)과 정렬로만 위계를 만든다. 숫자는 자리를
+   맞추고, 모서리는 거의 각지게. 색은 상태를 말할 때만 쓴다.
+   레이아웃(배치·크기·그리드)은 건드리지 않고 시각 속성만 덮어쓴다.
+   =========================================================================== */
+
+:root {
+  color-scheme: light;
+
+  --ink: #101b36;
+  --muted: #69738a;
+  --line: #dde2ea;
+  --canvas: #f6f7fa;
+  --panel: #ffffff;
+  --teal: #e4002b;
+  --teal-dark: #b80023;
+  --teal-soft: #fff1f3;
+  --available: #0f7a57;
+  --occupied: #c8102e;
+  --soon: #a9720a;
+
+  --a-radius: 3px;
+  --a-hairline: 1px solid var(--line);
+  --a-tint-red: #fff0f3;
+  --a-tint-navy: #eef2fc;
+  --a-tint-green: #e9f6f1;
+  --a-chip: #eef0f4;
+}
+
+body {
+  background: var(--canvas);
+  color: var(--ink);
+}
+
+/* 숫자는 자리를 맞춘다 — 장부의 기본. */
+.clock-block strong,
+.time-axis time,
+.timeline-event time,
+.schedule-date-switch strong,
+.weekly-room-event time,
+.my-bookings-dialog time,
+.modal-schedule-list time,
+form input,
+form select {
+  font-variant-numeric: tabular-nums;
+}
+
+/* 키보드 초점을 항상 보이게. */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+[role="option"]:focus-visible {
+  outline: 2px solid var(--teal);
+  outline-offset: 2px;
+}
+
+/* --- 상단바: 장식 레이어를 걷고 한 줄 괘선으로 --------------------------- */
+.topbar {
+  background: var(--panel);
+  border-bottom: var(--a-hairline);
+  box-shadow: none;
+}
+.topbar::before,
+.topbar::after { display: none; }
+
+.header-my-bookings {
+  border-radius: var(--a-radius);
+}
+
+/* --- 두 개의 큰 판: 그림자 대신 괘선 ------------------------------------- */
+.booking-panel,
+.map-panel {
+  border: var(--a-hairline);
+  border-radius: var(--a-radius);
+  box-shadow: none;
+  background: var(--panel);
+}
+.booking-panel { border-top: 3px solid var(--teal); }
+.map-panel { border-top: 3px solid var(--ink); }
+
+/* 눈썹 라벨(QUICK BOOKING 등)은 자간을 넓혀 라벨답게. */
+.booking-title p,
+.weekly-heading p,
+.section-heading p,
+.my-bookings-dialog-head p {
+  letter-spacing: 0.16em;
+  font-weight: 800;
+}
+
+.booking-title > span,
+.section-heading > span {
+  border-radius: var(--a-radius);
+  background: var(--a-chip);
+  color: var(--muted);
+}
+
+/* --- 예약 양식 ------------------------------------------------------------ */
+.selected-room-summary {
+  border-radius: var(--a-radius);
+  border: var(--a-hairline);
+  background: #fbfcfe;
+  box-shadow: none;
+}
+.spec-row span {
+  border-radius: var(--a-radius);
+}
+
+form input,
+form select {
+  border-radius: var(--a-radius);
+  border: var(--a-hairline);
+  background: var(--panel);
+  box-shadow: none;
+}
+form input:focus,
+form select:focus {
+  border-color: var(--teal);
+}
+
+.duration-switch button,
+.repeat-cycle-switch button,
+.schedule-view-switch,
+.schedule-view-switch button,
+.map-toggle,
+.floor-switch,
+.floor-switch button,
+.schedule-floor-switch button,
+.schedule-date-switch,
+.schedule-date-switch button,
+.schedule-calendar-picker,
+.team-suggestions,
+.team-suggestions button,
+.repeat-option,
+.repeat-settings,
+.notice {
+  border-radius: var(--a-radius);
+  box-shadow: none;
+}
+
+.duration-switch button.active,
+.repeat-cycle-switch button.active,
+.schedule-floor-switch button.active {
+  background: var(--teal);
+  border-color: var(--teal);
+  color: #fff;
+}
+
+.reserve-button {
+  border-radius: var(--a-radius);
+  box-shadow: none;
+}
+/* 원래는 민트색이 남아 있어 빨강 위에서 탁하게 보였다. */
+.reserve-button span { color: #ffd7de; }
+.reserve-button:disabled { background: #8d94a5; }
+.reserve-button:disabled span { color: #e4e7ed; }
+
+/* --- 일정 보드: 카드가 아니라 표(表)처럼 --------------------------------- */
+.schedule-design-cards .week-timeline {
+  background: transparent;
+  gap: 6px;
+}
+.schedule-design-cards .time-axis,
+.schedule-design-cards .timeline-day {
+  border: var(--a-hairline);
+  border-radius: var(--a-radius);
+  box-shadow: none;
+}
+.timeline-day-head,
+.daily-room-head,
+.weekly-room-name,
+.time-axis .axis-corner {
+  border-radius: 0;
+  background: #fafbfd;
+}
+.timeline-day.daily-room.active .daily-room-head {
+  background: var(--a-tint-red);
+}
+
+/* 괘선 배경: 30분선은 아주 옅게, 1시간선만 또렷하게. */
+.schedule-design-cards .time-axis-body,
+.schedule-design-cards .timeline-day-body {
+  background-image:
+    linear-gradient(to bottom, transparent calc(5% - 1px), #f2f4f8 calc(5% - 1px), #f2f4f8 5%, transparent 5%),
+    linear-gradient(to bottom, transparent calc(10% - 1px), #dfe4ec calc(10% - 1px), #dfe4ec 10%, transparent 10%);
+}
+
+/* 예약 블록: 장부의 한 줄 — 왼쪽 괘선이 종류를 말한다. */
+.schedule-design-cards .timeline-event,
+.timeline-event {
+  border-radius: 2px;
+  box-shadow: none;
+  border: 0;
+  border-left: 3px solid var(--teal);
+  background: var(--a-tint-red);
+}
+.schedule-design-cards .timeline-event.tone-1,
+.timeline-event.tone-1 {
+  border-left-color: var(--ink);
+  background: var(--a-tint-navy);
+}
+.schedule-design-cards .timeline-event.tone-2,
+.timeline-event.tone-2 {
+  border-left-color: var(--available);
+  background: var(--a-tint-green);
+}
+.timeline-event:hover {
+  filter: brightness(0.975);
+}
+
+.weekly-room-board,
+.weekly-room-event,
+.weekly-room-head,
+.weekly-room-cell {
+  border-radius: var(--a-radius);
+  box-shadow: none;
+}
+
+.schedule-availability,
+.schedule-drag-hint {
+  border-radius: var(--a-radius);
+}
+
+.current-time-line,
+.current-time-label {
+  border-radius: 0;
+}
+
+/* --- 떠 있는 요소: 그림자는 최소한만 남긴다 ------------------------------ */
+.reservation-hover-card,
+.room-popover,
+.my-bookings-dialog,
+.slot-confirmation,
+.team-suggestions {
+  border-radius: var(--a-radius);
+  border: var(--a-hairline);
+  box-shadow: 0 10px 24px #101b3614;
+}
+.reservation-hover-card { border-top: 3px solid var(--teal); }
+
+.timeline-drag-selection {
+  border-radius: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+}

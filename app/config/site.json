@@ -1,0 +1,18 @@
+{
+  "timeZone": "Asia/Seoul",
+  "booking": {
+    "openingTime": "09:00",
+    "closingTime": "20:00",
+    "slotMinutes": 30,
+    "defaultDurationMinutes": 60,
+    "durationPresetsMinutes": [60, 120, 240],
+    "allDayStart": "09:00",
+    "allDayEnd": "18:00",
+    "soonThresholdMinutes": 30,
+    "defaultRepeatSpanDays": 28
+  },
+  "timeline": {
+    "startHour": 8,
+    "endHour": 18
+  }
+}

@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // 빌드 산출물은 검사하지 않는다.
+    "dist/**",
+    "dist-standalone/**",
+    "tests/.bundle/**",
   ]),
 ]);
 

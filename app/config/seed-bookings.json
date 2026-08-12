@@ -1,0 +1,282 @@
+[
+  {
+    "roomId": "9-c1",
+    "when": {
+      "type": "today"
+    },
+    "start": "09:30",
+    "end": "10:30",
+    "owner": "김지수",
+    "team": "서울1감사1",
+    "purpose": "프로젝트 킥오프"
+  },
+  {
+    "roomId": "9-c1",
+    "when": {
+      "type": "today"
+    },
+    "start": "15:30",
+    "end": "16:30",
+    "owner": "박현우",
+    "team": "서울2세무",
+    "purpose": "고객 미팅"
+  },
+  {
+    "roomId": "9-c2",
+    "when": {
+      "type": "today"
+    },
+    "start": "13:30",
+    "end": "14:30",
+    "owner": "이서연",
+    "team": "서울1BSO1",
+    "purpose": "주간 회의"
+  },
+  {
+    "roomId": "9-c3",
+    "when": {
+      "type": "today"
+    },
+    "start": "14:00",
+    "end": "15:00",
+    "owner": "정우진",
+    "team": "법인 금융본부1",
+    "purpose": "업무 협의"
+  },
+  {
+    "roomId": "12-r1",
+    "when": {
+      "type": "today"
+    },
+    "start": "10:00",
+    "end": "11:00",
+    "owner": "최유진",
+    "team": "서울4감사1-1",
+    "purpose": "팀 회의"
+  },
+  {
+    "roomId": "12-r1",
+    "when": {
+      "type": "today"
+    },
+    "start": "16:00",
+    "end": "17:00",
+    "owner": "김태호",
+    "team": "서울4감사1-2",
+    "purpose": "교육"
+  },
+  {
+    "roomId": "12-r2",
+    "when": {
+      "type": "today"
+    },
+    "start": "13:00",
+    "end": "15:00",
+    "owner": "한지민",
+    "team": "법인 재무",
+    "purpose": "정기 회의"
+  },
+  {
+    "roomId": "12-big",
+    "when": {
+      "type": "today"
+    },
+    "start": "14:30",
+    "end": "16:00",
+    "owner": "윤서진",
+    "team": "서울 경영기획본부",
+    "purpose": "전사 설명회"
+  },
+  {
+    "roomId": "9-c1",
+    "when": {
+      "type": "weekday",
+      "index": 0
+    },
+    "start": "11:00",
+    "end": "12:00",
+    "owner": "김민정",
+    "team": "서울1감사2",
+    "purpose": "팀 주간회의"
+  },
+  {
+    "roomId": "9-c1",
+    "when": {
+      "type": "weekday",
+      "index": 1
+    },
+    "start": "13:00",
+    "end": "15:00",
+    "owner": "박서준",
+    "team": "서울4세무2",
+    "purpose": "고객 미팅"
+  },
+  {
+    "roomId": "9-c1",
+    "when": {
+      "type": "weekday",
+      "index": 3
+    },
+    "start": "09:30",
+    "end": "10:30",
+    "owner": "이지연",
+    "team": "해성BSO",
+    "purpose": "프로젝트 점검"
+  },
+  {
+    "roomId": "9-c1",
+    "when": {
+      "type": "weekday",
+      "index": 4
+    },
+    "start": "15:00",
+    "end": "17:00",
+    "owner": "최현우",
+    "team": "법인 금융본부2",
+    "purpose": "제안서 리뷰"
+  },
+  {
+    "roomId": "9-c2",
+    "when": {
+      "type": "weekday",
+      "index": 0
+    },
+    "start": "15:00",
+    "end": "17:00",
+    "owner": "한유진",
+    "team": "서울6감사1",
+    "purpose": "업무 협의"
+  },
+  {
+    "roomId": "9-c2",
+    "when": {
+      "type": "weekday",
+      "index": 2
+    },
+    "start": "10:30",
+    "end": "12:00",
+    "owner": "김다은",
+    "team": "서울2회계",
+    "purpose": "신규 고객 검토"
+  },
+  {
+    "roomId": "9-c3",
+    "when": {
+      "type": "weekday",
+      "index": 1
+    },
+    "start": "09:00",
+    "end": "10:00",
+    "owner": "정우진",
+    "team": "법인 금융본부1",
+    "purpose": "파트 미팅"
+  },
+  {
+    "roomId": "9-c3",
+    "when": {
+      "type": "weekday",
+      "index": 4
+    },
+    "start": "13:30",
+    "end": "15:30",
+    "owner": "윤서연",
+    "team": "서울1FAS1",
+    "purpose": "교육 준비"
+  },
+  {
+    "roomId": "9-c4",
+    "when": {
+      "type": "weekday",
+      "index": 2
+    },
+    "start": "15:00",
+    "end": "16:00",
+    "owner": "강지훈",
+    "team": "서울2PS",
+    "purpose": "1:1 미팅"
+  },
+  {
+    "roomId": "12-r1",
+    "when": {
+      "type": "weekday",
+      "index": 0
+    },
+    "start": "11:30",
+    "end": "13:30",
+    "owner": "최유진",
+    "team": "서울4감사1-1",
+    "purpose": "본부 운영회의"
+  },
+  {
+    "roomId": "12-r1",
+    "when": {
+      "type": "weekday",
+      "index": 3
+    },
+    "start": "14:00",
+    "end": "16:00",
+    "owner": "김태호",
+    "team": "서울4감사1-2",
+    "purpose": "외부 미팅"
+  },
+  {
+    "roomId": "12-r2",
+    "when": {
+      "type": "weekday",
+      "index": 1
+    },
+    "start": "11:00",
+    "end": "12:00",
+    "owner": "서지민",
+    "team": "서울4감사3",
+    "purpose": "정기 회의"
+  },
+  {
+    "roomId": "12-r2",
+    "when": {
+      "type": "weekday",
+      "index": 4
+    },
+    "start": "15:30",
+    "end": "17:30",
+    "owner": "박지혜",
+    "team": "서울4감사4",
+    "purpose": "워크숍 준비"
+  },
+  {
+    "roomId": "12-r3",
+    "when": {
+      "type": "weekday",
+      "index": 2
+    },
+    "start": "13:00",
+    "end": "14:30",
+    "owner": "문지호",
+    "team": "법인 Valuation",
+    "purpose": "자료 검토"
+  },
+  {
+    "roomId": "12-big",
+    "when": {
+      "type": "weekday",
+      "index": 0
+    },
+    "start": "12:00",
+    "end": "14:00",
+    "owner": "윤서진",
+    "team": "서울 경영기획본부",
+    "purpose": "전사 교육"
+  },
+  {
+    "roomId": "12-big",
+    "when": {
+      "type": "weekday",
+      "index": 3
+    },
+    "start": "10:00",
+    "end": "12:00",
+    "owner": "이준호",
+    "team": "법인 국제조세",
+    "purpose": "타운홀 준비"
+  }
+]

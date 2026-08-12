@@ -1075,3 +1075,21 @@ footer strong { color: #fff; }
   html, body { min-width: 1160px; overflow-x: auto; overflow-y: hidden; }
   .app-shell { min-width: 1160px; }
 }
+
+/* 현재 시각을 아직 읽지 못한 첫 렌더의 "확인 중" 상태.
+   실제 예약을 모르는 상태에서 "사용 가능"으로 단정하지 않기 위한 중립 표시. */
+:root { --unknown: #9aa3b2; }
+.status-dot.unknown, .legend i.unknown, .room-strip-button i.unknown { background: var(--unknown); }
+.room-status-dot.unknown { background: var(--unknown); }
+.status-text.unknown, .modal-status.unknown, .daily-room-meta.unknown b,
+.daily-room.active .daily-room-meta.unknown b { color: var(--unknown); }
+.map-room.unknown { border-color: #cdd3dc; background: #f7f8fa; }
+.map-room.unknown .map-status { color: var(--unknown); }
+
+/* 내 예약 — 예약 취소 */
+.my-booking-actions { margin-top: 10px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.my-booking-actions button { min-height: 30px; padding: 0 12px; border: 1px solid var(--line); border-radius: 7px; background: #fff; color: var(--muted); font-size: 12px; font-weight: 800; cursor: pointer; }
+.my-booking-actions button:hover { border-color: var(--teal); color: var(--teal); }
+.my-booking-actions .cancel-confirm { border-color: var(--teal); background: var(--teal); color: #fff; }
+.my-booking-actions .cancel-confirm:hover { background: var(--teal-dark); border-color: var(--teal-dark); color: #fff; }
+.my-booking-actions p { margin: 0; color: var(--teal); font-size: 12px; font-weight: 800; }

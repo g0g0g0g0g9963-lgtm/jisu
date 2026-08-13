@@ -1,0 +1,57 @@
+# ============================================================
+#  BDO 서울오피스 회의실 예약 — Synology NAS 배포 (host 네트워크 모드)
+#  NAS 경로: /volume1/sh-pf/docker/meeting-room/
+#
+#  실행:  cd /volume1/sh-pf/docker/meeting-room && docker compose up -d --build
+#  중지:  docker compose down
+#  로그:  docker compose logs -f
+#
+#  ※ 이 NAS는 도커 브리지 네트워크에서 DNS가 안 된다(사내망이 외부 DNS도 차단).
+#    그래서 빌드·실행 모두 host 네트워크를 쓴다. 포트 매핑 대신 앱이
+#    host의 ${HOST_PORT}(기본 3500, 127.0.0.1 전용)에 직접 바인딩되고,
+#    사용자는 DSM 역방향 프록시(https 3501 → localhost:3500)로 접속한다.
+# ============================================================
+
+services:
+  meeting-rooms:
+    build:
+      context: .
+      network: host
+    image: bdo-meeting-rooms:2.1.0
+    container_name: bdo-meeting-rooms
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      TZ: Asia/Seoul
+      PORT: ${HOST_PORT:-3500}
+      # 127.0.0.1 바인딩: https 역방향 프록시로만 접근 가능. http 직접 접근 차단.
+      HOST: 127.0.0.1
+      DATA_DIR: /app/data
+      # 첫 실행 시 예시 예약을 넣고 싶을 때만 1. (DB가 비어 있을 때만 동작)
+      SEED_DEMO: ${SEED_DEMO:-0}
+      # Microsoft SSO — .env에서 채우면 로그인 강제, 비우면 익명 모드
+      MS_TENANT_ID: ${MS_TENANT_ID:-}
+      MS_CLIENT_ID: ${MS_CLIENT_ID:-}
+      MS_CLIENT_SECRET: ${MS_CLIENT_SECRET:-}
+      APP_BASE_URL: ${APP_BASE_URL:-}
+    volumes:
+      # 예약 DB(bookings.sqlite). 컨테이너를 지워도 데이터는 남는다.
+      # ⚠️ 이 폴더는 uid 1000 소유여야 한다. chown -R jinkyu.kim을 여기에 돌리지 말 것.
+      - ./data:/app/data
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:'+(process.env.PORT||3000)+'/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

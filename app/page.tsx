@@ -1,13 +1,12 @@
 "use client";
 
-import { FormEvent, PointerEvent as ReactPointerEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, PointerEvent as ReactPointerEvent, useCallback, useEffect, useMemo, useState } from "react";
 import siteConfig from "./config/site.json";
 import officeTeams from "./config/teams.json";
+import { type CurrentUser, deleteBookingRequest, fetchBookings, fetchMe, postBookings } from "./lib/api";
 import {
   type Booking,
   bookingDefaults,
-  createBookingId,
-  createSeedBookings,
   expandRepeatDates,
   findConflictingDates,
   layoutOverlappingBookings,
@@ -154,8 +153,12 @@ export default function Home() {
   const [teamOpen, setTeamOpen] = useState(false);
   const [teamActiveIndex, setTeamActiveIndex] = useState(0);
   const [purpose, setPurpose] = useState("");
-  const [bookings, setBookings] = useState<Booking[]>(() => createSeedBookings(today));
+  const [bookings, setBookings] = useState<Booking[]>([]);
   const [notice, setNotice] = useState("");
+  const [syncError, setSyncError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  // SSO 모드에서는 로그인 계정이 예약자다. null이면 익명 모드(이름 직접 입력).
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const [mapDetailId, setMapDetailId] = useState<string | null>(null);
   const [showMap, setShowMap] = useState(false);
   const [allDay, setAllDay] = useState(false);
@@ -173,6 +176,39 @@ export default function Home() {
 
   const { date, start, end } = slot;
   const setDate = (next: DateKey) => setSlot((current) => ({ ...current, date: next }));
+
+  // 예약의 진실의 원천은 서버 DB다. 30초 주기 + 창 포커스 시 다시 읽어
+  // 다른 사람이 잡은 예약을 화면에 반영한다.
+  const refreshBookings = useCallback(async () => {
+    try {
+      setBookings(await fetchBookings());
+      setSyncError("");
+    } catch (error) {
+      setSyncError(error instanceof Error ? error.message : "서버와 통신할 수 없습니다.");
+    }
+  }, []);
+
+  useEffect(() => {
+    void refreshBookings();
+    const timer = window.setInterval(() => { void refreshBookings(); }, CLOCK_INTERVAL_MS);
+    const refreshOnFocus = () => { void refreshBookings(); };
+    window.addEventListener("focus", refreshOnFocus);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener("focus", refreshOnFocus);
+    };
+  }, [refreshBookings]);
+
+  useEffect(() => {
+    void fetchMe().then((user) => {
+      if (!user) return;
+      setCurrentUser(user);
+      setOwner(user.name);
+      setMyBookingOwner(user.name);
+    });
+    // setMyBookingOwner는 useStoredText가 주는 안정된 setter라 의존성에 넣지 않는다.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (!mapDetailId) return;
@@ -259,9 +295,12 @@ export default function Home() {
     setNotice("");
   };
 
-  const cancelBooking = (bookingId: string) => {
-    setBookings((current) => current.filter((booking) => booking.id !== bookingId));
+  const cancelBooking = async (bookingId: string) => {
+    const result = await deleteBookingRequest(bookingId, myBookingOwner.trim());
     setPendingCancelId(null);
+    await refreshBookings();
+    // 새로고침이 성공하면 syncError가 비워지므로, 취소 실패 메시지는 그 뒤에 얹는다.
+    if (!result.ok) setSyncError(result.message);
   };
 
   const getSlotMinutes = (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -359,8 +398,9 @@ export default function Home() {
     setNotice("");
   };
 
-  const submitReservation = (event: FormEvent) => {
+  const submitReservation = async (event: FormEvent) => {
     event.preventDefault();
+    if (submitting) return;
     if (!owner.trim() || !team.trim()) {
       setNotice("예약자 이름과 본부명을 입력해 주세요.");
       return;
@@ -385,32 +425,38 @@ export default function Home() {
 
     const ownerName = owner.trim();
     const teamName = team.trim();
-    setBookings((current) => [
-      ...current,
-      ...reservationDates.map((reservationDate) => ({
-        id: createBookingId(),
-        roomId: selected.id,
-        date: reservationDate,
-        start,
-        end,
-        owner: ownerName,
-        team: teamName,
-        purpose: purpose.trim() || "회의",
-      })),
-    ]);
-    setOwner("");
+    setSubmitting(true);
+    const result = await postBookings({
+      roomId: selected.id,
+      dates: reservationDates,
+      start,
+      end,
+      owner: ownerName,
+      team: teamName,
+      purpose: purpose.trim() || "회의",
+    });
+    setSubmitting(false);
+
+    if (!result.ok) {
+      // 동시에 다른 사람이 먼저 잡았을 수 있다. 서버 판정을 보여주고 최신 상태로 맞춘다.
+      setNotice(result.message);
+      await refreshBookings();
+      return;
+    }
+
     setMyBookingOwner(ownerName);
-    setTeam("");
     setPurpose("");
     setNotice(
       reservationDates.length > 1
         ? `${selected.name} 반복 예약 ${reservationDates.length}회가 완료됐어요.`
         : `${selected.name} 예약이 완료됐어요. · ${start}–${end}`,
     );
+    await refreshBookings();
   };
 
   return (
     <main className={`app-shell ${showMap ? "map-open" : ""}`}>
+      {syncError && <div className="sync-error-banner" role="alert">{syncError}</div>}
       <header className="topbar">
         <div className="brand-wrap">
           <div className="brand-lockup">
@@ -425,7 +471,9 @@ export default function Home() {
           </div>
         </div>
         <div className="header-account">
-          {myBookingOwner && <span className="header-user">{myBookingOwner}님</span>}
+          {currentUser
+            ? <span className="header-user">{currentUser.name}님 <a className="header-logout" href="/auth/logout">로그아웃</a></span>
+            : myBookingOwner && <span className="header-user">{myBookingOwner}님</span>}
           <button type="button" className="header-my-bookings" onClick={() => setMyBookingsOpen(true)}>내 예약</button>
           <div className="clock-block">
             <strong>{clock ? formatWallClock(clock) : "--:--"}</strong>
@@ -752,7 +800,9 @@ export default function Home() {
               <p>총 <b>{reservationDates.length}</b>회 예약됩니다.</p>
             </div>}
 
-            <label><span className="field-label">예약자 이름</span><input value={owner} onChange={(event) => setOwner(event.target.value)} placeholder="이름을 입력하세요" /></label>
+            {currentUser
+              ? <label><span className="field-label">예약자</span><input value={`${currentUser.name} (${currentUser.email})`} readOnly disabled /></label>
+              : <label><span className="field-label">예약자 이름</span><input value={owner} onChange={(event) => setOwner(event.target.value)} placeholder="이름을 입력하세요" /></label>}
             <div className={`team-field ${teamOpen ? "open" : ""}`}>
               <label>
                 <span className="field-label">본부명</span>
@@ -817,9 +867,9 @@ export default function Home() {
 
             {notice && <div className={`notice ${notice.includes("완료") ? "success" : "error"}`}>{notice}</div>}
             {selectedTimeConflict && !notice && <div className="notice error">이미 예약된 시간입니다. 다른 시간을 선택해 주세요.</div>}
-            <button className="reserve-button" type="submit" disabled={selectedTimeConflict}>
+            <button className="reserve-button" type="submit" disabled={selectedTimeConflict || submitting}>
               <span>{selected.name}</span>
-              <strong>{selectedTimeConflict ? "이미 예약된 시간입니다" : `${start}–${end} 예약하기`}</strong>
+              <strong>{submitting ? "저장 중…" : selectedTimeConflict ? "이미 예약된 시간입니다" : `${start}–${end} 예약하기`}</strong>
             </button>
           </form>
         </aside>
@@ -827,7 +877,7 @@ export default function Home() {
       {myBookingsOpen && <div className="my-bookings-backdrop" role="presentation" onMouseDown={() => { setMyBookingsOpen(false); setPendingCancelId(null); }}>
         <section className="my-bookings-dialog" role="dialog" aria-modal="true" aria-labelledby="my-bookings-title" onMouseDown={(event) => event.stopPropagation()}>
           <div className="my-bookings-dialog-head"><div><p>MY RESERVATIONS</p><h2 id="my-bookings-title">내 예약</h2></div><button type="button" onClick={() => { setMyBookingsOpen(false); setPendingCancelId(null); }} aria-label="내 예약 닫기">×</button></div>
-          <label className="my-bookings-search"><span>예약자 이름</span><input value={myBookingOwner} onChange={(event) => setMyBookingOwner(event.target.value)} placeholder="예약자 이름을 입력하세요" /></label>
+          {!currentUser && <label className="my-bookings-search"><span>예약자 이름</span><input value={myBookingOwner} onChange={(event) => setMyBookingOwner(event.target.value)} placeholder="예약자 이름을 입력하세요" /></label>}
           <div className="my-bookings-columns">
             <div>
               <h3>예정 예약 <b>{upcomingMyBookings.length}</b></h3>

@@ -1139,3 +1139,12 @@ footer strong { color: #fff; }
 @media (min-width: 780px) {
   .booking-submit { margin: 14px -22px 0; padding: 2px 22px 18px; }
 }
+
+/* 선택된 회의실 카드: 글자 크기는 그대로 두고 여백만 줄여 폼이 더 보이게 한다. */
+.selected-room-summary { margin: 12px 0; padding: 12px 14px; }
+.selected-room-summary p { margin: 5px 0 7px 16px; }
+.selected-room-summary .spec-row { gap: 4px; }
+.selected-room-summary .spec-row span { padding: 4px 7px; }
+@media (min-width: 780px) {
+  .selected-room-summary { margin: 12px 0 14px; padding: 12px 14px; }
+}

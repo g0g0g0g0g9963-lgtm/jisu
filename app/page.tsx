@@ -291,6 +291,8 @@ export default function Home() {
 
   const selectRoom = (room: Room, showMapDetail = false) => {
     setSelectedId(room.id);
+    // 다른 층 회의실을 고르면 일정표도 그 층으로 따라간다.
+    setFloor(room.floor);
     setMapDetailId(showMapDetail ? room.id : null);
     setNotice("");
   };
@@ -762,6 +764,30 @@ export default function Home() {
             <span>{selected.floor}F</span>
             {bookingPanelOpen && <button type="button" className="booking-modal-close" aria-label="예약창 닫기" onClick={() => setBookingPanelOpen(false)}>×</button>}
           </div>
+          <div className="room-picker">
+            <label className="field-label" htmlFor="room-picker-select">회의실</label>
+            <select
+              id="room-picker-select"
+              value={selected.id}
+              onChange={(event) => {
+                const room = roomById(event.target.value);
+                if (room) selectRoom(room);
+              }}
+            >
+              {floors.map((item) => (
+                <optgroup key={item} label={`${item}층`}>
+                  {rooms
+                    .filter((room) => room.floor === item)
+                    .map((room) => (
+                      <option key={room.id} value={room.id}>
+                        {room.name} · {formatCapacity(room.capacity)} · {statusOf(room).statusLabel}
+                      </option>
+                    ))}
+                </optgroup>
+              ))}
+            </select>
+          </div>
+
           <div className="selected-room-summary">
             <div className="summary-title"><span className={`status-dot ${selectedStatus.status}`} /><strong>{selected.name}</strong></div>
             <p>{selected.location}</p>
@@ -865,12 +891,14 @@ export default function Home() {
             </div>
             <label><span className="field-label">회의 목적 <em>(선택)</em></span><input value={purpose} onChange={(event) => setPurpose(event.target.value)} placeholder="예: 주간회의" /></label>
 
+            <div className="booking-submit">
             {notice && <div className={`notice ${notice.includes("완료") ? "success" : "error"}`}>{notice}</div>}
             {selectedTimeConflict && !notice && <div className="notice error">이미 예약된 시간입니다. 다른 시간을 선택해 주세요.</div>}
             <button className="reserve-button" type="submit" disabled={selectedTimeConflict || submitting}>
               <span>{selected.name}</span>
               <strong>{submitting ? "저장 중…" : selectedTimeConflict ? "이미 예약된 시간입니다" : `${start}–${end} 예약하기`}</strong>
             </button>
+            </div>
           </form>
         </aside>
       </section>

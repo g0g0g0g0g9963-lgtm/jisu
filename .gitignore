@@ -5,3 +5,7 @@ data-test
 data-*/
 .env
 *.log
+
+# NAS 자동 업데이트
+auto-update.log
+.auto-update.lock/

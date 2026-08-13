@@ -764,7 +764,13 @@ export default function Home() {
             <span>{selected.floor}F</span>
             {bookingPanelOpen && <button type="button" className="booking-modal-close" aria-label="예약창 닫기" onClick={() => setBookingPanelOpen(false)}>×</button>}
           </div>
-          <div className="room-picker">
+          <div className="selected-room-summary">
+            <div className="summary-title"><span className={`status-dot ${selectedStatus.status}`} /><strong>{selected.name}</strong></div>
+            <p>{selected.location}</p>
+            <div className="spec-row"><span>{formatCapacity(selected.capacity)}</span>{selected.equipment.map((item) => <span key={item}>{item}</span>)}</div>
+          </div>
+
+          <form onSubmit={submitReservation}>
             <label className="field-label" htmlFor="room-picker-select">회의실</label>
             <select
               id="room-picker-select"
@@ -786,15 +792,7 @@ export default function Home() {
                 </optgroup>
               ))}
             </select>
-          </div>
 
-          <div className="selected-room-summary">
-            <div className="summary-title"><span className={`status-dot ${selectedStatus.status}`} /><strong>{selected.name}</strong></div>
-            <p>{selected.location}</p>
-            <div className="spec-row"><span>{formatCapacity(selected.capacity)}</span>{selected.equipment.map((item) => <span key={item}>{item}</span>)}</div>
-          </div>
-
-          <form onSubmit={submitReservation}>
             <label className="field-label">예약 날짜</label>
             <input className="date-input" type="date" value={date} onChange={(event) => setDate(event.target.value)} />
 

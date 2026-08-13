@@ -307,8 +307,8 @@ button { color: inherit; }
 form > label { display: block; }
 .field-label { display: block; margin: 12px 0 7px; color: #53656a; font-size: 12px; font-weight: 800; }
 .field-label em { color: #959ba5; font-style: normal; font-weight: 700; }
-.room-picker select, form input, form select { width: 100%; height: 42px; padding: 0 11px; border: 1px solid #d5d6db; border-radius: 0; outline: none; background: #fff; font-size: 14px; }
-.room-picker select:focus, form input:focus, form select:focus { border-color: var(--teal); box-shadow: 0 0 0 3px #ed163914; }
+form input, form select { width: 100%; height: 42px; padding: 0 11px; border: 1px solid #d5d6db; border-radius: 0; outline: none; background: #fff; font-size: 14px; }
+form input:focus, form select:focus { border-color: var(--teal); box-shadow: 0 0 0 3px #ed163914; }
 .team-field { position: relative; z-index: 30; }
 .team-field > label { display: block; }
 .team-field::before { content: ""; position: absolute; z-index: 2; right: 1px; bottom: 1px; width: 44px; height: 40px; background: var(--teal); pointer-events: none; }
@@ -1122,11 +1122,6 @@ footer strong { color: #fff; }
 }
 
 .header-user .header-logout:hover { color: var(--ink); }
-
-/* 빠른 예약 — 회의실 선택 칸 (예약 현황을 몰라도 여기서 바로 고를 수 있게) */
-.room-picker { margin-top: 2px; }
-.room-picker .field-label { margin-top: 0; }
-.room-picker + .selected-room-summary { margin-top: 14px; }
 
 /* 항목이 늘어도 '예약하기'가 화면 밖으로 밀리지 않도록 패널 아래에 고정한다.
    패널의 아래 여백을 이 영역이 대신 가져가서, 버튼 밑으로 다른 입력칸이

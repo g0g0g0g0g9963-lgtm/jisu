@@ -12,9 +12,28 @@ export type CreateBookingRequest = {
   owner: string;
   team: string;
   purpose: string;
+  attendees: string[];
+  /** 비품 요청 { id: 수량 }. 요청이 없으면 빈 객체. */
+  equipment: Record<string, number>;
 };
 
 export type ApiResult = { ok: true } | { ok: false; message: string };
+
+/** 비품 한 종류의 보유 수량과, 고른 시간대에 남은 수량. */
+export type EquipmentSlot = { id: string; name: string; stock: number; left: number };
+
+/** 그 시간대에 남은 비품 수를 서버에서 받아온다. 재고는 사무실 전체가 함께 쓴다. */
+export async function fetchEquipment(
+  date: string, start: string, end: string, excludeBookingId?: string,
+): Promise<EquipmentSlot[]> {
+  const query = new URLSearchParams({ date, start, end });
+  if (excludeBookingId) query.set("exclude", excludeBookingId);
+  const response = await fetch(`/api/equipment?${query}`, { headers: { accept: "application/json" } });
+  if (response.status === 401) redirectToLogin();
+  if (!response.ok) return [];
+  const payload = (await response.json()) as { items?: EquipmentSlot[] };
+  return payload.items ?? [];
+}
 
 export type CurrentUser = { name: string; email: string };
 
@@ -61,6 +80,39 @@ export async function postBookings(request: CreateBookingRequest): Promise<ApiRe
     };
   }
   return { ok: false, message: payload?.error ?? `예약을 저장하지 못했습니다. (${response.status})` };
+}
+
+export type UpdateBookingRequest = {
+  roomId: string;
+  date: string;
+  start: string;
+  end: string;
+  owner: string;
+  team: string;
+  purpose: string;
+};
+
+/** 예약 한 건 수정. 본인 예약인지는 서버가 owner(익명) 또는 로그인 정보로 판단한다. */
+export async function patchBookingRequest(id: string, request: UpdateBookingRequest): Promise<ApiResult> {
+  const response = await fetch(`/api/bookings/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(request),
+  });
+  if (response.status === 401) redirectToLogin();
+  if (response.ok) return { ok: true };
+
+  const payload = (await response.json().catch(() => null)) as
+    | { error?: string; conflict?: Booking }
+    | null;
+  if (response.status === 409 && payload?.conflict) {
+    const clash = payload.conflict;
+    return {
+      ok: false,
+      message: `${clash.date} ${clash.start}–${clash.end}에 ${clash.owner}님 예약이 이미 있어요. 다른 시간을 선택해 주세요.`,
+    };
+  }
+  return { ok: false, message: payload?.error ?? `예약을 수정하지 못했습니다. (${response.status})` };
 }
 
 export async function deleteBookingRequest(id: string, owner: string): Promise<ApiResult> {

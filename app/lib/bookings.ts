@@ -22,9 +22,14 @@ export type Booking = {
   owner: string;
   team?: string;
   purpose: string;
+  /** 예약자 외 참석자. 옛 예약에는 없을 수 있다. */
+  attendees?: string[];
+  /** 비품 요청 { id: 수량 }. 옛 예약에는 없을 수 있다. */
+  equipment?: Record<string, number>;
 };
 
-export type RepeatCycle = "weekly" | "weekdays";
+/** "everyday"는 토·일까지 포함해 하루도 빠짐없이 잡는다. */
+export type RepeatCycle = "weekly" | "weekdays" | "everyday";
 
 export const teamOf = (booking: Booking) => booking.team || "소속 미입력";
 
@@ -172,7 +177,7 @@ export function nearestAvailableSlot(now: Date | null, durationMinutes: number) 
   const opening = minutesOf(bookingDefaults.openingTime);
   const latestStart = minutesOf(bookingDefaults.closingTime) - durationMinutes;
 
-  let date = todayKey(now ?? undefined);
+  const date = todayKey(now ?? undefined);
   let startMinutes = opening;
 
   if (now) {
@@ -181,11 +186,10 @@ export function nearestAvailableSlot(now: Date | null, durationMinutes: number) 
     startMinutes = Math.max(opening, rounded);
   }
 
-  // 오늘 남은 시간이 모자라면 다음 날 첫 시각으로 넘긴다.
-  if (startMinutes > latestStart) {
-    date = moveDate(date, 1);
-    startMinutes = opening;
-  }
+  // 오늘 예약 가능한 시간이 지났어도 날짜는 오늘로 둔다.
+  // 화면을 열었을 때 보이는 날짜가 오늘이 아니면 그것부터 헷갈린다.
+  // 다음 날로 넘기는 대신 시작 시각만 그날 고를 수 있는 마지막 값으로 당긴다.
+  if (startMinutes > latestStart) startMinutes = Math.max(opening, latestStart);
 
   const start = formatMinutes(startMinutes);
   return { date, start, end: addMinutes(start, durationMinutes) };

@@ -36,14 +36,34 @@ export type RoomStatusInfo = {
 const { closingTime, soonThresholdMinutes } = siteConfig.booking;
 
 /**
- * 오늘 예약과 현재 시각으로 회의실 상태를 계산한다.
+ * 예약과 현재 시각으로 회의실 상태를 계산한다.
  * nowMinutes가 null이면(브라우저에서 시계를 읽기 전) 아직 모른다고 표시한다.
  * 추측해서 "사용 가능"으로 보여주면 실제와 다를 수 있기 때문이다.
+ *
+ * nowMinutes를 넘기지 않으면(=오늘이 아닌 날을 보고 있으면) '지금'이라는
+ * 개념이 없다. 그때 "사용 가능"이라고 하면 오늘 기준 상태를 다른 날짜
+ * 화면에 붙여 놓는 셈이라 틀린 정보가 된다. 그 날짜의 예약 건수를 말한다.
  */
 export function describeRoomStatus(
   todaysBookings: Booking[],
   nowMinutes: number | null,
+  options?: { isToday?: boolean },
 ): RoomStatusInfo {
+  if (options && options.isToday === false) {
+    const count = todaysBookings.length;
+    return count === 0
+      ? { status: "available", statusLabel: "사용 가능", nextLabel: "하루 종일 예약이 없습니다" }
+      : {
+        status: "occupied",
+        statusLabel: `예약 ${count}건`,
+        nextLabel: [...todaysBookings]
+          .sort((a, b) => a.start.localeCompare(b.start))
+          .map((booking) => `${booking.start}–${booking.end}`)
+          .slice(0, 2)
+          .join(", "),
+      };
+  }
+
   if (nowMinutes === null) {
     return { status: "unknown", statusLabel: "확인 중", nextLabel: "현황 불러오는 중" };
   }
@@ -80,14 +100,16 @@ export function describeRoomStatus(
     }
     return {
       status: "available",
-      statusLabel: "사용 가능",
+      statusLabel: "지금 사용 가능",
       nextLabel: `${upcoming.start}부터 예약`,
     };
   }
 
   return {
     status: "available",
-    statusLabel: "사용 가능",
+    // '언제 기준인지'를 문구에 넣는다. 그냥 "사용 가능"이면 지금인지
+    // 오늘 하루인지 알 수 없어 정보가 아니라 장식이 된다.
+    statusLabel: nowMinutes >= minutesOf(closingTime) ? "오늘 마감" : "지금 사용 가능",
     nextLabel:
       nowMinutes >= minutesOf(closingTime)
         ? "오늘 예약 마감"

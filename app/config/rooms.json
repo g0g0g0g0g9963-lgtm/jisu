@@ -5,7 +5,11 @@
     "name": "Conference Room 1",
     "capacity": 10,
     "location": "출입구 오른쪽, 중앙",
-    "equipment": ["프로젝터", "스크린", "화이트보드"],
+    "equipment": [
+      "프로젝터",
+      "스크린",
+      "화이트보드"
+    ],
     "mapClass": "map-9-c1"
   },
   {
@@ -14,7 +18,9 @@
     "name": "Conference Room 2",
     "capacity": 4,
     "location": "출입구 오른쪽, 창가 쪽",
-    "equipment": ["화이트보드"],
+    "equipment": [
+      "화이트보드"
+    ],
     "mapClass": "map-9-c2"
   },
   {
@@ -23,7 +29,11 @@
     "name": "Conference Room 3",
     "capacity": 6,
     "location": "Conference Room 2 위쪽",
-    "equipment": ["프로젝터", "스크린", "화이트보드"],
+    "equipment": [
+      "프로젝터",
+      "스크린",
+      "화이트보드"
+    ],
     "mapClass": "map-9-c3"
   },
   {
@@ -32,8 +42,23 @@
     "name": "Conference Room 4",
     "capacity": 12,
     "location": "북동쪽 창가",
-    "equipment": ["프로젝터", "스크린"],
+    "equipment": [
+      "프로젝터",
+      "스크린"
+    ],
     "mapClass": "map-9-c4"
+  },
+  {
+    "id": "12-big",
+    "floor": 12,
+    "name": "대회의실",
+    "capacity": 16,
+    "location": "서쪽 하단, 문서보관실 옆",
+    "equipment": [
+      "글라스보드",
+      "대형 모니터"
+    ],
+    "mapClass": "map-12-big"
   },
   {
     "id": "12-r1",
@@ -41,7 +66,10 @@
     "name": "회의실 1",
     "capacity": 6,
     "location": "출입구 왼쪽, 창가 쪽",
-    "equipment": ["모니터", "화이트보드"],
+    "equipment": [
+      "모니터",
+      "화이트보드"
+    ],
     "mapClass": "map-12-r1"
   },
   {
@@ -50,7 +78,9 @@
     "name": "회의실 2",
     "capacity": 4,
     "location": "회의실 1 왼쪽",
-    "equipment": ["화이트보드"],
+    "equipment": [
+      "화이트보드"
+    ],
     "mapClass": "map-12-r2"
   },
   {
@@ -59,16 +89,9 @@
     "name": "회의실 3",
     "capacity": 4,
     "location": "서쪽 휴게실 옆",
-    "equipment": ["TV"],
+    "equipment": [
+      "모니터"
+    ],
     "mapClass": "map-12-r3"
-  },
-  {
-    "id": "12-big",
-    "floor": 12,
-    "name": "대회의실",
-    "capacity": 16,
-    "location": "서쪽 하단, 문서보관실 옆",
-    "equipment": ["글라스보드", "대형 모니터"],
-    "mapClass": "map-12-big"
   }
 ]

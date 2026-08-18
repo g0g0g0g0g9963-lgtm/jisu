@@ -11,4 +11,8 @@ export const siteConfig = readJson("site.json");
 export const roomsConfig = readJson("rooms.json");
 export const seedConfig = readJson("seed-bookings.json");
 
+export const equipmentConfig = readJson("equipment.json");
+
 export const ROOM_IDS = new Set(roomsConfig.map((room) => room.id));
+/** 비품 id → 보유 수량. 없는 품목이나 재고를 넘는 요청은 서버가 막는다. */
+export const EQUIPMENT_STOCK = new Map(equipmentConfig.items.map((item) => [item.id, item.stock]));

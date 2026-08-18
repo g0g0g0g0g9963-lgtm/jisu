@@ -1,0 +1,6 @@
+{
+  "items": [
+    { "id": "camera", "name": "화상카메라", "stock": 1 },
+    { "id": "laptop", "name": "노트북", "stock": 4 }
+  ]
+}

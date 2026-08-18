@@ -2,17 +2,28 @@
   "timeZone": "Asia/Seoul",
   "booking": {
     "openingTime": "09:00",
-    "closingTime": "20:00",
+    "closingTime": "18:00",
     "slotMinutes": 30,
     "defaultDurationMinutes": 60,
-    "durationPresetsMinutes": [60, 120, 240],
+    "durationPresetsMinutes": [
+      60,
+      120,
+      240
+    ],
     "allDayStart": "09:00",
     "allDayEnd": "18:00",
     "soonThresholdMinutes": 30,
-    "defaultRepeatSpanDays": 28
+    "defaultRepeatSpanDays": 2,
+    "allowWeekends": true,
+    "maxAttendees": 30,
+    "maxAttendeeNameLength": 20
   },
   "timeline": {
-    "startHour": 8,
+    "startHour": 9,
     "endHour": 18
+  },
+  "testUser": {
+    "name": "김지수",
+    "team": "서울 경영기획본부"
   }
 }

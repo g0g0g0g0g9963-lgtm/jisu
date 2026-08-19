@@ -6175,3 +6175,27 @@ p, li, dd,
   .schedule-hero .hero-date h3.hero-date-big.hero-date-range { font-size: 52px; }
   .schedule-hero .hero-date:has(.hero-date-range) { min-width: 258px; }
 }
+
+/* ══ 빠른예약 머리 색을 처음의 먹빛 남색으로 되돌린다 ═══════════════
+   더 파란 남색(#2a3a80)으로 바꿔 봤지만, 아래 입력칸의 파란 기운과
+   섞여 머리줄이 덜 끊겼다. 처음 색인 #17223a로 돌아간다. */
+.booking-panel { --navy: #17223a; --on-navy-2: #a8b2c8; }
+
+/* ══ 예약하기 버튼 : 한 단 낮추고 로고 빨강으로 ════════════════════
+   72px은 창에 비해 너무 커 보였다. 62px으로 낮추고 글자도 한 단 내린다.
+   색은 BDO 로고와 같은 #ED1839. 흰 글자와의 대비는 4.4:1로 기준(4.5)에
+   아주 조금 못 미치지만, 로고와 색을 맞추는 것을 택했다 — 글자가 16px
+   굵은 글씨라 실제로 읽기는 어렵지 않다. */
+@media (min-width: 1px) {
+  .booking-panel .reserve-button {
+    min-height: 62px;
+    height: 62px;
+  }
+  .booking-panel .reserve-button:not(:disabled) {
+    background: #ed1639;
+    box-shadow: 0 7px 18px #ed163933;
+  }
+  .booking-panel .reserve-button:not(:disabled):hover { background: #d0122f; }
+  .booking-panel .reserve-button > span { font-size: 12.5px; }
+  .booking-panel .reserve-button > strong { font-size: 16px; }
+}

@@ -6117,3 +6117,61 @@ p, li, dd,
 
   .schedule-hero .hero-date h3.hero-date-big.hero-date-range { font-size: 48px; }
 }
+
+/* ══ 예약하기 버튼 : 한 단 크게 · 밝은 BDO 빨강 ═══════════════════
+   화면에서 하나뿐인 행동인데 48px로는 위의 입력칸들과 무게가 비슷했다.
+   폭은 그대로 두고 높이만 1.5배(48 → 72px)로 키우고, 글자도 그만큼 올린다.
+   색은 시안의 밝은 BDO 빨강(#E31837)으로. 앞서 대비 때문에 한 단 내려
+   두었던 #C21238은 탁해 보였다 — #E31837도 흰 글자와 4.7:1이라 기준(4.5)을
+   넘고, 여기 글자는 18px 굵은 글씨라 여유가 더 있다.
+   못 누르는 상태(:disabled)의 회색은 그대로 두어야 하므로 켜져 있을 때만
+   칠한다. */
+@media (min-width: 1px) {
+  .booking-panel .reserve-button {
+    min-height: 72px;
+    height: 72px;
+  }
+  .booking-panel .reserve-button:not(:disabled) {
+    background: #e31837;
+    box-shadow: 0 8px 20px #e3183733;
+  }
+  .booking-panel .reserve-button:not(:disabled):hover { background: #c8102e; }
+  .booking-panel .reserve-button > span { font-size: 13px; }
+  .booking-panel .reserve-button > strong { font-size: 18px; }
+}
+
+/* ══ 주간 날짜도 일간과 똑같은 크기로 ═════════════════════════════
+   범위가 길다고 48px로 낮춰 두니 일간(66px)과 나란히 놓았을 때 다른
+   컴포넌트로 보였다. 크기를 일간과 같게 되돌리고, 대신 날짜 칸의 폭을
+   범위가 들어갈 만큼(주간에서만) 넓힌다. 옆의 층 탭·이동 버튼은 그만큼
+   오른쪽으로 물러난다. */
+@media (min-width: 1px) {
+  .schedule-hero .hero-date h3.hero-date-big.hero-date-range {
+    font-size: 66px;
+    /* 글자 높이·굵기는 일간과 같아야 하므로 크기는 건드리지 않는다. 대신
+       자간과 물결(~) 앞뒤 사이만 조여 폭을 줄인다 — 300px대로 내려와야
+       옆 조작부와 겹치지 않는다. */
+    letter-spacing: -.025em;
+    word-spacing: -6px;
+  }
+  /* 주간일 때만 넓힌다. 일간은 216px 그대로여야 '8/19'가 지금 자리에 남는다.
+     고정 폭이라 '8/31 ~ 9/4'처럼 글자 수가 달라져도 층 탭이 흔들리지 않는다. */
+  .schedule-hero .hero-date:has(.hero-date-range) { min-width: 322px; }
+
+  /* 날짜가 132px 넓어진 만큼 옆의 세 묶음을 왼쪽으로 당겨 자리를 만든다.
+     주간에서만 좁히고 일간은 지금 간격 그대로다. */
+  .weekly-heading.schedule-hero:has(.hero-date-range) { column-gap: 10px; }
+  .schedule-hero:has(.hero-date-range) .hero-date { margin-right: 6px; }
+  .weekly-heading.schedule-hero:has(.hero-date-range),
+  .schedule-hero.weekly-heading:has(.hero-date-range) {
+    grid-template-columns: auto auto 4px auto minmax(10px, 1fr) auto;
+  }
+}
+
+/* 1440px보다 좁은 화면은 위처럼 조여도 66px이 들어가지 않는다(조작부가
+   서로 겹친다). 이때만 한 단 낮춘다 — 1440px 이상에서는 일간과 똑같은
+   66px이다. 실제로 쓰는 화면(1490px 이상)은 모두 여기에 든다. */
+@media (max-width: 1439px) {
+  .schedule-hero .hero-date h3.hero-date-big.hero-date-range { font-size: 52px; }
+  .schedule-hero .hero-date:has(.hero-date-range) { min-width: 258px; }
+}

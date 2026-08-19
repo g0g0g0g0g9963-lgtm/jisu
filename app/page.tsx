@@ -4,7 +4,7 @@ import { FocusEvent as ReactFocusEvent, FormEvent, KeyboardEvent as ReactKeyboar
 import siteConfig from "./config/site.json";
 import equipmentCatalog from "./config/equipment.json";
 import officeTeams from "./config/teams.json";
-import { type CurrentUser, deleteBookingRequest, type EquipmentSlot, fetchBookings, fetchEquipment, fetchMe, patchBookingRequest, postBookings } from "./lib/api";
+import { type CurrentUser, deleteBookingRequest, fetchBookings, fetchMe, patchBookingRequest, postBookings } from "./lib/api";
 import {
   type Booking,
   bookingDefaults,
@@ -604,11 +604,6 @@ export default function Home() {
   const [cancelBusy, setCancelBusy] = useState(false);
   // 참석자 칸은 선택 항목이라 접어 둔다.
   const [attendeesOpen, setAttendeesOpen] = useState(false);
-  // 비품 요청도 선택 항목이라 접어 둔다. 재고는 고른 시간대 기준으로 서버에서 받는다.
-  const [equipmentOpen, setEquipmentOpen] = useState(false);
-  const [equipmentSlots, setEquipmentSlots] = useState<EquipmentSlot[]>([]);
-  const [equipment, setEquipment] = useState<Record<string, number>>({});
-  const equipmentCount = Object.values(equipment).reduce((sum, count) => sum + count, 0);
   // 조기 종료 확인 창에 띄울 예약.
   const [earlyEnd, setEarlyEnd] = useState<Booking | null>(null);
   const [earlyEndBusy, setEarlyEndBusy] = useState(false);
@@ -661,25 +656,6 @@ export default function Home() {
       window.removeEventListener("focus", refreshOnFocus);
     };
   }, [refreshBookings]);
-
-  // 날짜·시간이 바뀌면 그 시간대의 남은 비품 수를 다시 받아 온다.
-  useEffect(() => {
-    let alive = true;
-    void fetchEquipment(slot.date, slot.start, slot.end).then((items) => {
-      if (!alive) return;
-      setEquipmentSlots(items);
-      // 남은 수량이 줄었으면 요청 수량도 따라 줄인다.
-      setEquipment((current) => {
-        const next: Record<string, number> = {};
-        for (const item of items) {
-          const wanted = Math.min(current[item.id] ?? 0, item.left);
-          if (wanted > 0) next[item.id] = wanted;
-        }
-        return next;
-      });
-    });
-    return () => { alive = false; };
-  }, [slot.date, slot.start, slot.end, bookings]);
 
   // 아직 직접 고르지 않았다면 반복 종료일을 예약 날짜 기준으로 다시 잡는다.
   useEffect(() => {
@@ -1322,7 +1298,6 @@ export default function Home() {
       team: teamName,
       purpose: purpose.trim(),
       attendees,
-      equipment,
     });
     setSubmitting(false);
 
@@ -2094,7 +2069,7 @@ export default function Home() {
                 표의 칸에 적히는 이름이라 대부분 채우게 되는 칸이다.
                 비워 두면 서버가 기본 이름(site.json의 defaultPurpose)을 넣는다. */}
             <label>
-              <span className="field-label">회의 목적 <em>(선택)</em></span>
+              <span className="field-label">회의 목적</span>
               <input
                 id="purpose-input"
                 value={purpose}
@@ -2134,46 +2109,6 @@ export default function Home() {
               </button>
             )}
 
-
-            {/* 비품 요청. 재고는 사무실 전체가 함께 쓰므로 고른 시간대에 남은 수를 보여 준다. */}
-            {equipmentOpen || equipmentCount > 0 ? (
-              <div className="equipment-field">
-                <div className="field-label">비품 요청 <em>(선택)</em>
-                  {equipmentCount > 0 && <b className="equipment-count">{equipmentCount}개 요청</b>}
-                </div>
-                <div className="equipment-list">
-                  {equipmentSlots.map((item) => {
-                    const wanted = equipment[item.id] ?? 0;
-                    const soldOut = item.left === 0 && wanted === 0;
-                    return (
-                      <div className={`equipment-row ${wanted > 0 ? "on" : ""} ${soldOut ? "sold-out" : ""}`} key={item.id}>
-                        <span className="equipment-name">{item.name}</span>
-                        {/* '남은'과 '재고'는 같은 말이라 하나만 둔다. */}
-                        <span className="equipment-stock">
-                          {soldOut ? "이 시간 모두 사용 중" : `재고 ${item.left - wanted}개`}
-                        </span>
-                        <span className="equipment-step">
-                          <button type="button" aria-label={`${item.name} 하나 줄이기`} disabled={wanted === 0}
-                            onClick={() => setEquipment((current) => {
-                              const next = { ...current };
-                              if (wanted <= 1) delete next[item.id]; else next[item.id] = wanted - 1;
-                              return next;
-                            })}>−</button>
-                          <b>{wanted}</b>
-                          <button type="button" aria-label={`${item.name} 하나 늘리기`} disabled={wanted >= item.left}
-                            onClick={() => setEquipment((current) => ({ ...current, [item.id]: wanted + 1 }))}>＋</button>
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-                {/* '재고 N개'가 이미 그 시간에 남은 수를 뜻하므로 설명을 덧붙이지 않는다. */}
-              </div>
-            ) : (
-              <button type="button" className="attendee-add equipment-add" onClick={() => revealAfterExpand(".equipment-field", () => setEquipmentOpen(true))}>
-                비품 요청 <em>(선택)</em>
-              </button>
-            )}
 
             </div>
 

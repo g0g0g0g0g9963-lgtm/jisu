@@ -13,8 +13,6 @@ export type CreateBookingRequest = {
   team: string;
   purpose: string;
   attendees: string[];
-  /** 비품 요청 { id: 수량 }. 요청이 없으면 빈 객체. */
-  equipment: Record<string, number>;
 };
 
 export type ApiResult = { ok: true } | { ok: false; message: string };

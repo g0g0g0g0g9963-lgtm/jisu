@@ -63,7 +63,7 @@ const selectRange = db.prepare(
 const selectOverlap = db.prepare(
   "SELECT id, room_id, date, start, end, owner FROM bookings WHERE room_id = ? AND date = ? AND start < ? AND end > ? LIMIT 1",
 );
-const selectById = db.prepare("SELECT id, owner, owner_email FROM bookings WHERE id = ?");
+const selectById = db.prepare("SELECT id, owner, owner_email, date FROM bookings WHERE id = ?");
 // 수정할 때는 자기 자신을 겹침 검사에서 빼야 한다.
 const selectOverlapExcept = db.prepare(
   "SELECT id, room_id, date, start, end, owner FROM bookings WHERE room_id = ? AND date = ? AND start < ? AND end > ? AND id <> ? LIMIT 1",
@@ -212,10 +212,13 @@ export function createBookings({ roomId, dates, start, end, owner, ownerEmail = 
 const isOwner = (row, { owner = "", ownerEmail = "" }) =>
   (ownerEmail && row.owner_email ? row.owner_email === ownerEmail : row.owner === owner);
 
-export function deleteBooking(id, identity = {}) {
+export function deleteBooking(id, identity = {}, { today = "" } = {}) {
   const row = selectById.get(id);
   if (!row) return { ok: false, reason: "not-found" };
   if (!isOwner(row, identity)) return { ok: false, reason: "forbidden" };
+  // 지난 예약은 취소할 수 없다. 화면에서도 그 버튼을 숨기지만, API를 직접
+  // 불러도 막히도록 여기서도 확인한다.
+  if (today && row.date < today) return { ok: false, reason: "past" };
   deleteById.run(id);
   return { ok: true };
 }
@@ -229,11 +232,10 @@ export function updateBooking(id, identity = {}, patch, { equipmentStock = new M
   if (!row) return { ok: false, reason: "not-found" };
   if (!isOwner(row, identity)) return { ok: false, reason: "forbidden" };
 
-  // 지난 날짜로 옮기는 것만 막는다. 이미 지나간 예약의 내용을 고치거나
-  // 회의를 일찍 끝내는 것(날짜가 그대로인 수정)은 그대로 되어야 한다.
-  if (today && patch.date < today && patch.date !== row.date) {
-    return { ok: false, reason: "past" };
-  }
+  // 이미 지나간 예약은 통째로 고칠 수 없다. 지난 예약은 기록으로 남아야
+  // 하고, 지난 날짜로 "옮기는" 것도 같은 이유로 막는다.
+  if (today && row.date < today) return { ok: false, reason: "past" };
+  if (today && patch.date < today) return { ok: false, reason: "past" };
 
   const attendees = patch.attendees ?? parseAttendees(row.attendees);
   const equipment = patch.equipment ?? parseEquipment(row.equipment);

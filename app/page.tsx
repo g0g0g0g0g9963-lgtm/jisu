@@ -861,6 +861,11 @@ export default function Home() {
 
   const openEditor = (booking: Booking) => {
     if (!isMyBooking(booking)) return;
+    // 지난 예약은 기록으로 남아야 한다. "내 예약" 목록에서는 지난 항목에
+    // 버튼을 두지 않는 것과 같은 규칙을, 일정표에서 블록을 눌렀을 때도
+    // 적용한다. 서버도 같은 검사를 하지만(past 응답) 열어놓고 저장 시점에
+    // 막는 것보다, 열리지 않는 쪽이 헷갈리지 않는다.
+    if (booking.date < today) return;
     setEditDraft({
       id: booking.id,
       roomId: booking.roomId,

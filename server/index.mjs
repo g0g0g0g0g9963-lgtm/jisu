@@ -242,7 +242,7 @@ app.patch("/api/bookings/:id", (req, res) => {
     return;
   }
   if (result.reason === "past") {
-    res.status(400).json({ error: "지난 날짜로는 옮길 수 없습니다." });
+    res.status(400).json({ error: "지난 예약은 수정할 수 없습니다." });
     return;
   }
   if (result.reason === "shortage") {
@@ -269,6 +269,7 @@ app.delete("/api/bookings/:id", (req, res) => {
   const result = deleteBooking(
     req.params.id,
     ssoEnabled ? { owner: req.user.name, ownerEmail: req.user.email } : { owner },
+    { today: todayKey() },
   );
   if (result.ok) {
     res.status(204).end();
@@ -276,6 +277,10 @@ app.delete("/api/bookings/:id", (req, res) => {
   }
   if (result.reason === "not-found") {
     res.status(404).json({ error: "예약을 찾을 수 없습니다." });
+    return;
+  }
+  if (result.reason === "past") {
+    res.status(400).json({ error: "지난 예약은 취소할 수 없습니다." });
     return;
   }
   res.status(403).json({ error: "본인이 등록한 예약만 취소할 수 있습니다." });

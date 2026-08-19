@@ -258,7 +258,11 @@ button { color: inherit; }
 .daily-date-nav button:nth-child(2) strong { font-size: 12px; }
 .daily-date-nav button:nth-child(2).today span { color: #fff; background: var(--teal); }
 .week-timeline { flex: 1; min-height: 340px; margin-top: 10px; display: grid; grid-template-columns: 44px repeat(5, minmax(0, 1fr)); border-top: 1px solid var(--line); border-left: 1px solid var(--line); }
-.week-timeline.daily-timeline { grid-template-columns: 44px repeat(4, minmax(0, 1fr)); }
+.week-timeline.daily-timeline { position: relative; grid-template-columns: 44px repeat(4, minmax(0, 1fr)); }
+/* 현재 시각 선: 회의실 칸마다 따로 그리면 카드 사이 간격에서 끊겨 보인다.
+   위치·너비는 JS에서 회의실 칸들의 실제 픽셀 크기를 재서 그린다 — 그리드
+   트랙이 1fr(가변)이라 CSS만으로는 세로 위치의 %가 안정적으로 계산되지 않는다. */
+.week-timeline.daily-timeline > .current-time-line-all { position: absolute; }
 .time-axis, .timeline-day { min-width: 0; display: grid; grid-template-rows: 40px minmax(300px, 1fr); border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); }
 .daily-timeline .time-axis, .daily-timeline .timeline-day { grid-template-rows: 50px minmax(300px, 1fr); }
 .axis-corner { display: grid; place-items: center; color: #9599a2; border-bottom: 1px solid var(--line); font-size: 8px; }
@@ -5951,13 +5955,39 @@ p, li, dd,
   color: var(--teal);
 }
 
-/* ══ 큰 화면에서 머리줄 위 여백 ═══════════════════════════════════
-   좁은 화면에서는 한 픽셀이 아까워 날짜 줄을 위에 붙여 두었는데,
-   넓은 모니터에서는 그대로 두면 상단바에 눌린 것처럼 보인다.
-   화면이 넓어질수록 조금씩 더 내린다. */
+/* ══ 큰 화면에서 날짜 머리띠 높이 ═════════════════════════════════
+   좁은 화면에서는 한 픽셀이 아까워 날짜 줄을 위아래로 붙여 두었는데,
+   넓은 모니터에서는 띠가 얇아 상단바에 눌린 것처럼 보인다.
+   화면이 넓어질수록 위아래를 함께 키워 띠 자체를 두껍게 한다. */
 @media (min-width: 1400px) {
-  .weekly-board .weekly-heading.schedule-hero { padding-top: 16px; margin-bottom: 14px; }
+  .weekly-board .weekly-heading.schedule-hero { padding-top: 14px; padding-bottom: 14px; margin-bottom: 10px; }
 }
 @media (min-width: 1800px) {
-  .weekly-board .weekly-heading.schedule-hero { padding-top: 28px; margin-bottom: 18px; }
+  .weekly-board .weekly-heading.schedule-hero { padding-top: 22px; padding-bottom: 22px; margin-bottom: 12px; }
+}
+
+/* ══ 빠른예약 머리 색 ═════════════════════════════════════════════
+   기존의 먹빛 남색(#17223a) 대신 더 파란 남색으로 바꾸고,
+   아랫변에 BDO 빨강 선을 둬서 머리와 본문을 끊는다. */
+.booking-panel { --navy: #2a3a80; --on-navy-2: #c3cbe2; }
+/* .booking-panel .booking-title { border-bottom: 3px solid #e4002b; } */
+
+/* ══ 위치(핀) 버튼: 테두리 링 제거 + 아이콘 확대 ═══════════════════
+   화면 크기별로 이 버튼 스타일이 여러 곳에 흩어져 있어(38px/40px 폭,
+   22px 아이콘 등), 어느 경로로 렌더링되든 확실히 적용되도록 마지막에
+   한 번 더 덮어쓴다. */
+.map-toggle.icon-only,
+.map-toggle.icon-only.active,
+.schedule-heading-actions .map-toggle.icon-only,
+.schedule-heading-actions .map-toggle.icon-only.active,
+.schedule-hero .schedule-heading-actions .map-toggle.icon-only,
+.schedule-hero .schedule-heading-actions .map-toggle.icon-only.active {
+  border: 0;
+  box-shadow: none;
+}
+.map-toggle.icon-only svg,
+.schedule-heading-actions .map-toggle.icon-only svg,
+.schedule-hero .schedule-heading-actions .map-toggle.icon-only svg {
+  width: 26px;
+  height: 26px;
 }

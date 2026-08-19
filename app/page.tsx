@@ -1,6 +1,6 @@
 "use client";
 
-import { FocusEvent as ReactFocusEvent, FormEvent, KeyboardEvent as ReactKeyboardEvent, PointerEvent as ReactPointerEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { FocusEvent as ReactFocusEvent, FormEvent, KeyboardEvent as ReactKeyboardEvent, PointerEvent as ReactPointerEvent, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import siteConfig from "./config/site.json";
 import equipmentCatalog from "./config/equipment.json";
 import officeTeams from "./config/teams.json";
@@ -770,6 +770,40 @@ export default function Home() {
     ? ((nowMinutes - timelineStart) / (timelineEnd - timelineStart)) * 100
     : null;
   const showCurrentTime = currentTimePercent !== null && (scheduleView === "week" ? weekDays.includes(today) : date === today);
+
+  // 일간 보기의 현재 시각 선. 회의실 칸(그리드 트랙)이 1fr(가변)이라 CSS의
+  // top:%만으로는 세로 위치가 안정적으로 잡히지 않아, 칸들의 실제 픽셀
+  // 크기를 재서 하나의 선으로 그린다. 이렇게 하면 회의실 카드 사이 여백에서
+  // 선이 끊기지 않는다.
+  const dailyGridRef = useRef<HTMLDivElement | null>(null);
+  const [dailyGridMetrics, setDailyGridMetrics] = useState<{
+    left: number; width: number; bodyTop: number; bodyHeight: number;
+  } | null>(null);
+
+  useLayoutEffect(() => {
+    const grid = dailyGridRef.current;
+    if (!grid) { setDailyGridMetrics(null); return; }
+
+    const measure = () => {
+      const bodies = grid.querySelectorAll<HTMLElement>(".timeline-day-body");
+      if (!bodies.length) { setDailyGridMetrics(null); return; }
+      const gridRect = grid.getBoundingClientRect();
+      const first = bodies[0].getBoundingClientRect();
+      const last = bodies[bodies.length - 1].getBoundingClientRect();
+      setDailyGridMetrics({
+        left: first.left - gridRect.left,
+        width: last.right - first.left,
+        bodyTop: first.top - gridRect.top,
+        bodyHeight: first.height,
+      });
+    };
+
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(grid);
+    return () => observer.disconnect();
+  }, [scheduleView, floor, floorRooms.length]);
+
   /** 층마다 지금 비어 있는 회의실 수. 층을 고르기 전에 알 수 있어야 한다. */
   const floorAvailability = floors.map((item) => {
     const list = rooms.filter((room) => room.floor === item);
@@ -1566,7 +1600,7 @@ export default function Home() {
                     말인지 알기 어려웠다. */}
               </div>
 
-              {scheduleView === "day" && <div className="week-timeline daily-timeline">
+              {scheduleView === "day" && <div className="week-timeline daily-timeline" ref={dailyGridRef}>
                 <div className="time-axis">
                   <span className="axis-corner">시간</span>
                   <div className="time-axis-body">
@@ -1576,6 +1610,19 @@ export default function Home() {
                     )}
                   </div>
                 </div>
+                {/* 회의실마다 따로 선을 그으면 카드 사이 여백에서 끊겨 보인다.
+                    모든 회의실 칸에 걸치는 선 하나만 그린다. 위치는 칸들의
+                    실제 픽셀 크기(dailyGridMetrics)를 재서 계산한다. */}
+                {showCurrentTime && currentTimePercent !== null && dailyGridMetrics && (
+                  <span
+                    className="current-time-line current-time-line-all"
+                    style={{
+                      left: dailyGridMetrics.left,
+                      width: dailyGridMetrics.width,
+                      top: dailyGridMetrics.bodyTop + (currentTimePercent / 100) * dailyGridMetrics.bodyHeight,
+                    }}
+                  />
+                )}
                 {floorRooms.map((room) => {
                   const dailyBookings = layoutOverlappingBookings(
                     bookings.filter((booking) => booking.roomId === room.id && booking.date === date),
@@ -1596,7 +1643,6 @@ export default function Home() {
                         onPointerUp={(event) => finishSlotDrag(room, date, event)}
                         onPointerCancel={() => setSlotDrag(null)}
                       >
-                        {showCurrentTime && <span className="current-time-line" style={{ top: `${currentTimePercent}%` }} />}
                         {(() => {
                           const selection = slotDrag?.roomId === room.id && slotDrag.date === date
                             ? slotDrag

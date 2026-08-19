@@ -178,13 +178,13 @@ const spokenDuration = (minutes: number): string => {
 
 
 /**
- * "8월 3주차". 그 달의 몇 번째 주인지 숫자로 적는다.
- * 날짜 범위(8월 17–21일)는 제목으로 쓰기엔 너무 길고, 달을 걸치면 두 배가 된다.
+ * "WEEK 3". 그 달의 몇 번째 주인지. 일간의 영문 요일(WEDNESDAY)과 같은 자리에
+ * 같은 모양으로 놓이는 머리표라 영문 대문자로 쓴다.
  * 기준은 그 주 월요일이 속한 달이다.
  */
-const weekOfMonthLabel = (key: DateKey): string => {
-  const [, month, day] = key.split("-").map(Number);
-  return `${month}월 ${Math.floor((day - 1) / 7) + 1}주차`;
+const weekNumberLabel = (key: DateKey): string => {
+  const [, , day] = key.split("-").map(Number);
+  return `WEEK ${Math.floor((day - 1) / 7) + 1}`;
 };
 const pad2 = (value: number) => String(value).padStart(2, "0");
 
@@ -592,6 +592,8 @@ export default function Home() {
   useEffect(() => {
     if (!myBookingOwner && siteConfig.testUser?.name) setMyBookingOwner(siteConfig.testUser.name);
   }, [myBookingOwner, setMyBookingOwner]);
+  /** 상단바에 쓸 이름. SSO로 들어왔으면 계정 이름, 아니면 예약할 때 쓴 이름. */
+  const headerName = currentUser?.name ?? myBookingOwner;
   // 취소는 여러 건을 골라 한 번에 한다. null이면 고르는 중이 아니다.
   const [cancelSelection, setCancelSelection] = useState<string[] | null>(null);
   // 취소는 되돌릴 수 없다. 누르는 즉시 지우지 말고 무엇이 사라지는지 먼저 보여준다.
@@ -1389,17 +1391,24 @@ export default function Home() {
             <h1>회의실 예약</h1>
           </div>
         </div>
+        {/* 메뉴는 글자만 두고, 사람은 오른쪽 끝에 이니셜 원 하나로 묶는다.
+            원형 아이콘·구분선·빨강 버튼을 걷어 내면 빨강은 '예약하기' 하나에만
+            남아, 상단바에서 같은 무게로 경쟁하지 않는다. */}
         <div className="header-account">
-          {currentUser
-            ? <span className="header-user">{currentUser.name}님 <a className="header-logout" href="/auth/logout">로그아웃</a></span>
-            : myBookingOwner && <span className="header-user">{myBookingOwner}님</span>}
           {/* 시계와 날짜는 뺐다. 보고 있는 날짜가 왼쪽에 크게 있고,
               현재 시각은 일정표의 빨간 선이 알려 준다. */}
-          <a className="header-manual-help" title="매뉴얼" href="/회의실예약_매뉴얼.pdf" target="_blank" rel="noopener noreferrer">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round"><rect x="6" y="3.5" width="12" height="17" rx="1" /><path d="M9 8.5h6M9 12h6M9 15.5h3.5" /></svg>
-          </a>
-          <span className="header-sep" aria-hidden="true" />
-          <button type="button" className="header-my-bookings" onClick={() => setMyBookingsOpen(true)}>내 예약</button>
+          <nav className="header-nav" aria-label="사용자 메뉴">
+            <button type="button" className="header-nav-item" onClick={() => setMyBookingsOpen(true)}>내 예약</button>
+            <a className="header-nav-item" href="/회의실예약_매뉴얼.pdf" target="_blank" rel="noopener noreferrer">매뉴얼</a>
+          </nav>
+          {/* 이니셜은 이름에서 뽑는다. 원은 장식이라 낭독기에서는 건너뛰고
+              이름만 읽히게 한다. */}
+          {headerName && <span className="header-me">
+            <i className="header-me-face" aria-hidden="true">{headerName.slice(0, 2)}</i>
+            <span className="header-user">{headerName}님
+              {currentUser && <a className="header-logout" href="/auth/logout">로그아웃</a>}
+            </span>
+          </span>}
         </div>
       </header>
 
@@ -1552,19 +1561,21 @@ export default function Home() {
                   따로 있던 제어줄이 없어지고 그만큼 표가 커진다. */}
               <div className="weekly-heading schedule-hero">
                 <div className="hero-date">
-                  {/* 요일은 영문 대문자로 짧게 얹는다. '수요일'보다 글자 폭이
-                      좁고 대문자라 큰 숫자 위의 머리표처럼 읽힌다.
-                      주간은 이 줄을 두지 않는다 — 날짜는 바로 아래 요일 줄
-                      (월 17 · 화 18 …)에 이미 다 나와 있어 같은 말이 두 번이다. */}
-                  {!weekView && <p className="hero-kicker">{formatWeekdayEnglish(date)}</p>}
-                  {/* 일간은 '8/19'처럼 숫자만 남겨 크게 쓴다. 위 줄에 요일이 이미
-                      있으니 '월·일' 글자가 없어도 무슨 날인지 읽힌다 — 글자를 덜어낸
+                  {/* 머리표는 영문 대문자로 짧게 얹는다. 일간은 요일(WEDNESDAY),
+                      주간은 몇 번째 주(WEEK 3). 두 화면이 같은 자리에 같은 모양의
+                      두 줄을 쓰므로 보기를 바꿔도 같은 덩어리로 읽힌다. */}
+                  <p className="hero-kicker">{weekView
+                    ? weekNumberLabel(weekDays[0])
+                    : formatWeekdayEnglish(date)}</p>
+                  {/* 숫자만 남겨 크게 쓴다. 머리표에 요일·주차가 이미 있으니
+                      '월·일' 글자가 없어도 무슨 날인지 읽힌다 — 글자를 덜어낸
                       만큼 숫자를 키울 수 있어 이 영역의 제목이 날짜가 된다.
+                      주간의 범위는 표에 실제로 그려지는 날(월~금)의 처음과 끝을
+                      그대로 쓴다. 고정된 문구로 적으면 표와 어긋날 수 있다.
                       숫자만으로는 읽어 주는 기기에서 '8 나누기 19'로 들릴 수 있어
-                      한글 날짜를 눈에 안 보이게 함께 둔다.
-                      주간은 범위 대신 '8월 3주차'로 적는다(아래 요일 줄에 날짜가 다 있다). */}
-                  <h3 className={weekView ? undefined : "hero-date-big"}>{weekView
-                    ? weekOfMonthLabel(weekDays[0])
+                      한글 날짜를 눈에 안 보이게 함께 둔다. */}
+                  <h3 className={`hero-date-big${weekView ? " hero-date-range" : ""}`}>{weekView
+                    ? <><span aria-hidden="true">{slashDate(weekDays[0])} ~ {slashDate(weekDays[weekDays.length - 1])}</span><span className="sr-only">{formatDateLabel(weekDays[0])} ~ {formatDateLabel(weekDays[weekDays.length - 1])}</span></>
                     : <><span aria-hidden="true">{slashDate(date)}</span><span className="sr-only">{formatDateLabel(date)}</span></>}
                   </h3>
                 </div>

@@ -6034,3 +6034,86 @@ p, li, dd,
   /* 두 줄 사이 숨. 1px이면 대문자 요일이 숫자에 붙어 보인다. */
   .schedule-hero .hero-date { gap: 5px; }
 }
+
+/* ══ 상단바 사용자 메뉴 : 글자 메뉴 + 이니셜 원 (시안 C) ═══════════
+   원형 배경을 깐 매뉴얼 아이콘, 빨강으로 채운 '내 예약', 그 사이 구분선이
+   한 줄에 몰려 오른쪽이 무거웠다. 셋을 걷어 내고 메뉴는 글자만 남긴다.
+   사람은 오른쪽 끝에 이니셜 원 하나로 묶어 '메뉴'와 '내 계정'을 나눈다.
+   빨강은 이제 오른쪽 아래 '예약하기' 하나에만 남는다. */
+@media (min-width: 1px) {
+  .header-account { gap: 22px; }
+  .header-nav { display: flex; align-items: center; gap: 22px; }
+
+  /* 앞선 규칙들이 '내 예약'에 높이 40px·모서리 10px·빨강 바탕을 얹어 두었다.
+     같은 요소가 아니므로(클래스를 바꿨다) 새로 쌓지 않고 글자만 남긴다. */
+  .header-nav-item {
+    padding: 8px 2px;
+    color: var(--ink-2);
+    background: none;
+    border: 0;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: -.01em;
+    white-space: nowrap;
+    text-decoration: none;
+    cursor: pointer;
+    transition: color .15s ease;
+  }
+  .header-nav-item:hover { color: var(--ink-1); }
+  /* 마우스로 누를 때는 테두리를 그리지 않고, 키보드로 옮겨 왔을 때만 그린다. */
+  .header-nav-item:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; border-radius: 4px; }
+
+  .header-me {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding-left: 22px;
+    border-left: 1px solid #e8eaf0;
+  }
+  .header-me-face {
+    width: 32px;
+    height: 32px;
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    color: #fff;
+    background: var(--ink);
+    font-size: 12.5px;
+    font-weight: 800;
+    font-style: normal;
+    letter-spacing: -.02em;
+  }
+  .header-account .header-user { font-size: 13.5px; font-weight: 600; color: var(--ink-1); }
+}
+
+/* 창이 좁아지면 이름 글자를 접고 이니셜 원만 남긴다. 상단바에서 가장 먼저
+   자리를 내줘도 되는 것이 이름이다 — 원이 그 자리를 대신 지킨다. */
+@media (max-width: 900px) {
+  .header-account { gap: 16px; }
+  .header-nav { gap: 16px; }
+  .header-me { padding-left: 16px; }
+  .header-account .header-user { display: none; }
+}
+
+/* ══ 날짜 머리줄 : 검정 글씨 · 주간도 같은 두 줄로 ═══════════════
+   남색은 왼쪽 층 탭·오른쪽 예약창의 남색과 같은 계열이라 제목으로서
+   두드러지지 않았다. 요일·날짜를 검정으로 내린다.
+
+   주간도 일간과 같은 두 줄('WEEK 3' + '8/17 ~ 8/21')이 되었다.
+   범위는 글자 수가 세 배라 66px로 적으면 1440px 화면에서 층 탭과 조작부가
+   머리줄 밖으로 밀려난다. 글씨체·굵기·색은 일간과 같게 두고 크기만 48px로
+   낮춘다 — 이때 날짜 칸이 216 → 248px로 32px만 넓어져, 보기를 바꿀 때
+   층 탭이 움직이는 폭도 그만큼에서 그친다. */
+@media (min-width: 1px) {
+  .schedule-hero .hero-kicker,
+  .schedule-hero .hero-date h3.hero-date-big { color: #111111; }
+  /* 숫자는 h3 안의 span에 들어 있다(낭독기용 한글 날짜와 나누기 위해).
+     앞쪽의 `.weekly-heading span { color: var(--ink) }`가 그 span을 잡아
+     제목만 남색으로 남았다. 상자 색을 그대로 물려받게 한다. */
+  .schedule-hero .hero-date h3.hero-date-big span { color: inherit; }
+
+  .schedule-hero .hero-date h3.hero-date-big.hero-date-range { font-size: 48px; }
+}

@@ -32,6 +32,14 @@ echo Stopping any server left over from before...
 for /f "tokens=5" %%p in ('netstat -ano ^| findstr /r /c:":3000 .*LISTENING"') do taskkill /F /PID %%p >nul 2>nul
 for /f "tokens=5" %%p in ('netstat -ano ^| findstr /r /c:":5173 .*LISTENING"') do taskkill /F /PID %%p >nul 2>nul
 
+echo Building the latest code (this is what localhost:3000 serves)...
+call npm run build
+if errorlevel 1 (
+    echo [ERROR] Build failed. See the messages above.
+    pause
+    exit /b 1
+)
+
 echo Starting the booking server...
 start "BDO API - do not close" /min cmd /c "npm run dev:api"
 

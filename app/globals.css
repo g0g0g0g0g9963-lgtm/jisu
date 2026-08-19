@@ -6003,22 +6003,34 @@ p, li, dd,
    선·조작부는 제자리에 있다. 커진 만큼 위로만 자란다.
    주간 제목('8월 3주차')은 글자가 길어 그대로 둔다. */
 @media (min-width: 1px) {
-  /* 요일 : 날짜 위 작은 줄. 숫자 왼쪽 끝선에 맞춰 들여쓰기를 줄인다. */
+  /* 요일 : 큰 숫자 위에 얹는 머리표. 대문자라 자간을 벌려야 글자가
+     서로 붙지 않고, 날짜와 같은 남색이라 두 줄이 한 덩어리로 읽힌다.
+     굵기는 날짜(700)보다 한 단 위로 둔다 — 작은 글자는 같은 굵기·같은
+     색이어도 옆의 큰 글자보다 흐리고 연해 보인다. */
   .schedule-hero .hero-kicker {
     padding-left: 3px;
-    font-size: 13px;
-    font-weight: 600;
-    letter-spacing: .01em;
+    color: #22366f;
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: .09em;
     line-height: 1.15;
   }
 
-  /* 날짜 : 이 영역에서 가장 큰 글자. 숫자 폭이 고정이라(tabular-nums)
-     1일 ↔ 19일처럼 자릿수가 바뀌어도 옆 조작부가 밀리지 않는다. */
+  /* 날짜 : 이 영역에서 가장 큰 글자.
+     자간은 시안처럼 거의 그대로 둔다(-.01em). 앞서 -.045em까지 조여
+     '8 / 1 9'가 서로 먹으면서 글씨체 자체가 달라 보였다.
+     숫자 폭도 고정폭(tabular-nums)을 걷어 낸다 — 고정폭은 '1'의 좌우에
+     빈칸을 넣어 시안보다 넓어 보이게 만든다. 자릿수가 바뀌어도
+     날짜 칸이 min-width 216px로 고정이라 옆 조작부는 밀리지 않는다. */
   .schedule-hero .hero-date h3.hero-date-big {
+    color: #22366f;
     font-size: 66px;
     font-weight: 700;
     line-height: .95;
-    letter-spacing: -.045em;
-    font-variant-numeric: tabular-nums;
+    letter-spacing: -.01em;
+    font-variant-numeric: normal;
   }
+
+  /* 두 줄 사이 숨. 1px이면 대문자 요일이 숫자에 붙어 보인다. */
+  .schedule-hero .hero-date { gap: 5px; }
 }

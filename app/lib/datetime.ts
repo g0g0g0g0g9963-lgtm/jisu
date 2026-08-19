@@ -35,6 +35,10 @@ const weekdayLabelFormatter = new Intl.DateTimeFormat("ko-KR", {
   timeZone: "UTC",
   weekday: "short",
 });
+const weekdayEnglishFormatter = new Intl.DateTimeFormat("en-US", {
+  timeZone: "UTC",
+  weekday: "long",
+});
 const fullDateLabelFormatter = new Intl.DateTimeFormat("ko-KR", {
   timeZone: TIME_ZONE,
   year: "numeric",
@@ -91,6 +95,10 @@ export const formatDateLabel = (key: DateKey): string =>
 
 export const formatWeekday = (key: DateKey): string =>
   weekdayLabelFormatter.format(atUtcMidnight(key));
+
+/** "WEDNESDAY". 일간 머리줄의 영문 요일 — 큰 날짜 위에 대문자로 얹는다. */
+export const formatWeekdayEnglish = (key: DateKey): string =>
+  weekdayEnglishFormatter.format(atUtcMidnight(key)).toUpperCase();
 
 export const dayOfMonth = (key: DateKey): number =>
   atUtcMidnight(key).getUTCDate();

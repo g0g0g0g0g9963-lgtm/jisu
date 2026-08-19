@@ -24,6 +24,7 @@ import {
   formatMinutes,
   formatSpokenTime,
   formatWeekday,
+  formatWeekdayEnglish,
   getWorkWeek,
   isWeekend,
   minutesOf,
@@ -1553,16 +1554,20 @@ export default function Home() {
                   따로 있던 제어줄이 없어지고 그만큼 표가 커진다. */}
               <div className="weekly-heading schedule-hero">
                 <div className="hero-date">
-                  {/* 주간은 작은 줄을 두지 않는다. 날짜는 바로 아래 요일 줄
+                  {/* 요일은 영문 대문자로 짧게 얹는다. '수요일'보다 글자 폭이
+                      좁고 대문자라 큰 숫자 위의 머리표처럼 읽힌다.
+                      주간은 이 줄을 두지 않는다 — 날짜는 바로 아래 요일 줄
                       (월 17 · 화 18 …)에 이미 다 나와 있어 같은 말이 두 번이다. */}
-                  {!weekView && <p className="hero-kicker">{formatWeekday(date)}요일</p>}
+                  {!weekView && <p className="hero-kicker">{formatWeekdayEnglish(date)}</p>}
                   {/* 일간은 '8/19'처럼 숫자만 남겨 크게 쓴다. 위 줄에 요일이 이미
                       있으니 '월·일' 글자가 없어도 무슨 날인지 읽힌다 — 글자를 덜어낸
                       만큼 숫자를 키울 수 있어 이 영역의 제목이 날짜가 된다.
+                      숫자만으로는 읽어 주는 기기에서 '8 나누기 19'로 들릴 수 있어
+                      한글 날짜를 눈에 안 보이게 함께 둔다.
                       주간은 범위 대신 '8월 3주차'로 적는다(아래 요일 줄에 날짜가 다 있다). */}
                   <h3 className={weekView ? undefined : "hero-date-big"}>{weekView
                     ? weekOfMonthLabel(weekDays[0])
-                    : slashDate(date)}
+                    : <><span aria-hidden="true">{slashDate(date)}</span><span className="sr-only">{formatDateLabel(date)}</span></>}
                   </h3>
                 </div>
                 {/* 시안대로 화살표 둘을 붙이고 '오늘'을 그 옆에 둔다.

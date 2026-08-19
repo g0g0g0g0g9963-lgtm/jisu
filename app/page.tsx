@@ -598,7 +598,7 @@ export default function Home() {
   const [cancelAsk, setCancelAsk] = useState<string[] | null>(null);
   // 비어 있는 필수 칸. 브라우저가 그리는 흰 말풍선(required) 대신 우리가 표시한다.
   // 말풍선은 모양·문구를 바꿀 수 없고 화면 밖이면 보이지도 않는다.
-  const [missingField, setMissingField] = useState<"owner" | "team" | "purpose" | null>(null);
+  const [missingField, setMissingField] = useState<"owner" | "team" | null>(null);
   const [cancelBusy, setCancelBusy] = useState(false);
   // 참석자 칸은 선택 항목이라 접어 둔다.
   const [attendeesOpen, setAttendeesOpen] = useState(false);
@@ -886,10 +886,6 @@ export default function Home() {
       setEditNotice("종료 시간은 시작 시간보다 늦어야 합니다.");
       return;
     }
-    if (!editDraft.purpose.trim()) {
-      setEditNotice("회의 목적을 입력해 주세요.");
-      return;
-    }
     setEditBusy(true);
     const result = await patchBookingRequest(editDraft.id, {
       roomId: editDraft.roomId,
@@ -1109,8 +1105,9 @@ export default function Home() {
     filledTimer.current = window.setTimeout(() => setFilledNotice(null), 3000);
     window.requestAnimationFrame(() => {
       document.querySelector(".booking-fields")?.scrollTo({ top: 0, behavior: "smooth" });
-      // 남은 필수칸은 회의 목적 하나뿐이다. 커서를 미리 넣어 두면 표시를
-      // 읽기 전에 손이 먼저 움직인다. 스크롤은 위에서 이미 잡았다.
+      // 값을 가져온 뒤 남는 칸은 회의 목적 하나뿐이다(선택 항목이지만 대개
+      // 채운다). 커서를 미리 넣어 두면 표시를 읽기 전에 손이 먼저 움직인다.
+      // 스크롤은 위에서 이미 잡았다.
       document.getElementById("purpose-input")?.focus({ preventScroll: true });
     });
   };
@@ -1119,7 +1116,6 @@ export default function Home() {
   const REQUIRED_FIELDS = [
     { key: "owner", id: "owner-input", value: owner, message: "예약자 이름을 적어 주세요" },
     { key: "team", id: "team-input", value: team, message: "본부명을 골라 주세요" },
-    { key: "purpose", id: "purpose-input", value: purpose, message: "회의 목적을 적어 주세요" },
   ] as const;
 
   /** 빈 필수 칸 아래에 붙는 한 줄. 값이 들어오면 저절로 사라진다. */
@@ -1133,8 +1129,10 @@ export default function Home() {
    * 한 칸을 끝내면 아직 빈 다음 필수 칸으로 커서를 옮긴다. 남은 칸이 없으면
    * 예약 버튼으로 보내, 다 채웠다는 것과 다음에 누를 곳을 함께 알린다.
    */
-  const focusNextRequired = (afterKey: string, reveal = false) => {
-    const from = REQUIRED_FIELDS.findIndex((field) => field.key === afterKey);
+  const focusNextRequired = (afterKey: string | null, reveal = false) => {
+    // null이면 필수 칸 처음부터 본다. 회의 목적처럼 필수 목록에 없는 칸에서
+    // 넘어올 때 쓴다 — 아직 빈 필수 칸이 있으면 거기로, 없으면 예약 버튼으로.
+    const from = afterKey === null ? -1 : REQUIRED_FIELDS.findIndex((field) => field.key === afterKey);
     const next = REQUIRED_FIELDS.slice(from + 1).find((field) => !field.value.trim());
     const target = document.getElementById(next ? next.id : "reserve-button");
     if (!target) return;
@@ -2081,23 +2079,18 @@ export default function Home() {
             </div>
             </div>
 
-            {/* 회의 목적도 필수라 예약자 바로 밑에 둔다. 필수끼리 모아야
-                표에서 값을 가져왔을 때 스크롤 없이 다 보인다. */}
-            {/* required를 쓰지 않는다. 브라우저가 그리는 흰 말풍선은 문구도 모양도
-                바꿀 수 없고, 칸이 화면 밖이면 보이지도 않은 채 예약이 막힌다. */}
-            {/* 시간을 아직 못 골랐으면(timeNeedsPick) 회의 목적까지 같이 밝히지
-                않는다. 한 번에 두 곳을 가리키면 어디부터 할지 헷갈린다.
-                시간을 고르고 나면 자연스럽게 다음 차례로 넘어와 밝혀진다. */}
-            <label className={`${draftActive && !timeNeedsPick && !purpose.trim() ? "needs-input" : ""} ${missingField === "purpose" ? "field-missing" : ""}`.trim() || undefined}>
-              <span className="field-label">회의 목적<i className="req">*</i></span>
+            {/* 회의 목적은 선택 항목이다. 그래도 예약자 바로 밑에 둔다 —
+                표의 칸에 적히는 이름이라 대부분 채우게 되는 칸이다.
+                비워 두면 서버가 기본 이름(site.json의 defaultPurpose)을 넣는다. */}
+            <label>
+              <span className="field-label">회의 목적 <em>(선택)</em></span>
               <input
                 id="purpose-input"
                 value={purpose}
-                onChange={(event) => { setPurpose(event.target.value); if (event.target.value.trim()) setMissingField(null); }}
-                onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); focusNextRequired("purpose"); } }}
+                onChange={(event) => setPurpose(event.target.value)}
+                onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); focusNextRequired(null); } }}
                 placeholder="예: 주간회의"
               />
-              {missingNote("purpose")}
             </label>
 
             {/* 참석자는 선택 항목이라 평소에는 접어 두고 누를 때만 펼친다. */}

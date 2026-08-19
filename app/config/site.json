@@ -15,6 +15,7 @@
     "soonThresholdMinutes": 30,
     "defaultRepeatSpanDays": 2,
     "allowWeekends": true,
+    "defaultPurpose": "회의",
     "maxAttendees": 30,
     "maxAttendeeNameLength": 20
   },

@@ -31,7 +31,7 @@ console.log(ssoEnabled ? "[auth] Microsoft SSO 사용" : "[auth] 익명 모드 (
 const TIME = /^([01]\d|2[0-3]):([0-5]\d)$/;
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const MAX_REPEAT = 60;
-const { openingTime, closingTime, maxAttendees, maxAttendeeNameLength, allowWeekends } = siteConfig.booking;
+const { openingTime, closingTime, maxAttendees, maxAttendeeNameLength, allowWeekends, defaultPurpose } = siteConfig.booking;
 
 const isRealDate = (value) => {
   if (!DATE.test(value)) return false;
@@ -68,10 +68,9 @@ function validateCommon(body) {
   }
 
   const team = trimmed(body?.team).slice(0, 60);
-  // 회의 목적은 필수. 표에서 무슨 회의인지 알아보는 유일한 단서라 비워 두면
-  // 다른 사람이 이 예약을 옮겨 달라고 부탁할 판단 근거가 없다.
-  const purpose = trimmed(body?.purpose).slice(0, 100);
-  if (purpose.length === 0) return { error: "회의 목적을 입력해 주세요." };
+  // 회의 목적은 선택 항목이다. 다만 표의 칸에 적히는 이름이라 비워 두면
+  // 무슨 예약인지 알 수 없는 빈 칸이 된다. 비면 기본 이름(site.json)을 넣는다.
+  const purpose = trimmed(body?.purpose).slice(0, 100) || defaultPurpose;
 
   // 참석자는 선택 항목이다. 배열이 아니면 무시하고, 길이·개수는 설정값으로 자른다.
   const rawAttendees = Array.isArray(body?.attendees) ? body.attendees : [];

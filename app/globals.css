@@ -5950,3 +5950,14 @@ p, li, dd,
 .schedule-design-cards .weekly-room-board .weekly-room-head.active span {
   color: var(--teal);
 }
+
+/* ══ 큰 화면에서 머리줄 위 여백 ═══════════════════════════════════
+   좁은 화면에서는 한 픽셀이 아까워 날짜 줄을 위에 붙여 두었는데,
+   넓은 모니터에서는 그대로 두면 상단바에 눌린 것처럼 보인다.
+   화면이 넓어질수록 조금씩 더 내린다. */
+@media (min-width: 1400px) {
+  .weekly-board .weekly-heading.schedule-hero { padding-top: 16px; margin-bottom: 14px; }
+}
+@media (min-width: 1800px) {
+  .weekly-board .weekly-heading.schedule-hero { padding-top: 28px; margin-bottom: 18px; }
+}

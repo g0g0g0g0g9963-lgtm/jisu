@@ -1,8 +1,12 @@
 @echo off
-setlocal EnableExtensions
+setlocal EnableExtensions EnableDelayedExpansion
 cd /d "%~dp0"
 
 title BDO Meeting Room - dev server
+
+set "REPO_URL=https://github.com/g0g0g0g0g9963-lgtm/jisu.git"
+set "BRANCH=claude/setup-continuation-217xow"
+set "CODE_CHANGED=0"
 
 echo ============================================
 echo   Starting the meeting room site (local).
@@ -18,8 +22,63 @@ if errorlevel 1 (
     exit /b 1
 )
 
+where git >nul 2>nul
+if errorlevel 1 (
+    echo [ERROR] Git is not installed.
+    echo   Install it from https://git-scm.com and run this again.
+    pause
+    exit /b 1
+)
+
+if not exist ".git" (
+    echo Connecting this folder to the GitHub project...
+    git init -q
+    git remote add origin "%REPO_URL%"
+    git fetch origin %BRANCH% -q
+    if errorlevel 1 (
+        echo [ERROR] Could not reach GitHub. Check your internet connection.
+        pause
+        exit /b 1
+    )
+    git checkout -B %BRANCH% -q
+    git reset --hard origin/%BRANCH% -q
+    git branch --set-upstream-to=origin/%BRANCH% -q
+    set "CODE_CHANGED=1"
+    echo Done. This folder now tracks the GitHub project.
+) else (
+    echo Checking GitHub for the latest code...
+    git remote set-url origin "%REPO_URL%" >nul 2>nul
+    git fetch origin %BRANCH% -q
+    if errorlevel 1 (
+        echo [WARNING] Could not reach GitHub. Using the code already on this PC.
+    ) else (
+        for /f %%h in ('git rev-parse HEAD') do set "LOCAL_REV=%%h"
+        for /f %%h in ('git rev-parse origin/%BRANCH%') do set "REMOTE_REV=%%h"
+        if not "!LOCAL_REV!"=="!REMOTE_REV!" (
+            echo New code found on GitHub. Updating this PC...
+            git stash push -u -m "start-dev.bat autosave" -q
+            git checkout %BRANCH% -q
+            git reset --hard origin/%BRANCH% -q
+            set "CODE_CHANGED=1"
+            echo Updated to the latest code.
+            echo (If you had local edits, they are saved safely. Ask for help to get them back: git stash list)
+        ) else (
+            echo Already up to date.
+        )
+    )
+)
+echo.
+
 if not exist node_modules (
     echo First run: installing packages. This can take a few minutes...
+    call npm install
+    if errorlevel 1 (
+        echo [ERROR] npm install failed. See the messages above.
+        pause
+        exit /b 1
+    )
+) else if "%CODE_CHANGED%"=="1" (
+    echo Code was updated: refreshing packages just in case...
     call npm install
     if errorlevel 1 (
         echo [ERROR] npm install failed. See the messages above.

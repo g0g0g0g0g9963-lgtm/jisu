@@ -61,7 +61,7 @@ if not exist ".git" (
             git reset --hard origin/%BRANCH% -q
             set "CODE_CHANGED=1"
             echo Updated to the latest code.
-            echo (If you had local edits, they are saved safely. Ask for help to get them back: git stash list)
+            echo If you had local edits, they were saved safely - to see them, run: git stash list
         ) else (
             echo Already up to date.
         )

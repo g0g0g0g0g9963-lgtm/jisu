@@ -5991,3 +5991,34 @@ p, li, dd,
   width: 26px;
   height: 26px;
 }
+
+/* ══ 일간 날짜를 이 영역의 제목으로 ═══════════════════════════════
+   '8월 19일'을 48px 한 줄로 적으니 요일(13px)과 크기 차이가 작아
+   무엇이 제목인지 흐렸다. 요일은 작은 윗줄로 두고, 날짜는 '8/19'로
+   줄여 숫자만 크게 남긴다 — 글자를 덜어낸 만큼 폭은 그대로 두고
+   크기만 키울 수 있다.
+
+   머리줄은 높이가 calc(--rule-abs - 71px)로 고정되어 있고 내용이
+   아래에 붙으므로(align-content:end), 날짜가 두꺼워져도 아래 표와
+   선·조작부는 제자리에 있다. 커진 만큼 위로만 자란다.
+   주간 제목('8월 3주차')은 글자가 길어 그대로 둔다. */
+@media (min-width: 1px) {
+  /* 요일 : 날짜 위 작은 줄. 숫자 왼쪽 끝선에 맞춰 들여쓰기를 줄인다. */
+  .schedule-hero .hero-kicker {
+    padding-left: 3px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: .01em;
+    line-height: 1.15;
+  }
+
+  /* 날짜 : 이 영역에서 가장 큰 글자. 숫자 폭이 고정이라(tabular-nums)
+     1일 ↔ 19일처럼 자릿수가 바뀌어도 옆 조작부가 밀리지 않는다. */
+  .schedule-hero .hero-date h3.hero-date-big {
+    font-size: 66px;
+    font-weight: 700;
+    line-height: .95;
+    letter-spacing: -.045em;
+    font-variant-numeric: tabular-nums;
+  }
+}

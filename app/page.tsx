@@ -164,8 +164,8 @@ const equipmentSummary = (booking: Booking): string =>
     .map(([id, count]) => `${equipmentLabel(id)} ${count}`)
     .join(" · ");
 
-/** "8월". 제목에서 '월'은 얇게, '일'은 굵게 쓰려고 따로 뽑는다. */
-const monthLabel = (key: DateKey): string => `${Number(key.slice(5, 7))}월`;
+/** "8/19". 일간 제목은 숫자만 크게 쓰므로 '월·일' 글자를 덜어낸다. */
+const slashDate = (key: DateKey): string => `${Number(key.slice(5, 7))}/${dayOfMonth(key)}`;
 
 /** 100분 → "1시간 40분". 시각(01:40)과 헷갈리지 않게 말로 적는다. */
 const spokenDuration = (minutes: number): string => {
@@ -1556,11 +1556,13 @@ export default function Home() {
                   {/* 주간은 작은 줄을 두지 않는다. 날짜는 바로 아래 요일 줄
                       (월 17 · 화 18 …)에 이미 다 나와 있어 같은 말이 두 번이다. */}
                   {!weekView && <p className="hero-kicker">{formatWeekday(date)}요일</p>}
-                  {/* 날짜 제목은 굵기를 하나로 둔다. 주간은 '8월 3주차'로 적는다 —
-                      요일 줄에 날짜가 이미 다 나와 있어 제목까지 범위를 적을 이유가 없다. */}
-                  <h3>{weekView
+                  {/* 일간은 '8/19'처럼 숫자만 남겨 크게 쓴다. 위 줄에 요일이 이미
+                      있으니 '월·일' 글자가 없어도 무슨 날인지 읽힌다 — 글자를 덜어낸
+                      만큼 숫자를 키울 수 있어 이 영역의 제목이 날짜가 된다.
+                      주간은 범위 대신 '8월 3주차'로 적는다(아래 요일 줄에 날짜가 다 있다). */}
+                  <h3 className={weekView ? undefined : "hero-date-big"}>{weekView
                     ? weekOfMonthLabel(weekDays[0])
-                    : <>{monthLabel(date)} {dayOfMonth(date)}일</>}
+                    : slashDate(date)}
                   </h3>
                 </div>
                 {/* 시안대로 화살표 둘을 붙이고 '오늘'을 그 옆에 둔다.

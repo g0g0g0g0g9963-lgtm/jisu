@@ -6210,3 +6210,10 @@ p, li, dd,
      커진 만큼 이 추가분은 줄여야 혼자 멀어 보이지 않는다. */
   .booking-panel .booking-fields > .repeat-option { margin-bottom: 2px; }
 }
+
+/* 버튼 안의 회의실 이름을 검정으로. 빨강 위에서 흰 글자보다 오히려 또렷하다
+   (검정 4.8:1 · 흰색 4.4:1). 아래 시간 줄은 흰 글자 그대로 두어 두 줄의
+   위계는 유지한다. 못 누르는 회색 상태의 글자색은 건드리지 않는다. */
+@media (min-width: 1px) {
+  .booking-panel .reserve-button:not(:disabled) > span { color: #111111; }
+}

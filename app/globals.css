@@ -6190,18 +6190,23 @@ p, li, dd,
 @media (max-width: 1439px) {
   .schedule-hero .hero-date h3.hero-date-big.hero-date-range { letter-spacing: -.03em; }
 
+  /* 아랫줄에 층 탭·이동·일간주간 버튼을 다 모은다 — 날짜만 있는 윗줄
+     옆에 '일간/주간' 버튼만 뚝 떨어져 큰 빈 칸을 두고 있으면 옆으로
+     밀려난 것처럼 보인다. 일간과 같은 순서(층 탭 → 이동 → 배치)로 한
+     줄에 모아 그 줄 전체를 날짜 밑으로 내린다. */
   .weekly-heading.schedule-hero:has(.hero-date-range),
   .schedule-hero.weekly-heading:has(.hero-date-range) {
-    grid-template-columns: auto minmax(16px, 1fr) auto;
+    grid-template-columns: auto auto minmax(10px, 1fr) auto;
     grid-template-areas:
-      "date   gap    actions"
-      "floors floors nav";
+      "date   date  date   date"
+      "floors nav   gap    actions";
     row-gap: 14px;
     column-gap: 16px;
   }
   .schedule-hero:has(.hero-date-range) .hero-date { margin-right: 0; }
   .schedule-hero:has(.hero-date-range) .schedule-floor-switch { justify-self: start; }
-  .schedule-hero:has(.hero-date-range) .schedule-date-switch { justify-self: end; }
+  .schedule-hero:has(.hero-date-range) .schedule-date-switch { justify-self: start; }
+  .schedule-hero:has(.hero-date-range) .schedule-heading-actions { justify-self: end; }
   /* 자간을 조인 만큼(-.03em), 104주 실측 최댓값('11/30 – 12/4')이 304 →
      284px로 줄어든다. 여유를 더해 고정한다. */
   .schedule-hero .hero-date:has(.hero-date-range) { min-width: 320px; }

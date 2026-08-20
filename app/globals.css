@@ -6264,16 +6264,21 @@ p, li, dd,
    상태 글자와 확실히 구분되는 클릭 지점으로 만든다. */
 @media (min-width: 1px) {
   .room-picker-row > .room-picker-row-map {
-    width: 28px; height: 28px; padding: 0;
+    width: 34px; height: 34px; padding: 0;
     justify-content: center;
     border: 0;
     border-radius: 50%;
     color: #ed1639;
     background: transparent;
   }
-  .room-picker-row > .room-picker-row-map svg { width: 15px; height: 15px; }
+  .room-picker-row > .room-picker-row-map svg { width: 20px; height: 20px; }
   .room-picker-row > .room-picker-row-map:hover { background: #fdeaee; color: #d0122f; }
   .room-picker-row:has(> button.selected) > .room-picker-row-map { color: #ed1639; }
+  /* 빠른예약 안(폭이 좁은 booking-panel)의 목록은 줄 높이를 26px로 눌러 둔
+     규칙이 앞서 있는데, 선택자가 클래스 세 겹이라 이 파일 뒤쪽에 있는
+     위 규칙보다도 우선한다(구체성이 원본 순서를 이긴다). 같은 구체성으로
+     다시 잡아야 34px가 실제로 적용된다. */
+  .booking-panel .room-picker-options .room-picker-row-map { width: 34px; height: 34px; min-height: 0; }
 }
 
 /* ══ 날짜 머리줄에 좁은 전용 서체(Oswald) 적용 ═══════════════════════

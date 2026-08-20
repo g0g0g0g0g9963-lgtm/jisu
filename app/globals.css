@@ -12,6 +12,18 @@
   font-display: swap;
 }
 
+/* 날짜 머리줄(WEDNESDAY · 8/19)만 쓰는 좁은 영문·숫자 전용 서체.
+   한글은 담고 있지 않으므로 한글이 필요한 다른 곳에는 절대 쓰지 않는다.
+   Oswald도 OFL 오픈소스 라이선스라 Pretendard처럼 폰트 파일을 사이트
+   안에 두고 외부 CDN 없이 서비스한다(SIL Open Font License). */
+@font-face {
+  font-family: "Oswald";
+  src: url("/fonts/Oswald-Variable.woff2") format("woff2-variations");
+  font-weight: 500 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --ink: #243b83;
   --muted: #6a6f7a;
@@ -6243,4 +6255,43 @@ p, li, dd,
 }
 @media (min-height: 820px) {
   .booking-panel .booking-submit { margin-top: 100px; }
+}
+
+/* ══ 회의실 목록의 '위치' 버튼을 아이콘 하나로 ═══════════════════════
+   흰 알약 버튼 + "위치" 글자였는데, 핀 아이콘 하나로도 '이 회의실 위치
+   보기'라는 뜻이 충분히 전해진다. 버튼처럼 보이던 테두리·배경·글자를
+   걷어 내고 아이콘만 남긴다. 빨강(로고 색)으로 칠해 옆의 회의실 이름·
+   상태 글자와 확실히 구분되는 클릭 지점으로 만든다. */
+@media (min-width: 1px) {
+  .room-picker-row > .room-picker-row-map {
+    width: 28px; height: 28px; padding: 0;
+    justify-content: center;
+    border: 0;
+    border-radius: 50%;
+    color: #ed1639;
+    background: transparent;
+  }
+  .room-picker-row > .room-picker-row-map svg { width: 15px; height: 15px; }
+  .room-picker-row > .room-picker-row-map:hover { background: #fdeaee; color: #d0122f; }
+  .room-picker-row:has(> button.selected) > .room-picker-row-map { color: #ed1639; }
+}
+
+/* ══ 날짜 머리줄에 좁은 전용 서체(Oswald) 적용 ═══════════════════════
+   Pretendard로는 아무리 자간을 조여도 '1'이 세로획+대각선 깃 모양이라
+   시안(세로획 하나�001)과 달라 보였다. 신문 헤드라인에 쓰는 좁은
+   그로테스크체 Oswald로 이 두 줄만 바꾼다 — 한글이 없는 영문·숫자
+   전용 글자라 폰트를 통째로 바꿔도 안전하다.
+   Oswald는 이미 폭이 좁게 그려져 있어 Pretendard 때처럼 자간을
+   눌러 폭을 줄일 필요가 없다. 자간은 오히려 살짝 벌린다(0). */
+@media (min-width: 1px) {
+  .schedule-hero .hero-kicker {
+    font-family: "Oswald", "Pretendard", sans-serif;
+    font-weight: 600;
+    letter-spacing: .1em;
+  }
+  .schedule-hero .hero-date h3.hero-date-big {
+    font-family: "Oswald", "Pretendard", sans-serif;
+    font-weight: 700;
+    letter-spacing: 0;
+  }
 }

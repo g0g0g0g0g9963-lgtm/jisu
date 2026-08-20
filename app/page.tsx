@@ -1880,7 +1880,7 @@ export default function Home() {
                         aria-label={`${room.name} 배치도에서 위치 보기`}
                         onClick={() => { setTeamOpen(false); setMapDetailId(null); setMapPurpose("pick"); selectFloor(room.floor); setShowMap(true); }}
                       >
-                        <PinIcon />위치
+                        <PinIcon />
                       </button>
                     </div>;
                   })}

@@ -6221,10 +6221,11 @@ p, li, dd,
 /* ══ 예약하기 버튼을 입력칸 바로 아래로 ═══════════════════════════
    입력칸 영역이 flex:1로 남는 높이를 다 차지해서, 비품 요청을 뺀 뒤로는
    참석자 추가와 버튼 사이에 250px짜리 빈 칸이 생겼다. 입력칸은 필요한
-   만큼만 쓰게 하고 버튼을 바로 아래로 올린다.
+   만큼만 쓰게 하고 버튼을 그 아래 적당한 자리로 올린다 — 붙이지는
+   않는다. 바로 붙이면(28px) 이번엔 반대로 버튼이 위로 너무 붙어 보였다.
    내용이 많아지면(참석자 펼침·알림 문구) 여전히 줄어들며 스크롤이 생기므로
    버튼이 화면 밖으로 밀리지는 않는다. */
 @media (min-width: 1px) {
   .booking-panel .booking-fields { flex: 0 1 auto; }
-  .booking-panel .booking-submit { margin-top: 28px; }
+  .booking-panel .booking-submit { margin-top: 100px; }
 }

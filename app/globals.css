@@ -6199,3 +6199,14 @@ p, li, dd,
   .booking-panel .reserve-button > span { font-size: 12.5px; }
   .booking-panel .reserve-button > strong { font-size: 16px; }
 }
+
+/* ══ 빠른예약 입력칸 사이에 숨통 ═══════════════════════════════════
+   비품 요청을 뺀 뒤 칸 여섯 개가 위쪽에 몰려 있고 아래로 250px이 비었다.
+   좁은 화면에서 한 칸이라도 아끼려고 12px까지 조여 둔 간격이라, 여유가
+   생긴 넓은 화면에서만 22px로 벌린다. (1150px 이하는 지금 그대로) */
+@media (min-width: 1151px) {
+  .booking-panel .booking-fields { gap: 22px; }
+  /* 반복 예약은 앞뒤가 다른 성격의 칸이라 조금 더 띄워 두었다. 간격이
+     커진 만큼 이 추가분은 줄여야 혼자 멀어 보이지 않는다. */
+  .booking-panel .booking-fields > .repeat-option { margin-bottom: 2px; }
+}

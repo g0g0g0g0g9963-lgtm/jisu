@@ -6182,14 +6182,26 @@ p, li, dd,
   }
 }
 
-/* 1440px보다 좁은 화면은 위처럼 조여도 66px이 들어가지 않는다(조작부가
-   서로 겹친다). 이때만 한 단 낮춘다 — 1440px 이상에서는 일간과 똑같은
-   66px이다. 실제로 쓰는 화면(1490px 이상)은 모두 여기에 든다. */
+/* 1440px보다 좁은 화면은 옆으로 조여도 66px이 들어가지 않아, 지금까지는
+   이때만 글자를 52px로 낮췄다. 그런데 그러면 일간·주간을 오갈 때마다
+   크기가 달라 보인다 — 화면 폭이 좁을 때만이라 눈치채기 어려웠을 뿐,
+   일간과 '항상' 같아야 한다는 요구에는 맞지 않는 임시방편이었다.
+   글자를 줄이는 대신 자리를 만든다: 이 폭에서는 층 탭·날짜 이동을
+   아랫줄로 내려, 66px 날짜가 옆 눈치를 보지 않고 그 크기 그대로
+   나온다. 일간(범위 없음)은 이 규칙을 타지 않아 한 줄 그대로다. */
 @media (max-width: 1439px) {
-  .schedule-hero .hero-date h3.hero-date-big.hero-date-range { font-size: 52px; }
-  /* 같은 이유로, 104주 전체 실측 최댓값('11/30 – 12/4', 52px 기준 239px)에
-     여유를 더해 고정한다. */
-  .schedule-hero .hero-date:has(.hero-date-range) { min-width: 264px; }
+  .weekly-heading.schedule-hero:has(.hero-date-range),
+  .schedule-hero.weekly-heading:has(.hero-date-range) {
+    grid-template-columns: auto minmax(16px, 1fr) auto;
+    grid-template-areas:
+      "date   gap    actions"
+      "floors floors nav";
+    row-gap: 14px;
+    column-gap: 16px;
+  }
+  .schedule-hero:has(.hero-date-range) .hero-date { margin-right: 0; }
+  .schedule-hero:has(.hero-date-range) .schedule-floor-switch { justify-self: start; }
+  .schedule-hero:has(.hero-date-range) .schedule-date-switch { justify-self: end; }
 }
 
 /* ══ 빠른예약 머리 색을 처음의 먹빛 남색으로 되돌린다 ═══════════════

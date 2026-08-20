@@ -6160,11 +6160,10 @@ p, li, dd,
 @media (min-width: 1px) {
   .schedule-hero .hero-date h3.hero-date-big.hero-date-range {
     font-size: 66px;
-    /* 글자 높이·굵기는 일간과 같아야 하므로 크기는 건드리지 않는다. 대신
-       자간과 물결(~) 앞뒤 사이만 조여 폭을 줄인다 — 300px대로 내려와야
-       옆 조작부와 겹치지 않는다. */
-    letter-spacing: -.025em;
-    word-spacing: -6px;
+    /* 자간·굵기는 일간과 완전히 같은 값(상속)을 쓴다. 자간을 따로 조이면
+       숫자끼리 더 붙어 일간보다 눈에 진하게(굵게) 보였다 — Oswald로 바꾼
+       뒤로는 '8/17 ~ 8/21'도 322px 칸에 여유 있게 들어가 조일 필요가
+       없어졌다. */
   }
   /* 주간일 때만 넓힌다. 일간은 216px 그대로여야 '8/19'가 지금 자리에 남는다.
      고정 폭이라 '8/31 ~ 9/4'처럼 글자 수가 달라져도 층 탭이 흔들리지 않는다. */
@@ -6296,7 +6295,20 @@ p, li, dd,
   }
   .schedule-hero .hero-date h3.hero-date-big {
     font-family: "Oswald", "Pretendard", sans-serif;
-    font-weight: 700;
+    /* 700은 66px에서 너무 무거워 보였다. 한 단 낮춰 600으로 —
+     주간 범위(.hero-date-range)도 같은 선택자를 타므로 자동으로
+     같이 낮아져, 일간·주간이 항상 같은 굵기로 남는다. */
+    font-weight: 600;
     letter-spacing: 0;
   }
+}
+
+/* ══ 날짜 왼쪽 시작선을 시간 축 숫자와 맞춘다 ═══════════════════════
+   '시간' 칸(09:00 등)은 68px 칸 안에 가운데 정렬돼 있어, 그 숫자의
+   실제 왼쪽 시작점은 칸 왼쪽에서 18px쯤 안으로 들어가 있다.
+   날짜 큰 글자는 칸 왼쪽에 그대로 붙어 있어 그 아래 시간 숫자보다
+   왼쪽으로 튀어나와 보였다. 날짜 칸에 왼쪽 여백을 줘 시간 숫자의
+   시작선과 맞춘다. */
+@media (min-width: 1px) {
+  .schedule-hero .hero-date { padding-left: 16px; }
 }

@@ -168,6 +168,23 @@ const equipmentSummary = (booking: Booking): string =>
 /** "8/19". 일간 제목은 숫자만 크게 쓰므로 '월·일' 글자를 덜어낸다. */
 const slashDate = (key: DateKey): string => `${Number(key.slice(5, 7))}/${dayOfMonth(key)}`;
 
+/**
+ * 주간 제목의 날짜 범위. "8/17 ~ 8/21"처럼 양쪽에 월을 다 적고 물결로
+ * 이으면, 달·일이 둘 다 두 자리인 주(예: 10/26~10/30)는 66px 글자로
+ * 304px을 넘어 옆 조작부와 겹쳤다. 영문 표기 관례대로 en dash(–)를
+ * 쓰고, 같은 달 안이면 뒤쪽 월을 생략한다("8/17–21"). 달이 걸치면
+ * (예: 8/31–9/4) 양쪽 다 적는다. 이 압축만으로 실제 있을 수 있는 104주
+ * 전체의 최댓값이 379px→304px로 줄어, 옆 조작부를 밀어내지 않고도
+ * 66px 그대로 일간과 같은 크기를 쓸 수 있다.
+ */
+const weekRangeLabel = (start: DateKey, end: DateKey): string => {
+  const startMonth = Number(start.slice(5, 7));
+  const endMonth = Number(end.slice(5, 7));
+  return startMonth === endMonth
+    ? `${startMonth}/${dayOfMonth(start)}–${dayOfMonth(end)}`
+    : `${startMonth}/${dayOfMonth(start)}–${endMonth}/${dayOfMonth(end)}`;
+};
+
 /** 100분 → "1시간 40분". 시각(01:40)과 헷갈리지 않게 말로 적는다. */
 const spokenDuration = (minutes: number): string => {
   const hours = Math.floor(minutes / 60);
@@ -177,14 +194,17 @@ const spokenDuration = (minutes: number): string => {
 };
 
 
+const MONTH_ABBR = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+
 /**
- * "WEEK 3". 그 달의 몇 번째 주인지. 일간의 영문 요일(WEDNESDAY)과 같은 자리에
- * 같은 모양으로 놓이는 머리표라 영문 대문자로 쓴다.
- * 기준은 그 주 월요일이 속한 달이다.
+ * "AUG · WEEK 3". 몇 월의 몇 번째 주인지. 일간의 영문 요일(WEDNESDAY)과 같은
+ * 자리에 같은 모양으로 놓이는 머리표라 영문 대문자로 쓴다.
+ * 기준은 그 주 월요일이 속한 달이다 — 달을 앞에 적어야 아래 큰 글자(날짜
+ * 범위)를 보지 않고도 몇 월인지 바로 안다.
  */
 const weekNumberLabel = (key: DateKey): string => {
-  const [, , day] = key.split("-").map(Number);
-  return `WEEK ${Math.floor((day - 1) / 7) + 1}`;
+  const [, month, day] = key.split("-").map(Number);
+  return `${MONTH_ABBR[month - 1]} · WEEK ${Math.floor((day - 1) / 7) + 1}`;
 };
 const pad2 = (value: number) => String(value).padStart(2, "0");
 
@@ -1550,7 +1570,7 @@ export default function Home() {
                       숫자만으로는 읽어 주는 기기에서 '8 나누기 19'로 들릴 수 있어
                       한글 날짜를 눈에 안 보이게 함께 둔다. */}
                   <h3 className={`hero-date-big${weekView ? " hero-date-range" : ""}`}>{weekView
-                    ? <><span aria-hidden="true">{slashDate(weekDays[0])} ~ {slashDate(weekDays[weekDays.length - 1])}</span><span className="sr-only">{formatDateLabel(weekDays[0])} ~ {formatDateLabel(weekDays[weekDays.length - 1])}</span></>
+                    ? <><span aria-hidden="true">{weekRangeLabel(weekDays[0], weekDays[weekDays.length - 1])}</span><span className="sr-only">{formatDateLabel(weekDays[0])} ~ {formatDateLabel(weekDays[weekDays.length - 1])}</span></>
                     : <><span aria-hidden="true">{slashDate(date)}</span><span className="sr-only">{formatDateLabel(date)}</span></>}
                   </h3>
                 </div>

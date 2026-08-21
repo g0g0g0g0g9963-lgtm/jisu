@@ -1851,9 +1851,14 @@ export default function Home() {
           aria-controls="quick-booking-content"
           onClick={() => setBookingPanelOpen(true)}
         >
-          <CalendarIcon />
-          <span>빠른 예약</span>
-          <ChevronIcon direction="prev" />
+          <span className="booking-panel-rail-main">
+            <CalendarIcon />
+            <i aria-hidden="true" />
+            <span>빠른 예약</span>
+          </span>
+          <span className="booking-panel-rail-arrow" aria-hidden="true">
+            <ChevronIcon direction="prev" />
+          </span>
         </button>
         <div className="booking-panel-content" id="quick-booking-content" aria-hidden={!bookingPanelOpen}>
         {/* 표·배치도에서 값을 가져오면 칸 위에 겹쳐 잠깐 뜬다. 자리를 차지하지

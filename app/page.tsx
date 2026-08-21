@@ -642,7 +642,10 @@ export default function Home() {
   const [editNotice, setEditNotice] = useState("");
   const [editBusy, setEditBusy] = useState(false);
   const [editConfirmDelete, setEditConfirmDelete] = useState(false);
-  const [bookingPanelOpen, setBookingPanelOpen] = useState(false);
+  // 빠른 예약은 기본으로 펼쳐 두되, 사용자가 일정표를 넓게 보고 싶을 때
+  // 오른쪽의 얇은 세로 탭으로 접을 수 있다. 폼은 숨기기만 하므로 작성 중인
+  // 회의실·날짜·시간·입력값은 접었다 다시 펴도 그대로 남는다.
+  const [bookingPanelOpen, setBookingPanelOpen] = useState(true);
   const [slotDrag, setSlotDrag] = useState<SlotDrag | null>(null);
   const [slotConfirmation, setSlotConfirmation] = useState<SlotSelection | null>(null);
   // 주간 화면 더블클릭은 일간 드래그와 달리 시간을 정한 적이 없다.
@@ -1043,6 +1046,7 @@ export default function Home() {
     setDate(weeklyPick.date);
     setWeeklyPick(null);
     setDraftActive(true);
+    setBookingPanelOpen(true);
     // 시간은 아직 안 정했다는 뜻이므로, 채워졌다는 알림 대신
     // 시작·종료 칸을 빨갛게 밝혀 무엇을 해야 하는지 바로 보이게 한다.
     setTimeNeedsPick(true);
@@ -1207,6 +1211,7 @@ export default function Home() {
     setNotice("");
     setSlotConfirmation(null);
     setDraftActive(true);
+    setBookingPanelOpen(true);
     setTimeNeedsPick(false);
     flashFilled(
       roomById(slotConfirmation.roomId)?.name ?? "회의실",
@@ -1334,7 +1339,6 @@ export default function Home() {
     setPurpose("");
     setAttendees([]);
     setAttendeeDraft("");
-    setBookingPanelOpen(false);
     setNotice("예약이 완료되었습니다.");
     setToast({
       text: "예약이 완료되었습니다",
@@ -1371,7 +1375,7 @@ export default function Home() {
   };
 
   return (
-    <main className={`app-shell ${showMap ? "map-open" : ""}`}>
+    <main className={`app-shell ${showMap ? "map-open" : ""} ${bookingPanelOpen ? "" : "booking-panel-collapsed"}`}>
       {syncError && <div className="sync-error-banner" role="alert">{syncError}</div>}
       <header className="topbar">
         <div className="brand-wrap">
@@ -1460,7 +1464,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className={`workspace ${bookingPanelOpen ? "booking-modal-open" : ""}`}>
+      <section className="workspace">
         <aside className="room-list-panel">
           <div className="section-heading">
             <div><p>ROOMS</p><h2>{floor}층 회의실</h2></div>
@@ -1838,8 +1842,20 @@ export default function Home() {
 
       {/* 빠른 예약은 작업 영역 밖으로 뺀다. 화면 맨 위부터 아래까지 한 칸으로
           쓰려면 상단바·작업영역과 형제여야 격자에 자리를 잡을 수 있다. */}
-      {bookingPanelOpen && <div className="booking-modal-backdrop" role="presentation" onMouseDown={() => setBookingPanelOpen(false)} />}
-      <aside className={`booking-panel ${bookingPanelOpen ? "booking-panel-modal" : ""} ${filledNotice ? "just-filled" : ""}`} id="quick-booking">
+      <aside className={`booking-panel ${bookingPanelOpen ? "" : "is-collapsed"} ${filledNotice ? "just-filled" : ""}`} id="quick-booking">
+        <button
+          type="button"
+          className="booking-panel-rail"
+          aria-label="빠른 예약 펼치기"
+          aria-expanded={bookingPanelOpen}
+          aria-controls="quick-booking-content"
+          onClick={() => setBookingPanelOpen(true)}
+        >
+          <CalendarIcon />
+          <span>빠른 예약</span>
+          <ChevronIcon direction="prev" />
+        </button>
+        <div className="booking-panel-content" id="quick-booking-content" aria-hidden={!bookingPanelOpen}>
         {/* 표·배치도에서 값을 가져오면 칸 위에 겹쳐 잠깐 뜬다. 자리를 차지하지
             않으므로 아래 입력칸이 밀리지 않는다. */}
         {/* 떠 있는 알림은 뺐다. 표의 점선 블록과 머리의 '작성 중' 딱지가
@@ -1853,7 +1869,14 @@ export default function Home() {
                 이건 남아서 '아직 안 끝났다'를 계속 말한다. */}
             <div><h2>빠른 예약</h2>{draftActive && <span className="draft-chip">작성 중</span>}</div>
 
-            {bookingPanelOpen && <button type="button" className="booking-modal-close" aria-label="예약창 닫기" onClick={() => setBookingPanelOpen(false)}><CloseIcon /></button>}
+            <button
+              type="button"
+              className="booking-panel-toggle"
+              aria-label="빠른 예약 접기"
+              aria-expanded={bookingPanelOpen}
+              aria-controls="quick-booking-content"
+              onClick={() => setBookingPanelOpen(false)}
+            ><ChevronIcon direction="next" /></button>
           </div>
           <div className="selected-room-summary">
             {/* 위치 설명은 뺐다. 어디인지는 배치도로 보는 것이 정확하고,
@@ -2167,6 +2190,7 @@ export default function Home() {
             </button>
             </div>
           </form>
+        </div>
       </aside>
       {myBookingsOpen && <div className="my-bookings-backdrop" role="presentation" onMouseDown={() => { setMyBookingsOpen(false); setCancelSelection(null); }}>
         <section className="my-bookings-dialog" role="dialog" aria-modal="true" aria-labelledby="my-bookings-title" onMouseDown={(event) => event.stopPropagation()}>

@@ -6352,3 +6352,106 @@ p, li, dd,
 @media (min-width: 1px) {
   .schedule-hero .hero-date { padding-left: 16px; }
 }
+
+/* ══ 빠른 예약 패널 접기·펼치기 ═══════════════════════════════════
+   펼친 상태에서는 지금의 예약 양식을 그대로 쓰고, 접으면 오른쪽에 세로 탭만
+   남긴다. 셸의 두 번째 열 자체를 줄이므로 일정표는 빈자리를 즉시 모두 쓴다. */
+@media (min-width: 1px) {
+  .app-shell {
+    transition: grid-template-columns .24s ease;
+  }
+
+  .app-shell.booking-panel-collapsed {
+    grid-template-columns: minmax(0, 1fr) 54px;
+  }
+
+  .booking-panel-content {
+    height: 100%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* 기존에는 form이 패널의 바로 아래 자식이었다. 내용 래퍼를 하나 둔 뒤에도
+     같은 세로 배치와 내부 스크롤이 유지되도록 동일한 flex 역할을 넘긴다. */
+  .booking-panel-content > form {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .booking-panel-rail { display: none; }
+
+  .booking-panel .booking-title {
+    position: relative;
+    padding-right: 66px;
+  }
+
+  .booking-panel-toggle {
+    width: 36px;
+    height: 36px;
+    position: absolute;
+    top: 50%;
+    right: 16px;
+    display: grid;
+    place-items: center;
+    border: 0;
+    border-radius: 9px;
+    color: #fff;
+    background: #ffffff1f;
+    cursor: pointer;
+    transform: translateY(-50%);
+    transition: background .16s ease, transform .16s ease;
+  }
+  .booking-panel-toggle:hover { background: #ffffff32; }
+  .booking-panel-toggle:active { transform: translateY(-50%) scale(.94); }
+  .booking-panel-toggle:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+  .booking-panel-toggle svg { width: 8px; height: 14px; }
+
+  .app-shell > .booking-panel.is-collapsed {
+    padding: 0;
+    overflow: visible;
+    align-items: stretch;
+    border: 0;
+    background: transparent;
+  }
+
+  .booking-panel.is-collapsed .booking-panel-content { display: none; }
+
+  .booking-panel.is-collapsed .booking-panel-rail {
+    width: 54px;
+    min-height: 150px;
+    margin-top: calc(var(--rule-abs) + 10px);
+    padding: 13px 0 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    gap: 9px;
+    border: 0;
+    border-radius: 12px 0 0 12px;
+    color: #fff;
+    background: #17223a;
+    box-shadow: -7px 9px 24px #17223a2b;
+    cursor: pointer;
+    transition: background .16s ease, box-shadow .16s ease, transform .16s ease;
+  }
+  .booking-panel.is-collapsed .booking-panel-rail:hover {
+    background: #24314d;
+    box-shadow: -9px 11px 28px #17223a3b;
+  }
+  .booking-panel.is-collapsed .booking-panel-rail:active { transform: translateX(2px); }
+  .booking-panel.is-collapsed .booking-panel-rail:focus-visible { outline: 3px solid #ed1639; outline-offset: -3px; }
+  .booking-panel.is-collapsed .booking-panel-rail > svg:first-child { width: 19px; height: 19px; color: #fff; }
+  .booking-panel.is-collapsed .booking-panel-rail > svg:last-child { width: 8px; height: 14px; }
+  .booking-panel.is-collapsed .booking-panel-rail > span {
+    writing-mode: vertical-rl;
+    text-orientation: upright;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: .08em;
+    line-height: 1;
+  }
+}

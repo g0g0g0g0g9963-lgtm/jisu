@@ -6412,8 +6412,8 @@ p, li, dd,
   .booking-panel-toggle svg { width: 8px; height: 14px; }
 
   .app-shell > .booking-panel.is-collapsed {
-    width: 48px;
-    height: 218px;
+    width: 36px;
+    height: 158px;
     position: fixed;
     z-index: 80;
     top: calc(var(--rule-abs) + 10px);
@@ -6428,8 +6428,8 @@ p, li, dd,
   .booking-panel.is-collapsed .booking-panel-content { display: none; }
 
   .booking-panel.is-collapsed .booking-panel-rail {
-    width: 48px;
-    height: 218px;
+    width: 36px;
+    height: 158px;
     min-height: 0;
     margin-top: 0;
     padding: 0;
@@ -6440,15 +6440,15 @@ p, li, dd,
     gap: 0;
     overflow: hidden;
     border: 0;
-    border-radius: 10px 0 0 10px;
+    border-radius: 8px 0 0 8px;
     color: #fff;
     background: transparent;
-    box-shadow: 0 7px 18px #17223a2c;
+    box-shadow: 0 5px 13px #17223a24;
     cursor: pointer;
     transition: box-shadow .16s ease, transform .16s ease;
   }
   .booking-panel.is-collapsed .booking-panel-rail:hover {
-    box-shadow: 0 9px 22px #17223a3d;
+    box-shadow: 0 7px 17px #17223a33;
     transform: translateY(-2px);
   }
   .booking-panel.is-collapsed .booking-panel-rail:active { transform: translateY(0) scale(.98); }
@@ -6458,7 +6458,7 @@ p, li, dd,
     width: 100%;
     flex: 1;
     min-height: 0;
-    padding: 16px 0 13px;
+    padding: 10px 0 8px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -6471,15 +6471,15 @@ p, li, dd,
     background: linear-gradient(180deg, #123461 0%, #0a244b 100%);
   }
   .booking-panel.is-collapsed .booking-panel-rail-main > svg {
-    width: 22px;
-    height: 22px;
+    width: 18px;
+    height: 18px;
     flex: none;
     color: #fff;
   }
   .booking-panel.is-collapsed .booking-panel-rail-main > i {
-    width: 22px;
+    width: 18px;
     height: 3px;
-    margin: 6px 0 13px;
+    margin: 5px 0 8px;
     flex: none;
     border-radius: 999px;
     background: #ff334f;
@@ -6488,16 +6488,16 @@ p, li, dd,
     writing-mode: vertical-rl;
     text-orientation: upright;
     color: #fff;
-    font-size: 14px;
-    font-weight: 800;
-    letter-spacing: .08em;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: .04em;
     line-height: 1.1;
   }
 
   .booking-panel.is-collapsed .booking-panel-rail-arrow {
     width: 100%;
-    height: 44px;
-    flex: 0 0 44px;
+    height: 34px;
+    flex: 0 0 34px;
     display: grid;
     place-items: center;
     color: #fff;
@@ -6506,5 +6506,5 @@ p, li, dd,
     transition: background .16s ease;
   }
   .booking-panel.is-collapsed .booking-panel-rail:hover .booking-panel-rail-arrow { background: #ed1639; }
-  .booking-panel.is-collapsed .booking-panel-rail-arrow svg { width: 11px; height: 20px; }
+  .booking-panel.is-collapsed .booking-panel-rail-arrow svg { width: 9px; height: 16px; }
 }

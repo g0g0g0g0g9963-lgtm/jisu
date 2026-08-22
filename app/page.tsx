@@ -804,10 +804,9 @@ export default function Home() {
     : null;
   const showCurrentTime = currentTimePercent !== null && (scheduleView === "week" ? weekDays.includes(today) : date === today);
 
-  // 일간 보기의 현재 시각 선. 회의실 칸(그리드 트랙)이 1fr(가변)이라 CSS의
-  // top:%만으로는 세로 위치가 안정적으로 잡히지 않아, 칸들의 실제 픽셀
-  // 크기를 재서 하나의 선으로 그린다. 이렇게 하면 회의실 카드 사이 여백에서
-  // 선이 끊기지 않는다.
+  // 일간 보기의 현재 시각 선. 시간축부터 마지막 회의실까지 실제 픽셀 크기를
+  // 재서 하나의 선으로 그린다. 선은 예약 카드보다 아래 레이어에 있으므로
+  // 시간표 전체를 잇되 예약 내용은 가리지 않는다.
   const dailyGridRef = useRef<HTMLDivElement | null>(null);
   const [dailyGridMetrics, setDailyGridMetrics] = useState<{
     left: number; width: number; bodyTop: number; bodyHeight: number;
@@ -819,13 +818,16 @@ export default function Home() {
 
     const measure = () => {
       const bodies = grid.querySelectorAll<HTMLElement>(".timeline-day-body");
-      if (!bodies.length) { setDailyGridMetrics(null); return; }
+      const timeAxisBody = grid.querySelector<HTMLElement>(".time-axis-body");
+      if (!bodies.length || !timeAxisBody) { setDailyGridMetrics(null); return; }
       const gridRect = grid.getBoundingClientRect();
       const first = bodies[0].getBoundingClientRect();
       const last = bodies[bodies.length - 1].getBoundingClientRect();
+      const axis = timeAxisBody.getBoundingClientRect();
+      const lineStart = axis.left + axis.width / 2;
       setDailyGridMetrics({
-        left: first.left - gridRect.left,
-        width: last.right - first.left,
+        left: lineStart - gridRect.left,
+        width: last.right - lineStart,
         bodyTop: first.top - gridRect.top,
         bodyHeight: first.height,
       });
@@ -1661,9 +1663,8 @@ export default function Home() {
                     )}
                   </div>
                 </div>
-                {/* 회의실마다 따로 선을 그으면 카드 사이 여백에서 끊겨 보인다.
-                    모든 회의실 칸에 걸치는 선 하나만 그린다. 위치는 칸들의
-                    실제 픽셀 크기(dailyGridMetrics)를 재서 계산한다. */}
+                {/* 시간 칸부터 마지막 회의실까지 선 하나를 잇는다. 위치는 실제
+                    픽셀 크기(dailyGridMetrics)를 재서 계산하며 예약 카드 아래에 그린다. */}
                 {showCurrentTime && currentTimePercent !== null && dailyGridMetrics && (
                   <span
                     className="current-time-line current-time-line-all"

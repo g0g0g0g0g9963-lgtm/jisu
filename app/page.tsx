@@ -1,6 +1,6 @@
 "use client";
 
-import { FocusEvent as ReactFocusEvent, FormEvent, KeyboardEvent as ReactKeyboardEvent, PointerEvent as ReactPointerEvent, type Ref, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { FocusEvent as ReactFocusEvent, FormEvent, KeyboardEvent as ReactKeyboardEvent, PointerEvent as ReactPointerEvent, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import siteConfig from "./config/site.json";
 import equipmentCatalog from "./config/equipment.json";
 import officeTeams from "./config/teams.json";
@@ -212,7 +212,7 @@ const pad2 = (value: number) => String(value).padStart(2, "0");
  * 날짜 입력칸. 브라우저 기본 달력은 위치와 모양을 바꿀 수 없어 직접 그린다.
  * 달력은 입력칸 오른쪽 끝선에 맞춰 열린다.
  */
-function DateField({ value, min, onChange, rangeFrom, onRangeChange, variant = "field", allowAnyDate = false, buttonRef, skipWeekends = true, onSkipWeekendsChange, onDone }: {
+function DateField({ value, min, onChange, rangeFrom, onRangeChange, variant = "field", allowAnyDate = false, controlledOpen, onOpenChange, skipWeekends = true, onSkipWeekendsChange, onDone }: {
   value: DateKey;
   min?: DateKey;
   onChange: (next: DateKey) => void;
@@ -226,8 +226,9 @@ function DateField({ value, min, onChange, rangeFrom, onRangeChange, variant = "
    */
   rangeFrom?: DateKey;
   onRangeChange?: (start: DateKey, end: DateKey) => void;
-  /** 바깥에서 날짜 버튼을 직접 열어야 할 때 사용한다. */
-  buttonRef?: Ref<HTMLButtonElement>;
+  /** 반복 종료 달력처럼 바깥 체크 상태와 열림을 직접 연결할 때 사용한다. */
+  controlledOpen?: boolean;
+  onOpenChange?: (next: boolean) => void;
   /**
    * 기간 안의 토·일을 건너뛸지. 끄면 달력에서도 주말이 회색으로 빠지지 않는다.
    * 달력 아래 '주말 포함' 체크로 바꾼다.
@@ -237,7 +238,13 @@ function DateField({ value, min, onChange, rangeFrom, onRangeChange, variant = "
   /** 기간 고르기에서 '완료'를 눌러 달력을 닫았을 때. */
   onDone?: () => void;
 }) {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen ?? internalOpen;
+  const setOpen = useCallback((next: boolean | ((current: boolean) => boolean)) => {
+    const resolved = typeof next === "function" ? next(open) : next;
+    if (controlledOpen === undefined) setInternalOpen(resolved);
+    onOpenChange?.(resolved);
+  }, [controlledOpen, onOpenChange, open]);
   const [viewMonth, setViewMonth] = useState(() => value.slice(0, 7));
   const [dragging, setDragging] = useState(false);
   const [dragFrom, setDragFrom] = useState<DateKey | null>(null);
@@ -376,7 +383,6 @@ function DateField({ value, min, onChange, rangeFrom, onRangeChange, variant = "
   return (
     <div className={`date-field${variant === "icon" ? " date-field-icon" : ""}`} ref={wrapRef}>
       <button
-        ref={buttonRef}
         type="button"
         className="date-field-value"
         aria-expanded={open}
@@ -598,7 +604,7 @@ export default function Home() {
   const [allDay, setAllDay] = useState(false);
   const [roomPickerOpen, setRoomPickerOpen] = useState(false);
   const [repeatWeekly, setRepeatWeekly] = useState(false);
-  const repeatEndButtonRef = useRef<HTMLButtonElement>(null);
+  const [repeatEndCalendarOpen, setRepeatEndCalendarOpen] = useState(false);
   // 반복은 평일만 잡는 것이 기본이다. 주말에도 회의를 잡는 사람을 위해
   // 달력 안에서 켤 수 있게 한다. (단건 예약은 원래 토·일도 된다)
   const [repeatWeekends, setRepeatWeekends] = useState(false);
@@ -1977,14 +1983,11 @@ export default function Home() {
 
             <label className="repeat-option">
               <input type="checkbox" checked={repeatWeekly} onChange={(event) => {
-                setRepeatWeekly(event.target.checked);
-                if (event.target.checked && !repeatEndTouched) {
+                const checked = event.target.checked;
+                setRepeatWeekly(checked);
+                setRepeatEndCalendarOpen(checked);
+                if (checked && !repeatEndTouched) {
                   setRepeatEnd(moveDate(date, bookingDefaults.defaultRepeatSpanDays));
-                }
-                if (event.target.checked) {
-                  /* 반복 설정과 날짜 버튼이 DOM에 생긴 뒤 실제 버튼 클릭을 보내
-                     사람이 눌렀을 때와 똑같은 경로로 달력을 연다. */
-                  window.setTimeout(() => repeatEndButtonRef.current?.click(), 180);
                 }
               }} />
               {/* 무엇에 쓰는 칸인지 옆에 한마디 붙인다. 체크박스 이름만으로는
@@ -1997,7 +2000,8 @@ export default function Home() {
                 {/* '반복 예약'을 켜는 순간 이 칸이 생긴다. 그것 자체가 종료일을
                     고르라는 뜻이므로 달력을 한 번 더 누르게 하지 않는다. */}
                 <DateField
-                  buttonRef={repeatEndButtonRef}
+                  controlledOpen={repeatEndCalendarOpen}
+                  onOpenChange={setRepeatEndCalendarOpen}
                   skipWeekends={!repeatWeekends}
                   onSkipWeekendsChange={(skip) => setRepeatWeekends(!skip)}
                   value={repeatEnd}

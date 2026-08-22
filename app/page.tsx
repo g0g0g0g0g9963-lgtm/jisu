@@ -1,6 +1,6 @@
 "use client";
 
-import { FocusEvent as ReactFocusEvent, FormEvent, KeyboardEvent as ReactKeyboardEvent, PointerEvent as ReactPointerEvent, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { FocusEvent as ReactFocusEvent, FormEvent, KeyboardEvent as ReactKeyboardEvent, PointerEvent as ReactPointerEvent, type Ref, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import siteConfig from "./config/site.json";
 import equipmentCatalog from "./config/equipment.json";
 import officeTeams from "./config/teams.json";
@@ -212,7 +212,7 @@ const pad2 = (value: number) => String(value).padStart(2, "0");
  * 날짜 입력칸. 브라우저 기본 달력은 위치와 모양을 바꿀 수 없어 직접 그린다.
  * 달력은 입력칸 오른쪽 끝선에 맞춰 열린다.
  */
-function DateField({ value, min, onChange, rangeFrom, onRangeChange, variant = "field", allowAnyDate = false, openOnMount = false, skipWeekends = true, onSkipWeekendsChange, onDone }: {
+function DateField({ value, min, onChange, rangeFrom, onRangeChange, variant = "field", allowAnyDate = false, buttonRef, skipWeekends = true, onSkipWeekendsChange, onDone }: {
   value: DateKey;
   min?: DateKey;
   onChange: (next: DateKey) => void;
@@ -226,8 +226,8 @@ function DateField({ value, min, onChange, rangeFrom, onRangeChange, variant = "
    */
   rangeFrom?: DateKey;
   onRangeChange?: (start: DateKey, end: DateKey) => void;
-  /** 칸이 나타나는 것 자체가 '날짜를 고르라'는 뜻일 때 달력을 바로 펼친다. */
-  openOnMount?: boolean;
+  /** 바깥에서 날짜 버튼을 직접 열어야 할 때 사용한다. */
+  buttonRef?: Ref<HTMLButtonElement>;
   /**
    * 기간 안의 토·일을 건너뛸지. 끄면 달력에서도 주말이 회색으로 빠지지 않는다.
    * 달력 아래 '주말 포함' 체크로 바꾼다.
@@ -247,15 +247,6 @@ function DateField({ value, min, onChange, rangeFrom, onRangeChange, variant = "
   // 기간을 다 골랐는지. 다 골랐어도 창은 닫지 않고 '완료'를 기다린다.
   const [rangeSettled, setRangeSettled] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
-
-  /* 반복 예약 체크를 누른 포인터·클릭 이벤트와 새 영역의 배치가 모두 끝난
-     다음 달력을 연다. 바로 다음 프레임은 원래 클릭에 의해 다시 닫힐 수 있어
-     짧은 지연을 둔다. */
-  useEffect(() => {
-    if (!openOnMount) return;
-    const timer = window.setTimeout(() => setOpen(true), 120);
-    return () => window.clearTimeout(timer);
-  }, [openOnMount]);
 
   // 달력을 새로 열 때는 언제나 시작일부터 고른다.
   useEffect(() => { if (open) { setPickTarget("start"); setRangeSettled(false); } }, [open]);
@@ -385,6 +376,7 @@ function DateField({ value, min, onChange, rangeFrom, onRangeChange, variant = "
   return (
     <div className={`date-field${variant === "icon" ? " date-field-icon" : ""}`} ref={wrapRef}>
       <button
+        ref={buttonRef}
         type="button"
         className="date-field-value"
         aria-expanded={open}
@@ -606,6 +598,7 @@ export default function Home() {
   const [allDay, setAllDay] = useState(false);
   const [roomPickerOpen, setRoomPickerOpen] = useState(false);
   const [repeatWeekly, setRepeatWeekly] = useState(false);
+  const repeatEndButtonRef = useRef<HTMLButtonElement>(null);
   // 반복은 평일만 잡는 것이 기본이다. 주말에도 회의를 잡는 사람을 위해
   // 달력 안에서 켤 수 있게 한다. (단건 예약은 원래 토·일도 된다)
   const [repeatWeekends, setRepeatWeekends] = useState(false);
@@ -1988,6 +1981,11 @@ export default function Home() {
                 if (event.target.checked && !repeatEndTouched) {
                   setRepeatEnd(moveDate(date, bookingDefaults.defaultRepeatSpanDays));
                 }
+                if (event.target.checked) {
+                  /* 반복 설정과 날짜 버튼이 DOM에 생긴 뒤 실제 버튼 클릭을 보내
+                     사람이 눌렀을 때와 똑같은 경로로 달력을 연다. */
+                  window.setTimeout(() => repeatEndButtonRef.current?.click(), 180);
+                }
               }} />
               {/* 무엇에 쓰는 칸인지 옆에 한마디 붙인다. 체크박스 이름만으로는
                   '반복'이 무슨 뜻인지(같은 시간을 여러 날) 알기 어렵다. */}
@@ -1999,7 +1997,7 @@ export default function Home() {
                 {/* '반복 예약'을 켜는 순간 이 칸이 생긴다. 그것 자체가 종료일을
                     고르라는 뜻이므로 달력을 한 번 더 누르게 하지 않는다. */}
                 <DateField
-                  openOnMount
+                  buttonRef={repeatEndButtonRef}
                   skipWeekends={!repeatWeekends}
                   onSkipWeekendsChange={(skip) => setRepeatWeekends(!skip)}
                   value={repeatEnd}

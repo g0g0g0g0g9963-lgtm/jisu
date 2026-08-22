@@ -115,3 +115,77 @@
   margin-right: auto;
   top: 6px;
 }
+
+/* Booking cards — pearl tint concept B */
+.schedule-design-cards .daily-timeline .timeline-event,
+.schedule-design-cards .weekly-room-board .weekly-room-event {
+  --event-accent: #9dc6df;
+  --event-dot: #bad8e9;
+  --event-ink: #18345f;
+  background:
+    radial-gradient(120% 78% at 12% 0%, rgb(255 255 255 / 92%) 0%, rgb(255 255 255 / 0%) 58%),
+    #f5f9fc;
+  border: 1px solid #d7e6ef;
+  border-left: 4px solid var(--event-accent);
+  border-radius: 10px;
+  color: var(--event-ink);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 90%), 0 3px 10px rgb(27 52 86 / 7%);
+}
+
+.schedule-design-cards .daily-timeline .timeline-event.is-mine,
+.schedule-design-cards .weekly-room-board .weekly-room-event.is-mine {
+  --event-accent: #e8a8b7;
+  --event-dot: #edc3cd;
+  --event-ink: #8f1736;
+  background:
+    radial-gradient(120% 78% at 12% 0%, rgb(255 255 255 / 94%) 0%, rgb(255 255 255 / 0%) 58%),
+    #fff7f8;
+  border-color: #f0d4da;
+  border-left-color: var(--event-accent);
+}
+
+.schedule-design-cards .daily-timeline .timeline-event > strong,
+.schedule-design-cards .weekly-room-board .weekly-room-event > b {
+  color: var(--event-ink);
+  letter-spacing: -0.02em;
+  font-weight: 700;
+}
+
+.schedule-design-cards .daily-timeline .timeline-event > strong::after,
+.schedule-design-cards .weekly-room-board .weekly-room-event > b::after {
+  content: "";
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-left: 7px;
+  border-radius: 50%;
+  vertical-align: 1px;
+  background: var(--event-dot);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 70%);
+}
+
+.schedule-design-cards .daily-timeline .timeline-event > time,
+.schedule-design-cards .weekly-room-board .weekly-room-event > time {
+  color: #63758f;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.schedule-design-cards .daily-timeline .timeline-event.is-mine > time,
+.schedule-design-cards .weekly-room-board .weekly-room-event.is-mine > time {
+  color: #a45b70;
+}
+
+.schedule-design-cards .daily-timeline .timeline-event > small,
+.schedule-design-cards .weekly-room-board .weekly-room-event > small {
+  color: #6f7b8b;
+  font-weight: 500;
+}
+
+.schedule-design-cards .daily-timeline .timeline-event:hover,
+.schedule-design-cards .daily-timeline .timeline-event:focus-visible,
+.schedule-design-cards .weekly-room-board .weekly-room-event:hover,
+.schedule-design-cards .weekly-room-board .weekly-room-event:focus-visible {
+  transform: translateY(-1px);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 95%), 0 8px 18px rgb(27 52 86 / 12%);
+}

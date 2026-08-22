@@ -6362,7 +6362,7 @@ p, li, dd,
   }
 
   .app-shell.booking-panel-collapsed {
-    grid-template-columns: minmax(0, 1fr) 62px;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .booking-panel-content {
@@ -6410,6 +6410,12 @@ p, li, dd,
   .booking-panel-toggle svg { width: 8px; height: 14px; }
 
   .app-shell > .booking-panel.is-collapsed {
+    width: 48px;
+    height: 218px;
+    position: fixed;
+    z-index: 80;
+    top: 74px;
+    right: 10px;
     padding: 0;
     overflow: visible;
     align-items: center;
@@ -6423,7 +6429,7 @@ p, li, dd,
     width: 48px;
     height: 218px;
     min-height: 0;
-    margin-top: 74px;
+    margin-top: 0;
     padding: 0;
     display: flex;
     flex-direction: column;

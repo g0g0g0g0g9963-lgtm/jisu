@@ -538,7 +538,7 @@ function RoomDetailPopover({
         {bookings.length ? bookings.map((booking) => (
           <div key={booking.id}>
             <time>{booking.start}–{booking.end}</time>
-            <span><strong>{booking.purpose}</strong><small>{booking.owner} · {teamOf(booking)}</small></span>
+            <span><small>{booking.owner} · {teamOf(booking)}</small></span>
           </div>
         )) : <p>선택한 날짜에는 예약이 없습니다.</p>}
       </div>
@@ -546,6 +546,15 @@ function RoomDetailPopover({
           예약은 오른쪽 '빠른 예약' 한 곳에서만 끝낸다. */}
     </section>
   );
+}
+
+function ReservationHoverCard({ booking, room }: { booking: Booking; room: Room }) {
+  return <span className="reservation-hover-card" role="tooltip">
+    <strong>예약 정보</strong>
+    <span><b>일시</b>{formatDateLabel(booking.date)} · {booking.start}–{booking.end}</span>
+    <span><b>회의실</b>{room.name}</span>
+    <span><b>예약자</b>{booking.owner} · {teamOf(booking)}</span>
+  </span>;
 }
 
 export default function Home() {
@@ -1696,11 +1705,13 @@ export default function Home() {
                               key={booking.id}
                               style={{ top: `${top}%`, height: `${height}%`, left, right }}
                               aria-label={isMyBooking(booking)
-                                ? "내 예약 · 눌러서 수정하거나 삭제합니다"
-                                : "예약된 시간"}
+                                ? `내 예약 ${booking.start}–${booking.end} · 눌러서 수정하거나 삭제합니다`
+                                : `${booking.start}–${booking.end} / ${booking.owner} · ${teamOf(booking)}`}
                               onPointerDown={(event) => event.stopPropagation()}
                               onClick={(event) => { event.stopPropagation(); setSelectedId(room.id); openEditor(booking); }}
                             >
+                              <time>{booking.start}–{booking.end}</time>
+                              <small>{booking.owner} · {teamOf(booking)}</small>
                               {/* 지금 진행 중인 내 예약에만. 남은 시간을 바로 돌려줄 수 있다. */}
                               {isRunningNow(booking) && (
                                 <span
@@ -1711,6 +1722,7 @@ export default function Home() {
                                   onKeyDown={(event) => { if (event.key === "Enter") { event.stopPropagation(); setEarlyEnd(booking); } }}
                                 >회의 일찍 끝내기</span>
                               )}
+                              <ReservationHoverCard booking={booking} room={room} />
                             </button>
                           );
                         })}
@@ -1780,10 +1792,13 @@ export default function Home() {
                                 key={booking.id}
                                 style={{ top: `${top}%`, height: `${height}%`, left: `${booking.lane * width}%`, width: `${width}%` }}
                                 aria-label={isMyBooking(booking)
-                                  ? "내 예약 · 눌러서 수정하거나 삭제합니다"
-                                  : "예약된 시간"}
+                                  ? `내 예약 ${booking.start}–${booking.end} · 눌러서 수정하거나 삭제합니다`
+                                  : `${booking.start}–${booking.end} / ${booking.owner} · ${teamOf(booking)}`}
                                 onClick={() => { setSelectedId(room.id); setDate(day); openEditor(booking); }}
                               >
+                                <time>{booking.start}<span className="wk-end">–{booking.end}</span></time>
+                                <small>{booking.owner} · {teamOf(booking)}</small>
+                                <ReservationHoverCard booking={booking} room={room} />
                               </button>
                             );
                           })}

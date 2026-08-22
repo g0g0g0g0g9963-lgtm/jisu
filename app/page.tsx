@@ -1653,7 +1653,7 @@ export default function Home() {
 
               {scheduleView === "day" && <div className="week-timeline daily-timeline" ref={dailyGridRef}>
                 <div className="time-axis">
-                  <span className="axis-corner">시간</span>
+                  <span className="axis-corner">TIME</span>
                   <div className="time-axis-body">
                     {timelineHours.map((hour) => <time key={hour} style={{ top: `${((hour * 60 - timelineStart) / (timelineEnd - timelineStart)) * 100}%` }}>{String(hour).padStart(2, "0")}:00</time>)}
                     {showCurrentTime && nowMinutes !== null && (

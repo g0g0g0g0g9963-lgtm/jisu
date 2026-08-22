@@ -142,6 +142,15 @@ function CloseIcon() {
   );
 }
 
+/** 선택된 회의실을 글자 대신 표시하는 작은 체크. */
+function SelectedRoomIcon() {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" aria-hidden="true" focusable="false">
+      <path d="m4.25 8.25 2.35 2.35 5.15-5.2" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 /** 배치도를 여는 자리 표시 핀. */
 function PinIcon() {
   return (
@@ -1682,8 +1691,14 @@ export default function Home() {
                   const status = statusOf(room);
                   return (
                     <div className={`timeline-day daily-room ${selected.id === room.id ? "active" : ""}`} key={room.id}>
-                      <button type="button" className="timeline-day-head daily-room-head" onClick={() => { setSelectedId(room.id); setMapDetailId(null); }}>
+                      <button
+                        type="button"
+                        className="timeline-day-head daily-room-head"
+                        aria-pressed={selected.id === room.id}
+                        onClick={() => { setSelectedId(room.id); setMapDetailId(null); }}
+                      >
                         <strong>{room.name}</strong>
+                        <span className="daily-room-selected-icon"><SelectedRoomIcon /></span>
                         {/* 지금 쓸 수 있는지가 이 표에서 가장 먼저 봐야 할 정보다.
                             주간현황과도 같은 형식으로 맞춘다. */}
                         <span className={`daily-room-meta ${status.status}`}><i className={`room-status-dot ${status.status}`} /><b>{status.statusLabel}</b><em>·</em>{formatCapacity(room.capacity)}</span>

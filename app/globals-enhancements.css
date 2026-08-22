@@ -212,3 +212,72 @@
   white-space: nowrap;
   transform: translate(-50%, -50%);
 }
+
+/* 선택된 회의실은 설명 문구 없이 선·면·아이콘의 세 가지 단서로 표시한다. */
+.schedule-design-cards .daily-timeline .daily-room-head {
+  position: relative;
+  padding-right: 40px;
+  transition: background-color 140ms ease, box-shadow 140ms ease;
+}
+
+.schedule-design-cards .daily-timeline .daily-room:not(.active) .daily-room-head:hover {
+  background: #f8f9fb;
+}
+
+.schedule-design-cards .daily-timeline .daily-room.active {
+  box-shadow: none;
+}
+
+.schedule-design-cards .daily-timeline .daily-room.active .daily-room-head {
+  background: #f4f6fa;
+  box-shadow: inset 0 3px 0 #17223a;
+}
+
+.schedule-design-cards .daily-timeline .daily-room-head:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px rgb(48 75 120 / 38%);
+}
+
+.schedule-design-cards .daily-timeline .daily-room.active .daily-room-head:focus-visible {
+  box-shadow: inset 0 3px 0 #17223a, inset 0 0 0 2px rgb(48 75 120 / 38%);
+}
+
+.schedule-design-cards .daily-timeline .daily-room.active .daily-room-head > strong {
+  color: #17223a;
+  font-weight: 750;
+}
+
+.daily-room-selected-icon {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: grid;
+  width: 18px;
+  height: 18px;
+  place-items: center;
+  color: #304b78;
+  background: #fff;
+  border: 1.5px solid #304b78;
+  border-radius: 50%;
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0.82);
+  transition: opacity 140ms ease, transform 140ms ease;
+}
+
+.daily-room-selected-icon svg {
+  width: 13px;
+  height: 13px;
+}
+
+.daily-room.active .daily-room-selected-icon {
+  opacity: 1;
+  transform: scale(1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .schedule-design-cards .daily-timeline .daily-room-head,
+  .daily-room-selected-icon {
+    transition: none;
+  }
+}

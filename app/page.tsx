@@ -212,7 +212,7 @@ const pad2 = (value: number) => String(value).padStart(2, "0");
  * 날짜 입력칸. 브라우저 기본 달력은 위치와 모양을 바꿀 수 없어 직접 그린다.
  * 달력은 입력칸 오른쪽 끝선에 맞춰 열린다.
  */
-function DateField({ value, min, onChange, rangeFrom, onRangeChange, variant = "field", allowAnyDate = false, controlledOpen, onOpenChange, skipWeekends = true, onSkipWeekendsChange, onDone }: {
+function DateField({ value, min, onChange, rangeFrom, onRangeChange, variant = "field", allowAnyDate = false, controlledOpen, onOpenChange, inlineWhenOpen = false, skipWeekends = true, onSkipWeekendsChange, onDone }: {
   value: DateKey;
   min?: DateKey;
   onChange: (next: DateKey) => void;
@@ -229,6 +229,8 @@ function DateField({ value, min, onChange, rangeFrom, onRangeChange, variant = "
   /** 반복 종료 달력처럼 바깥 체크 상태와 열림을 직접 연결할 때 사용한다. */
   controlledOpen?: boolean;
   onOpenChange?: (next: boolean) => void;
+  /** 반복 종료 달력은 팝업 위치 계산 없이 입력칸 바로 아래에 펼친다. */
+  inlineWhenOpen?: boolean;
   /**
    * 기간 안의 토·일을 건너뛸지. 끄면 달력에서도 주말이 회색으로 빠지지 않는다.
    * 달력 아래 '주말 포함' 체크로 바꾼다.
@@ -267,7 +269,7 @@ function DateField({ value, min, onChange, rangeFrom, onRangeChange, variant = "
    */
   const [floatAt, setFloatAt] = useState<{ left: number; top: number } | null>(null);
   useEffect(() => {
-    if (!open) {
+    if (!open || inlineWhenOpen) {
       setFloatAt(null);
       return;
     }
@@ -314,7 +316,16 @@ function DateField({ value, min, onChange, rangeFrom, onRangeChange, variant = "
       window.removeEventListener("resize", follow);
       document.removeEventListener("scroll", follow, true);
     };
-  }, [open]);
+  }, [inlineWhenOpen, open]);
+
+  /* 인라인 달력이 생기면 스크롤 영역 안에서 달력 전체가 보이는 위치로 옮긴다. */
+  useEffect(() => {
+    if (!open || !inlineWhenOpen) return;
+    const frame = window.requestAnimationFrame(() => {
+      wrapRef.current?.querySelector<HTMLElement>(".date-panel")?.scrollIntoView({ block: "nearest" });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [inlineWhenOpen, open]);
 
   useEffect(() => {
     if (!open) return;
@@ -396,7 +407,7 @@ function DateField({ value, min, onChange, rangeFrom, onRangeChange, variant = "
       </button>
       {open && (
         <div
-          className={`date-panel${floatAt ? " date-panel-float" : ""}`}
+          className={`date-panel${floatAt ? " date-panel-float" : ""}${inlineWhenOpen ? " date-panel-inline" : ""}`}
           style={floatAt ? { position: "fixed", left: floatAt.left, top: floatAt.top, right: "auto" } : undefined}
           role="dialog"
           aria-label="날짜 선택"
@@ -2002,6 +2013,7 @@ export default function Home() {
                 <DateField
                   controlledOpen={repeatEndCalendarOpen}
                   onOpenChange={setRepeatEndCalendarOpen}
+                  inlineWhenOpen
                   skipWeekends={!repeatWeekends}
                   onSkipWeekendsChange={(skip) => setRepeatWeekends(!skip)}
                   value={repeatEnd}

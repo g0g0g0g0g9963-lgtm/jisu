@@ -56,7 +56,6 @@
     linear-gradient(145deg, #cad4df 0%, #bac6d3 100%);
 }
 
-
 /* 문라이트 펄: 두 영역을 같은 중간 블루그레이로 통일하고 선이 지나가는 효과는 없앤다. */
 .booking-panel .selected-room-summary,
 .booking-panel .room-picker-card,
@@ -80,6 +79,7 @@
   animation: none;
 }
 
+/* 기존 실버 빛결 레이어를 제거한다. */
 .booking-panel .room-picker-card .room-picker-toggle::before,
 .booking-panel .room-picker-card .room-picker-toggle::after {
   display: none;
@@ -98,4 +98,20 @@
 @media (prefers-reduced-motion: reduce) {
   .booking-panel .selected-room-summary,
   .booking-panel .room-picker-card { animation: none; }
+}
+
+/* 빠른예약 카드 아래 장식선은 없애고 카드 묶음을 패널 중앙에 맞춘다. */
+.app-shell > .booking-panel {
+  background:
+    linear-gradient(178deg, #fffafb 0%, #fefafc 44%, #fffdfd 78%, #fff 100%) 0 0 / 100% 150px no-repeat,
+    #fff;
+}
+
+.booking-panel .selected-room-summary,
+.booking-panel .room-picker-card {
+  box-sizing: border-box;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  top: 6px;
 }

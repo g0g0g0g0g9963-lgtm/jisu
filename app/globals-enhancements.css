@@ -61,11 +61,11 @@
 .booking-panel .selected-room-summary,
 .booking-panel .room-picker-card,
 .booking-panel .room-picker-card .room-picker-toggle {
-  background-color: #d6dee7;
+  background-color: #e3e9ef;
   background-image:
     radial-gradient(circle at 10% 5%, rgba(255,255,255,.72), rgba(255,255,255,.20) 25%, transparent 48%),
-    radial-gradient(circle at 92% 94%, rgba(188,207,231,.48), rgba(202,216,233,.16) 30%, transparent 55%),
-    linear-gradient(145deg, #e0e6ed 0%, #d3dce6 52%, #dae2ea 100%);
+    radial-gradient(circle at 92% 94%, rgba(202,218,237,.44), rgba(216,227,240,.14) 30%, transparent 55%),
+    linear-gradient(145deg, #eef2f6 0%, #dfe6ed 52%, #e7ecf2 100%);
 }
 
 .booking-panel .selected-room-summary {

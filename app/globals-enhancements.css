@@ -450,3 +450,116 @@
     background-position: 50% 0, 0 0;
   }
 }
+
+/* 펼친 패널의 회의실 선택은 요약 카드와 버튼을 하나의 직사각형 필드로 합친다. */
+.booking-panel:not(.is-collapsed) .room-picker-card {
+  margin: 0;
+  overflow: visible;
+  background: #fff;
+  border: 1px solid #d9dee7;
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+.booking-panel:not(.is-collapsed) .room-picker-card::after,
+.booking-panel:not(.is-collapsed) .room-picker-card .room-picker-toggle::before {
+  content: none;
+}
+
+.booking-panel:not(.is-collapsed) .room-picker-card .room-picker-toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  height: auto;
+  min-height: 64px;
+  padding: 10px 10px 10px 12px;
+  color: #17223a;
+  text-align: left;
+  background: #fff;
+  border: 0;
+  border-radius: 7px;
+  box-shadow: none;
+}
+
+.booking-panel:not(.is-collapsed) .room-picker-card .room-picker-toggle:hover {
+  background: #f8f9fb;
+}
+
+.booking-panel:not(.is-collapsed) .room-picker-card .room-picker-toggle:focus-visible {
+  outline: 2px solid rgb(48 75 120 / 48%);
+  outline-offset: -2px;
+}
+
+.booking-panel:not(.is-collapsed) .room-picker-card:has(.room-picker-toggle.open) {
+  border-color: #304b78;
+  box-shadow: 0 0 0 2px rgb(48 75 120 / 10%);
+}
+
+.booking-panel:not(.is-collapsed) .room-picker-card .room-picker-toggle.open {
+  border-radius: 7px 7px 0 0;
+  box-shadow: inset 0 -1px #e1e4eb;
+}
+
+.booking-panel:not(.is-collapsed) .room-picker-card .room-picker-toggle > .room-picker-field-copy {
+  display: grid;
+  flex: 1;
+  gap: 6px;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.booking-panel .room-picker-field-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.booking-panel .room-picker-field-title > strong {
+  overflow: hidden;
+  color: #17223a;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  letter-spacing: -0.02em;
+  font-size: 13.5px;
+  font-weight: 750;
+}
+
+.booking-panel .room-picker-field-title .status-dot {
+  width: 7px;
+  height: 7px;
+}
+
+.booking-panel .room-picker-field-specs {
+  display: flex;
+  gap: 4px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.booking-panel .room-picker-field-specs > em {
+  flex: none;
+  padding: 2px 7px;
+  color: #687386;
+  white-space: nowrap;
+  background: #f5f6f9;
+  border-radius: 999px;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 650;
+  box-shadow: inset 0 0 0 1px #e1e4eb;
+}
+
+.booking-panel:not(.is-collapsed) .room-picker-card .room-picker-toggle > i {
+  flex: 0 0 32px;
+  width: 32px;
+  height: 32px;
+  margin: 0;
+}
+
+.booking-panel:not(.is-collapsed) .room-picker-options {
+  border-top: 0;
+  border-radius: 0 0 7px 7px;
+}

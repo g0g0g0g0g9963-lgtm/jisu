@@ -1931,29 +1931,24 @@ export default function Home() {
           <div className="booking-section-heading booking-room-heading">
             <span>1</span><b>회의실</b>
           </div>
-          <div className="selected-room-summary">
-            {/* 위치 설명은 뺐다. 어디인지는 배치도로 보는 것이 정확하고,
-                그 자리를 회의실 이름에 준다. */}
-            <div className="summary-title"><span className={`status-dot ${selectedStatus.status}`} /><strong>{selected.name}</strong></div>
-            <div className="spec-row"><span>{formatCapacity(selected.capacity)}</span>{selected.equipment.map((item) => <span key={item}>{item}</span>)}</div>
-          </div>
 
           <form onSubmit={submitReservation}>
             {/* 입력칸만 스크롤시키고 '예약하기'는 그 아래에 늘 보이게 둔다.
                 버튼을 sticky로 띄우면 밑에 있는 칸을 덮어 버린다. */}
             <label className="sr-only" htmlFor="room-picker-select">회의실</label>
           <section className="room-picker-card" aria-label="room picker">
-            <div className="room-picker-selected">
-              <div className="room-picker-selected-top">
-                <span className={`status-dot ${selectedStatus.status}`} />
-                <strong>{selected.name}</strong>
-                <span className="room-picker-floor">{selected.floor}F</span>
-              </div>
-              <p>{selected.location}</p>
-              <div className="spec-row"><span>{formatCapacity(selected.capacity)}</span>{selected.equipment.slice(0, 3).map((item) => <span key={item}>{item}</span>)}</div>
-            </div>
-            <button type="button" className={`room-picker-toggle ${roomPickerOpen ? "open" : ""}`} aria-expanded={roomPickerOpen} onClick={() => setRoomPickerOpen((current) => !current)}>
-              <span>{"\uD68C\uC758\uC2E4 \uC120\uD0DD"}</span><i aria-hidden="true" />
+            <button
+              type="button"
+              className={`room-picker-toggle ${roomPickerOpen ? "open" : ""}`}
+              aria-label={`회의실 선택: ${selected.name}`}
+              aria-expanded={roomPickerOpen}
+              onClick={() => setRoomPickerOpen((current) => !current)}
+            >
+              <span className="room-picker-field-copy">
+                <span className="room-picker-field-title"><span className={`status-dot ${selectedStatus.status}`} /><strong>{selected.name}</strong></span>
+                <span className="room-picker-field-specs"><em>{formatCapacity(selected.capacity)}</em>{selected.equipment.slice(0, 2).map((item) => <em key={item}>{item}</em>)}</span>
+              </span>
+              <i aria-hidden="true" />
             </button>
             {roomPickerOpen && <div className="room-picker-options">
               {floors.map((item) => (

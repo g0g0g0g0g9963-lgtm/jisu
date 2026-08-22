@@ -6372,6 +6372,21 @@ p, li, dd,
     flex-direction: column;
   }
 
+  /* A안: 접힌 탭이나 빈 시간대를 눌러 빠른 예약을 열면 오른쪽에서
+     자연스럽게 밀려 들어온다. 갑자기 나타나지 않도록 투명도도 함께 잇는다. */
+  .booking-panel:not(.is-collapsed) .booking-panel-content {
+    animation: quick-booking-slide-in .5s cubic-bezier(.22, .75, .2, 1) both;
+  }
+
+  @keyframes quick-booking-slide-in {
+    from { transform: translateX(100%); opacity: .7; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .booking-panel:not(.is-collapsed) .booking-panel-content { animation: none; }
+  }
+
   /* 기존에는 form이 패널의 바로 아래 자식이었다. 내용 래퍼를 하나 둔 뒤에도
      같은 세로 배치와 내부 스크롤이 유지되도록 동일한 flex 역할을 넘긴다. */
   .booking-panel-content > form {
@@ -6410,6 +6425,32 @@ p, li, dd,
   .booking-panel-toggle:active { transform: translateY(-50%) scale(.94); }
   .booking-panel-toggle:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
   .booking-panel-toggle svg { width: 8px; height: 14px; }
+
+  /* B안: 작성 상태와 접기 버튼을 같은 크기·모서리·남색 톤으로 묶고,
+     작성 중임을 알리는 빨강은 작은 점으로만 남긴다. */
+  .booking-panel .draft-chip {
+    min-height: 36px;
+    margin-left: auto;
+    padding: 0 12px;
+    display: inline-flex;
+    align-items: center;
+    border-radius: 9px;
+    color: #fff;
+    background: #ffffff1f;
+    box-shadow: none;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: -.01em;
+  }
+  .booking-panel .draft-chip::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    margin-right: 7px;
+    flex: none;
+    border-radius: 50%;
+    background: #ff2945;
+  }
 
   .app-shell > .booking-panel.is-collapsed {
     width: 50px;

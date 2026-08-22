@@ -6479,11 +6479,14 @@ p, li, dd,
   /* 둥근 오른쪽 아래 모서리 밖으로 뒤의 빨간 기준선이 한 점 보이지 않게
      카드 외곽을 패널 바탕색으로 얇게 가린다. */
   .booking-panel .room-picker-card {
+    flex: none;
+    min-height: 44px;
     box-shadow: 0 0 0 2px #fff,
       inset 1px 0 0 #e9ecf2,
       inset -1px 0 0 #e9ecf2,
       inset 0 -1px 0 #e9ecf2;
   }
+  .booking-panel .selected-room-summary { flex: none; }
 
   /* B3 펄 아이보리 + A1 실크 빛결. 선택칸보다 아주 조금 밝은 면으로
      가볍게 띄우고, 빛은 약 3초에 한 번만 지나가도록 차분하게 둔다. */

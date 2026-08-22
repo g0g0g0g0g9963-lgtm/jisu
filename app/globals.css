@@ -6110,9 +6110,9 @@ p, li, dd,
   .header-account .header-user { display: none; }
 }
 
-/* ══ 날짜 머리줄 : 검정 글씨 · 주간도 같은 두 줄로 ═══════════════
-   남색은 왼쪽 층 탭·오른쪽 예약창의 남색과 같은 계열이라 제목으로서
-   두드러지지 않았다. 요일·날짜를 검정으로 내린다.
+/* ══ 날짜 머리줄 : 빠른 예약 헤더와 같은 진한 남색 ═══════════════
+   요일과 큰 날짜를 오른쪽 빠른 예약 헤더의 남색(#17223a)과 맞춰
+   화면 양쪽의 제목 색을 하나로 통일한다.
 
    주간도 일간과 같은 두 줄('WEEK 3' + '8/17 ~ 8/21')이 되었다.
    범위는 글자 수가 세 배라 66px로 적으면 1440px 화면에서 층 탭과 조작부가
@@ -6121,7 +6121,7 @@ p, li, dd,
    층 탭이 움직이는 폭도 그만큼에서 그친다. */
 @media (min-width: 1px) {
   .schedule-hero .hero-kicker,
-  .schedule-hero .hero-date h3.hero-date-big { color: #111111; }
+  .schedule-hero .hero-date h3.hero-date-big { color: #17223a; }
   /* 숫자는 h3 안의 span에 들어 있다(낭독기용 한글 날짜와 나누기 위해).
      앞쪽의 `.weekly-heading span { color: var(--ink) }`가 그 span을 잡아
      제목만 남색으로 남았다. 상자 색을 그대로 물려받게 한다. */

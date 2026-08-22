@@ -8,6 +8,7 @@
 
 /* 선택 영역: 한 톤 진한 블루그레이 위로 은은한 새틴 결이 천천히 흐른다. */
 .booking-panel .room-picker-card .room-picker-toggle {
+  font-size: 13px;
   background:
     linear-gradient(112deg, transparent 0 34%, rgba(255,255,255,.28) 46%, rgba(255,255,255,.10) 55%, transparent 67%) -145% 0 / 230% 100% no-repeat,
     linear-gradient(145deg, #dce3eb 0%, #cfd8e2 100%);
@@ -40,4 +41,17 @@
 
 @media (prefers-reduced-motion: reduce) {
   .booking-panel .room-picker-card .room-picker-toggle { animation: none; }
+}
+
+/* 정보 영역만 위아래 숨을 더 주고, 두 면의 블루그레이 농도를 맞춘다. */
+.booking-panel .selected-room-summary {
+  padding-top: 10px;
+  padding-bottom: 10px;
+  background: linear-gradient(145deg, #f1f4f7 0%, #e7ecf1 100%);
+}
+
+.booking-panel .room-picker-card .room-picker-toggle {
+  background:
+    linear-gradient(112deg, transparent 0 34%, rgba(255,255,255,.23) 46%, rgba(255,255,255,.07) 55%, transparent 67%) -145% 0 / 230% 100% no-repeat,
+    linear-gradient(145deg, #cad4df 0%, #bac6d3 100%);
 }

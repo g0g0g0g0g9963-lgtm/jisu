@@ -6551,6 +6551,20 @@ p, li, dd,
     .booking-panel .room-picker-toggle i::before { animation: none; }
   }
 
+  /* 반복 종료 달력은 팝업으로 띄우지 않고 입력칸 바로 아래에 펼친다.
+     따라서 위치 계산 실패나 스크롤 영역의 잘림 없이 항상 눈에 보인다. */
+  .booking-panel .repeat-settings .date-panel.date-panel-inline {
+    width: 100%;
+    position: relative;
+    z-index: 1;
+    top: auto;
+    right: auto;
+    bottom: auto;
+    left: auto;
+    margin-top: 7px;
+    box-shadow: 0 8px 20px #17223a14;
+  }
+
   .app-shell > .booking-panel.is-collapsed {
     width: 50px;
     height: 225px;

@@ -6412,8 +6412,8 @@ p, li, dd,
   .booking-panel-toggle svg { width: 8px; height: 14px; }
 
   .app-shell > .booking-panel.is-collapsed {
-    width: 44px;
-    height: 190px;
+    width: 58px;
+    height: 240px;
     position: fixed;
     z-index: 80;
     top: calc(var(--rule-abs) + 10px);
@@ -6428,8 +6428,8 @@ p, li, dd,
   .booking-panel.is-collapsed .booking-panel-content { display: none; }
 
   .booking-panel.is-collapsed .booking-panel-rail {
-    width: 44px;
-    height: 190px;
+    width: 58px;
+    height: 240px;
     min-height: 0;
     margin-top: 0;
     padding: 0;
@@ -6458,7 +6458,7 @@ p, li, dd,
     width: 100%;
     flex: 1;
     min-height: 0;
-    padding: 10px 0 8px;
+    padding: 16px 0 12px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -6471,15 +6471,15 @@ p, li, dd,
     background: linear-gradient(180deg, #123461 0%, #0a244b 100%);
   }
   .booking-panel.is-collapsed .booking-panel-rail-main > svg {
-    width: 20px;
-    height: 20px;
+    width: 25px;
+    height: 25px;
     flex: none;
     color: #fff;
   }
   .booking-panel.is-collapsed .booking-panel-rail-main > i {
-    width: 20px;
+    width: 25px;
     height: 3px;
-    margin: 5px 0 8px;
+    margin: 7px 0 12px;
     flex: none;
     border-radius: 999px;
     background: #ff334f;
@@ -6488,7 +6488,7 @@ p, li, dd,
     writing-mode: vertical-rl;
     text-orientation: upright;
     color: #fff;
-    font-size: 13px;
+    font-size: 16px;
     font-weight: 500;
     letter-spacing: .04em;
     line-height: 1.1;
@@ -6497,8 +6497,8 @@ p, li, dd,
 
   .booking-panel.is-collapsed .booking-panel-rail-arrow {
     width: 100%;
-    height: 40px;
-    flex: 0 0 40px;
+    height: 52px;
+    flex: 0 0 52px;
     display: grid;
     place-items: center;
     color: #fff;
@@ -6507,14 +6507,16 @@ p, li, dd,
     transition: background .16s ease;
   }
   .booking-panel.is-collapsed .booking-panel-rail:hover .booking-panel-rail-arrow { background: #ed1639; }
-  .booking-panel.is-collapsed .booking-panel-rail-arrow svg { width: 10px; height: 18px; }
+  .booking-panel.is-collapsed .booking-panel-rail-arrow svg { width: 13px; height: 22px; }
 }
 
 /* 넓은 화면에서 날짜 머리줄 위쪽에 불필요하게 커진 여백을 이전의
    촘촘한 간격으로 되돌린다. 날짜·층·이동 조작부와 아래 기준선이 함께
    10px 올라가므로 서로의 정렬은 그대로 유지된다. */
 @media (min-width: 1440px) {
-  .app-shell { --rule-abs: 170px; }
+  /* 날짜 머리줄 아래 띠의 최종 고정 위치. 다른 구성요소를 조정해도
+     이 값은 바꾸지 않는다. 왼쪽 남색·오른쪽 빨강 띠가 함께 움직인다. */
+  .app-shell { --rule-abs: 180px; }
   .weekly-board .weekly-heading.schedule-hero,
   .schedule-hero.weekly-heading {
     padding-top: 6px;
@@ -6527,7 +6529,8 @@ p, li, dd,
    노트북에서도 날짜만 윗줄로 밀어 올리지 않는다. 날짜·층·이동·보기
    조작부를 다시 한 줄에 놓아 상단바 아래의 큰 빈 공간을 없앤다. */
 @media (min-width: 1200px) and (max-width: 1439px) {
-  .app-shell { --rule-abs: 170px; }
+  /* Windows 배율 구간도 넓은 화면과 동일한 절대 위치를 사용한다. */
+  .app-shell { --rule-abs: 180px; }
   .weekly-heading.schedule-hero,
   .schedule-hero.weekly-heading,
   .weekly-heading.schedule-hero:has(.hero-date-range),

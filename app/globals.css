@@ -6413,7 +6413,7 @@ p, li, dd,
 
   .app-shell > .booking-panel.is-collapsed {
     width: 50px;
-    height: 210px;
+    height: 225px;
     position: fixed;
     z-index: 80;
     /* 접힌 탭은 날짜 머리줄이나 기준 띠를 따라 움직이지 않는다.
@@ -6431,7 +6431,7 @@ p, li, dd,
 
   .booking-panel.is-collapsed .booking-panel-rail {
     width: 50px;
-    height: 210px;
+    height: 225px;
     min-height: 0;
     margin-top: 0;
     padding: 0;

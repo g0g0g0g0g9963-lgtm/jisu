@@ -6476,6 +6476,15 @@ p, li, dd,
     overflow: visible;
   }
 
+  /* 둥근 오른쪽 아래 모서리 밖으로 뒤의 빨간 기준선이 한 점 보이지 않게
+     카드 외곽을 패널 바탕색으로 얇게 가린다. */
+  .booking-panel .room-picker-card {
+    box-shadow: 0 0 0 2px #fff,
+      inset 1px 0 0 #e9ecf2,
+      inset -1px 0 0 #e9ecf2,
+      inset 0 -1px 0 #e9ecf2;
+  }
+
   .app-shell > .booking-panel.is-collapsed {
     width: 50px;
     height: 225px;

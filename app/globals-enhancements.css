@@ -14,6 +14,21 @@
   animation: room-picker-satin-flow 5.6s ease-in-out infinite;
 }
 
+/* 선택 줄은 정보 카드보다 가볍게 보이도록 높이를 다시 줄인다. */
+.booking-panel .room-picker-card {
+  min-height: 38px;
+}
+
+.booking-panel .room-picker-card .room-picker-toggle {
+  height: 38px;
+  min-height: 38px;
+  padding-left: 12px;
+  padding-right: 12px;
+  background:
+    linear-gradient(112deg, transparent 0 34%, rgba(255,255,255,.25) 46%, rgba(255,255,255,.08) 55%, transparent 67%) -145% 0 / 230% 100% no-repeat,
+    linear-gradient(145deg, #d1dae4 0%, #c1ccd8 100%);
+}
+
 .booking-panel .room-picker-card .room-picker-toggle::before {
   display: none;
 }

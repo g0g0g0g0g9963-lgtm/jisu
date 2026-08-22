@@ -6431,6 +6431,7 @@ p, li, dd,
   /* B안: 작성 상태와 접기 버튼을 같은 크기·모서리·남색 톤으로 묶고,
      작성 중임을 알리는 빨강은 작은 점으로만 남긴다. */
   .booking-panel .draft-chip {
+    height: 36px;
     min-height: 36px;
     margin-left: auto;
     padding: 0 12px;
@@ -6452,6 +6453,27 @@ p, li, dd,
     flex: none;
     border-radius: 50%;
     background: #ff2945;
+  }
+
+  /* 작성 중과 접기 버튼을 제목 두 번째 줄의 같은 아랫선에 고정한다. */
+  .booking-panel-toggle {
+    top: auto;
+    bottom: 12px;
+    transform: none;
+  }
+  .booking-panel-toggle:active { transform: scale(.94); }
+
+  /* 고정 높이 안에서 글자의 아래 획이 잘리지 않도록 선택 줄에 여유를 준다. */
+  .booking-panel .room-picker-card .room-picker-toggle {
+    height: 44px;
+    min-height: 44px;
+    line-height: 1.4;
+  }
+  .booking-panel .room-picker-card .room-picker-toggle > span {
+    display: inline-flex;
+    align-items: center;
+    min-height: 22px;
+    overflow: visible;
   }
 
   .app-shell > .booking-panel.is-collapsed {

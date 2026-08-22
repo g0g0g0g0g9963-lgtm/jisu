@@ -6416,9 +6416,8 @@ p, li, dd,
     height: 225px;
     position: fixed;
     z-index: 80;
-    /* 접힌 탭은 날짜 머리줄이나 기준 띠를 따라 움직이지 않는다.
-       상단 사용자 영역이 끝나는 즉시 시작하도록 상단바 높이에 고정한다. */
-    top: var(--bar-h);
+    /* 접힌 탭은 날짜 영역의 기준 띠 바로 아래에서 시작한다. */
+    top: calc(var(--rule-abs) + 10px);
     right: 0;
     padding: 0;
     overflow: visible;

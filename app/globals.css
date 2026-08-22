@@ -6358,7 +6358,7 @@ p, li, dd,
    남긴다. 셸의 두 번째 열 자체를 줄이므로 일정표는 빈자리를 즉시 모두 쓴다. */
 @media (min-width: 1px) {
   .app-shell {
-    transition: grid-template-columns .5s cubic-bezier(.22, .75, .2, 1);
+    transition: grid-template-columns .35s cubic-bezier(.22, .75, .2, 1);
   }
 
   .app-shell.booking-panel-collapsed {
@@ -6377,7 +6377,7 @@ p, li, dd,
   /* A안: 접힌 탭이나 빈 시간대를 눌러 빠른 예약을 열면 오른쪽에서
      자연스럽게 밀려 들어온다. 갑자기 나타나지 않도록 투명도도 함께 잇는다. */
   .booking-panel:not(.is-collapsed) .booking-panel-content {
-    animation: quick-booking-slide-in .5s cubic-bezier(.22, .75, .2, 1) both;
+    animation: quick-booking-slide-in .35s cubic-bezier(.22, .75, .2, 1) both;
   }
 
   @keyframes quick-booking-slide-in {

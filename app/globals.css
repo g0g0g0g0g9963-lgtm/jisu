@@ -6663,7 +6663,7 @@ p, li, dd,
   .booking-panel.is-collapsed .booking-panel-rail-main > i {
     width: 22px;
     height: 3px;
-    margin: 6px 0 10px;
+    margin: 10px 0 8px;
     flex: none;
     border-radius: 999px;
     background: #ff334f;
@@ -6675,6 +6675,7 @@ p, li, dd,
     font-size: 14px;
     font-weight: 500;
     letter-spacing: .04em;
+    word-spacing: -.42em;
     line-height: 1.1;
     white-space: nowrap;
   }

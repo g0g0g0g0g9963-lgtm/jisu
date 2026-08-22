@@ -91,8 +91,8 @@
 }
 
 @keyframes room-card-moonlight-bottom {
-  from { box-shadow: inset 1px 0 rgba(255,255,255,.40), inset -1px 0 rgba(95,113,136,.16), inset 0 -1px rgba(100,119,142,.20), 5px 6px 16px rgba(150,179,216,.18); }
-  to { box-shadow: inset 1px 0 rgba(255,255,255,.54), inset -1px 0 rgba(95,113,136,.12), inset 0 -1px rgba(100,119,142,.15), 8px 9px 24px rgba(150,181,221,.40); }
+  from { box-shadow: inset 1px 0 rgba(255,255,255,.40), inset -1px 0 rgba(95,113,136,.16), inset 0 -1px rgba(100,119,142,.20); }
+  to { box-shadow: inset 1px 0 rgba(255,255,255,.54), inset -1px 0 rgba(95,113,136,.12), inset 0 -1px rgba(100,119,142,.15); }
 }
 
 @media (prefers-reduced-motion: reduce) {

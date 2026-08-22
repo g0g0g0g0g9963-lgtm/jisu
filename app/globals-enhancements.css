@@ -281,3 +281,172 @@
     transition: none;
   }
 }
+
+/* 빠른예약 펼침 — 같은 기능을 네 단계로 묶어 읽는 순서를 분명히 한다. */
+.booking-section-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 20px;
+  color: #17223a;
+  letter-spacing: -0.02em;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.booking-section-heading > span {
+  display: grid;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  place-items: center;
+  color: #fff;
+  background: #17223a;
+  border-radius: 5px;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+}
+
+.booking-panel:not(.is-collapsed) .booking-room-heading {
+  margin: 10px 0 8px;
+}
+
+.booking-panel:not(.is-collapsed) .selected-room-summary {
+  margin-top: 0;
+}
+
+.booking-panel .booking-fields {
+  gap: 0;
+  margin-top: 10px;
+  padding-top: 0;
+}
+
+.booking-form-section {
+  display: grid;
+  flex: none;
+  gap: 10px;
+  padding: 13px 0 15px;
+  border-top: 1px solid #e1e4eb;
+}
+
+.booking-form-section:last-child {
+  padding-bottom: 4px;
+}
+
+.booking-date-row .date-field,
+.booking-date-row .date-field-icon,
+.booking-date-row .date-field-value {
+  width: 100%;
+}
+
+.booking-panel .form-row-time {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10px;
+}
+
+.booking-panel .form-row-time > label,
+.booking-panel .form-row-time select {
+  min-width: 0;
+  width: 100%;
+}
+
+.booking-panel .booking-time-section > .repeat-option {
+  min-height: 20px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.booking-panel .booking-time-section > .repeat-settings {
+  margin-top: 0;
+}
+
+.booking-panel .booking-time-section .form-row-duration {
+  margin: 0;
+}
+
+.booking-panel .booking-info-section .form-row-owner {
+  margin-top: 0;
+}
+
+.booking-panel .booking-info-section > label > .field-label,
+.booking-panel .booking-info-section .form-row-owner .field-label {
+  margin-top: 0;
+}
+
+.booking-panel .booking-info-section .attendee-add {
+  margin-top: 0;
+}
+
+/* 빠른예약 접힘 — 기존 펄 모듈을 시간표 전체 높이의 50px 레일로 확장한다. */
+.app-shell > .booking-panel.is-collapsed {
+  top: var(--rule-abs);
+  bottom: 0;
+  width: 50px;
+  height: auto;
+  min-height: 320px;
+  align-items: stretch;
+}
+
+.booking-panel.is-collapsed .booking-panel-rail {
+  width: 50px;
+  height: 100%;
+  min-height: 320px;
+  border-radius: 10px 0 0 10px;
+  transform: none;
+  box-shadow: inset 1px 0 rgb(255 255 255 / 18%), 0 6px 16px rgb(23 34 58 / 18%);
+}
+
+.booking-panel.is-collapsed .booking-panel-rail:hover {
+  transform: none;
+  box-shadow: inset 1px 0 rgb(255 255 255 / 24%), 0 8px 20px rgb(23 34 58 / 24%);
+}
+
+.booking-panel.is-collapsed .booking-panel-rail:active {
+  transform: none;
+}
+
+.booking-panel.is-collapsed .booking-panel-rail-main {
+  position: relative;
+  padding: 18px 0 12px;
+  background-image:
+    linear-gradient(112deg, rgb(255 255 255 / 0%) 0 42%, rgb(255 255 255 / 17%) 49%, rgb(255 255 255 / 0%) 57% 100%),
+    linear-gradient(180deg, #09264f 0%, #2d4c76 47%, #16365f 72%, #061d42 100%);
+  background-position: 115% 0, 0 0;
+  background-size: 240% 100%, 100% 100%;
+  animation: 6s ease-in-out infinite alternate quick-rail-satin-flow;
+  box-shadow: inset 1px 0 rgb(255 255 255 / 14%);
+}
+
+.booking-panel.is-collapsed .booking-panel-rail:hover .booking-panel-rail-main {
+  background-image:
+    linear-gradient(112deg, rgb(255 255 255 / 0%) 0 42%, rgb(255 255 255 / 22%) 49%, rgb(255 255 255 / 0%) 57% 100%),
+    linear-gradient(180deg, #0d2d58 0%, #365781 47%, #1c416d 72%, #09254b 100%);
+}
+
+.booking-panel.is-collapsed .booking-panel-rail-main > i {
+  margin: 11px 0 0;
+}
+
+.booking-panel.is-collapsed .booking-panel-rail-main > span {
+  margin: auto 0;
+}
+
+.booking-panel.is-collapsed .booking-panel-rail-arrow {
+  height: 52px;
+  flex-basis: 52px;
+}
+
+@keyframes quick-rail-satin-flow {
+  from { background-position: 115% 0, 0 0; }
+  to { background-position: -115% 0, 0 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .booking-panel.is-collapsed .booking-panel-rail-main {
+    animation: none;
+    background-position: 50% 0, 0 0;
+  }
+}

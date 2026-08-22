@@ -1928,6 +1928,9 @@ export default function Home() {
               onClick={() => setBookingPanelOpen(false)}
             ><DoubleChevronIcon direction="prev" /></button>
           </div>
+          <div className="booking-section-heading booking-room-heading">
+            <span>1</span><b>회의실</b>
+          </div>
           <div className="selected-room-summary">
             {/* 위치 설명은 뺐다. 어디인지는 배치도로 보는 것이 정확하고,
                 그 자리를 회의실 이름에 준다. */}
@@ -1938,7 +1941,7 @@ export default function Home() {
           <form onSubmit={submitReservation}>
             {/* 입력칸만 스크롤시키고 '예약하기'는 그 아래에 늘 보이게 둔다.
                 버튼을 sticky로 띄우면 밑에 있는 칸을 덮어 버린다. */}
-            <label className="field-label" htmlFor="room-picker-select">회의실</label>
+            <label className="sr-only" htmlFor="room-picker-select">회의실</label>
           <section className="room-picker-card" aria-label="room picker">
             <div className="room-picker-selected">
               <div className="room-picker-selected-top">
@@ -2006,10 +2009,14 @@ export default function Home() {
             {/* 스크롤되는 영역은 여기서부터. 회의실 카드를 이 밖에 두어야
                 스크롤 막대가 빨강 선을 가로지르지 않는다. */}
             <div className="booking-fields">
-            {/* 날짜·시작·종료는 모두 '언제'를 정하는 것이라 한 줄로 묶는다.
-                세로를 73px 아껴 필수 항목이 스크롤 없이 다 보이게 하는 핵심이다. */}
-            <div className="form-row form-row-when">
-              <div><span className="field-label">예약 날짜</span><DateField value={date} onChange={setDate} /></div>
+            <section className="booking-form-section booking-date-section">
+              <div className="booking-section-heading"><span>2</span><b>예약 날짜</b></div>
+              <div className="booking-date-row"><DateField value={date} onChange={setDate} /></div>
+            </section>
+
+            <section className="booking-form-section booking-time-section">
+              <div className="booking-section-heading"><span>3</span><b>시간 선택</b></div>
+              <div className="form-row form-row-time">
               {/* 일간 표에서 드래그한 뒤 회의 목적 칸에 붙는 것과 같은 옅은 표시다.
                   '틀렸다'는 경고가 아니라 '다음에 할 일'을 가리키는 것이라
                   Field-missing(제출 시 빈 칸)과는 다르게, 값이 바뀌면 조용히 풀린다. */}
@@ -2018,7 +2025,7 @@ export default function Home() {
                   할 일이 끝난 뒤에도 계속 떠 있는 것처럼 보였다. */}
               <label className={timeNeedsPick ? "needs-input" : undefined}><span className="field-label">시작 시간</span><select id="start-time-select" value={start} onChange={(event) => { changeStart(event.target.value); event.target.blur(); }}>{visibleStartTimeOptions.map((time) => <option key={time}>{time}</option>)}</select></label>
               <label className={timeNeedsPick ? "needs-input" : undefined}><span className="field-label">종료 시간</span><select value={end} onChange={(event) => { changeEnd(event.target.value); event.target.blur(); }}>{timeOptions.map((time) => <option key={time}>{time}</option>)}</select></label>
-            </div>
+              </div>
 
             <label className="repeat-option">
               <input type="checkbox" checked={repeatWeekly} onChange={(event) => {
@@ -2073,6 +2080,10 @@ export default function Home() {
               <button type="button" className={allDay ? "active" : ""} onClick={selectAllDay}>종일</button>
             </div>
             </div>
+            </section>
+
+            <section className="booking-form-section booking-info-section">
+            <div className="booking-section-heading"><span>4</span><b>예약 정보</b></div>
 
             {/* 예약자와 본부는 한 줄에 둔다. 나중에 로그인 연동이 되면 한 칸으로 합칠 자리다. */}
             <div className="form-row form-row-owner">
@@ -2205,6 +2216,8 @@ export default function Home() {
                 참석자 추가 <em>(선택)</em>
               </button>
             )}
+
+            </section>
 
 
             </div>

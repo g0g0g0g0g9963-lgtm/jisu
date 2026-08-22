@@ -6522,3 +6522,25 @@ p, li, dd,
     margin-bottom: 8px;
   }
 }
+
+/* Windows 화면 배율 때문에 실제 창 너비가 1200~1439px로 계산되는
+   노트북에서도 날짜만 윗줄로 밀어 올리지 않는다. 날짜·층·이동·보기
+   조작부를 다시 한 줄에 놓아 상단바 아래의 큰 빈 공간을 없앤다. */
+@media (min-width: 1200px) and (max-width: 1439px) {
+  .app-shell { --rule-abs: 170px; }
+  .weekly-heading.schedule-hero,
+  .schedule-hero.weekly-heading,
+  .weekly-heading.schedule-hero:has(.hero-date-range),
+  .schedule-hero.weekly-heading:has(.hero-date-range) {
+    grid-template-columns: auto auto 28px auto minmax(12px, 1fr) auto;
+    grid-template-areas: "date floors gapl nav gapr actions";
+    row-gap: 0;
+    padding-top: 6px;
+    padding-bottom: 14px;
+    margin-bottom: 8px;
+  }
+  .schedule-hero .hero-date { margin-right: 20px; }
+  .schedule-hero .schedule-floor-switch { justify-self: start; }
+  .schedule-hero .schedule-date-switch { justify-self: start; }
+  .schedule-hero .schedule-heading-actions { justify-self: end; }
+}

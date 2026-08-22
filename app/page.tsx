@@ -237,7 +237,7 @@ function DateField({ value, min, onChange, rangeFrom, onRangeChange, variant = "
   /** 기간 고르기에서 '완료'를 눌러 달력을 닫았을 때. */
   onDone?: () => void;
 }) {
-  const [open, setOpen] = useState(openOnMount);
+  const [open, setOpen] = useState(false);
   const [viewMonth, setViewMonth] = useState(() => value.slice(0, 7));
   const [dragging, setDragging] = useState(false);
   const [dragFrom, setDragFrom] = useState<DateKey | null>(null);
@@ -247,6 +247,14 @@ function DateField({ value, min, onChange, rangeFrom, onRangeChange, variant = "
   // 기간을 다 골랐는지. 다 골랐어도 창은 닫지 않고 '완료'를 기다린다.
   const [rangeSettled, setRangeSettled] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
+
+  /* 반복 예약 체크를 누른 포인터 이벤트가 완전히 끝난 다음 달력을 연다.
+     같은 클릭에 의해 새로 생긴 달력이 곧바로 닫히는 현상을 막는다. */
+  useEffect(() => {
+    if (!openOnMount) return;
+    const frame = window.requestAnimationFrame(() => setOpen(true));
+    return () => window.cancelAnimationFrame(frame);
+  }, [openOnMount]);
 
   // 달력을 새로 열 때는 언제나 시작일부터 고른다.
   useEffect(() => { if (open) { setPickTarget("start"); setRangeSettled(false); } }, [open]);

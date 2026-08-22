@@ -121,6 +121,18 @@ function ChevronIcon({ direction }: { direction: "prev" | "next" }) {
   );
 }
 
+/** 빠른예약 패널 전용 이중 꺾쇠. */
+function DoubleChevronIcon({ direction }: { direction: "prev" | "next" }) {
+  const transform = direction === "next" ? "translate(20 0) scale(-1 1)" : undefined;
+  return (
+    <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" focusable="false">
+      <g transform={transform}>
+        <path d="M9 5 5 10l4 5M15 5l-4 5 4 5" stroke="currentColor" strokeWidth="1.65" strokeLinecap="round" strokeLinejoin="round" />
+      </g>
+    </svg>
+  );
+}
+
 /** 창 닫기 ×. 글자 ×는 글꼴마다 크기·굵기가 달라 도형으로 그린다. */
 function CloseIcon() {
   return (
@@ -1874,7 +1886,7 @@ export default function Home() {
             <span>빠른 예약</span>
           </span>
           <span className="booking-panel-rail-arrow" aria-hidden="true">
-            <ChevronIcon direction="prev" />
+            <DoubleChevronIcon direction="next" />
           </span>
         </button>
         <div className="booking-panel-content" id="quick-booking-content" aria-hidden={!bookingPanelOpen}>
@@ -1898,7 +1910,7 @@ export default function Home() {
               aria-expanded={bookingPanelOpen}
               aria-controls="quick-booking-content"
               onClick={() => setBookingPanelOpen(false)}
-            ><ChevronIcon direction="next" /></button>
+            ><DoubleChevronIcon direction="prev" /></button>
           </div>
           <div className="selected-room-summary">
             {/* 위치 설명은 뺐다. 어디인지는 배치도로 보는 것이 정확하고,

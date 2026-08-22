@@ -125,7 +125,7 @@ function ChevronIcon({ direction }: { direction: "prev" | "next" }) {
 function DoubleChevronIcon({ direction }: { direction: "prev" | "next" }) {
   const transform = direction === "next" ? "translate(20 0) scale(-1 1)" : undefined;
   return (
-    <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" focusable="false">
+    <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" focusable="false" style={{ width: 20 }}>
       <g transform={transform}>
         <path d="M9 5 5 10l4 5M15 5l-4 5 4 5" stroke="currentColor" strokeWidth="1.65" strokeLinecap="round" strokeLinejoin="round" />
       </g>

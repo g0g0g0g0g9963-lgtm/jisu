@@ -6412,8 +6412,8 @@ p, li, dd,
   .booking-panel-toggle svg { width: 8px; height: 14px; }
 
   .app-shell > .booking-panel.is-collapsed {
-    width: 58px;
-    height: 240px;
+    width: 50px;
+    height: 210px;
     position: fixed;
     z-index: 80;
     top: calc(var(--rule-abs) + 10px);
@@ -6428,8 +6428,8 @@ p, li, dd,
   .booking-panel.is-collapsed .booking-panel-content { display: none; }
 
   .booking-panel.is-collapsed .booking-panel-rail {
-    width: 58px;
-    height: 240px;
+    width: 50px;
+    height: 210px;
     min-height: 0;
     margin-top: 0;
     padding: 0;
@@ -6458,7 +6458,7 @@ p, li, dd,
     width: 100%;
     flex: 1;
     min-height: 0;
-    padding: 16px 0 12px;
+    padding: 14px 0 10px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -6471,15 +6471,15 @@ p, li, dd,
     background: linear-gradient(180deg, #123461 0%, #0a244b 100%);
   }
   .booking-panel.is-collapsed .booking-panel-rail-main > svg {
-    width: 25px;
-    height: 25px;
+    width: 21px;
+    height: 21px;
     flex: none;
     color: #fff;
   }
   .booking-panel.is-collapsed .booking-panel-rail-main > i {
-    width: 25px;
+    width: 22px;
     height: 3px;
-    margin: 7px 0 12px;
+    margin: 6px 0 10px;
     flex: none;
     border-radius: 999px;
     background: #ff334f;
@@ -6488,7 +6488,7 @@ p, li, dd,
     writing-mode: vertical-rl;
     text-orientation: upright;
     color: #fff;
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 500;
     letter-spacing: .04em;
     line-height: 1.1;
@@ -6497,8 +6497,8 @@ p, li, dd,
 
   .booking-panel.is-collapsed .booking-panel-rail-arrow {
     width: 100%;
-    height: 52px;
-    flex: 0 0 52px;
+    height: 44px;
+    flex: 0 0 44px;
     display: grid;
     place-items: center;
     color: #fff;
@@ -6507,7 +6507,7 @@ p, li, dd,
     transition: background .16s ease;
   }
   .booking-panel.is-collapsed .booking-panel-rail:hover .booking-panel-rail-arrow { background: #ed1639; }
-  .booking-panel.is-collapsed .booking-panel-rail-arrow svg { width: 13px; height: 22px; }
+  .booking-panel.is-collapsed .booking-panel-rail-arrow svg { width: 11px; height: 19px; }
 }
 
 /* 넓은 화면에서 날짜 머리줄 위쪽에 불필요하게 커진 여백을 이전의

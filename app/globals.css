@@ -6412,8 +6412,8 @@ p, li, dd,
   .booking-panel-toggle svg { width: 8px; height: 14px; }
 
   .app-shell > .booking-panel.is-collapsed {
-    width: 36px;
-    height: 178px;
+    width: 44px;
+    height: 190px;
     position: fixed;
     z-index: 80;
     top: calc(var(--rule-abs) + 10px);
@@ -6428,8 +6428,8 @@ p, li, dd,
   .booking-panel.is-collapsed .booking-panel-content { display: none; }
 
   .booking-panel.is-collapsed .booking-panel-rail {
-    width: 36px;
-    height: 178px;
+    width: 44px;
+    height: 190px;
     min-height: 0;
     margin-top: 0;
     padding: 0;
@@ -6471,13 +6471,13 @@ p, li, dd,
     background: linear-gradient(180deg, #123461 0%, #0a244b 100%);
   }
   .booking-panel.is-collapsed .booking-panel-rail-main > svg {
-    width: 18px;
-    height: 18px;
+    width: 20px;
+    height: 20px;
     flex: none;
     color: #fff;
   }
   .booking-panel.is-collapsed .booking-panel-rail-main > i {
-    width: 18px;
+    width: 20px;
     height: 3px;
     margin: 5px 0 8px;
     flex: none;
@@ -6488,7 +6488,7 @@ p, li, dd,
     writing-mode: vertical-rl;
     text-orientation: upright;
     color: #fff;
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 500;
     letter-spacing: .04em;
     line-height: 1.1;
@@ -6497,8 +6497,8 @@ p, li, dd,
 
   .booking-panel.is-collapsed .booking-panel-rail-arrow {
     width: 100%;
-    height: 34px;
-    flex: 0 0 34px;
+    height: 40px;
+    flex: 0 0 40px;
     display: grid;
     place-items: center;
     color: #fff;
@@ -6507,7 +6507,7 @@ p, li, dd,
     transition: background .16s ease;
   }
   .booking-panel.is-collapsed .booking-panel-rail:hover .booking-panel-rail-arrow { background: #ed1639; }
-  .booking-panel.is-collapsed .booking-panel-rail-arrow svg { width: 9px; height: 16px; }
+  .booking-panel.is-collapsed .booking-panel-rail-arrow svg { width: 10px; height: 18px; }
 }
 
 /* 넓은 화면에서 날짜 머리줄 위쪽에 불필요하게 커진 여백을 이전의

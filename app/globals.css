@@ -6358,11 +6358,13 @@ p, li, dd,
    남긴다. 셸의 두 번째 열 자체를 줄이므로 일정표는 빈자리를 즉시 모두 쓴다. */
 @media (min-width: 1px) {
   .app-shell {
-    transition: grid-template-columns .24s ease;
+    transition: grid-template-columns .5s cubic-bezier(.22, .75, .2, 1);
   }
 
   .app-shell.booking-panel-collapsed {
-    grid-template-columns: minmax(0, 1fr);
+    /* 열린 상태와 열 개수를 같게 유지해야 예약현황 너비도 순간적으로
+       튀지 않고 빠른 예약창과 함께 부드럽게 넓어진다. */
+    grid-template-columns: minmax(0, 1fr) 0px;
   }
 
   .booking-panel-content {

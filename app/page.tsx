@@ -1710,8 +1710,9 @@ export default function Home() {
                               onPointerDown={(event) => event.stopPropagation()}
                               onClick={(event) => { event.stopPropagation(); setSelectedId(room.id); openEditor(booking); }}
                             >
+                              <strong>{booking.owner}</strong>
                               <time>{booking.start}–{booking.end}</time>
-                              <small>{booking.owner} · {teamOf(booking)}</small>
+                              <small>{teamOf(booking)}</small>
                               {/* 지금 진행 중인 내 예약에만. 남은 시간을 바로 돌려줄 수 있다. */}
                               {isRunningNow(booking) && (
                                 <span
@@ -1796,8 +1797,9 @@ export default function Home() {
                                   : `${booking.start}–${booking.end} / ${booking.owner} · ${teamOf(booking)}`}
                                 onClick={() => { setSelectedId(room.id); setDate(day); openEditor(booking); }}
                               >
+                                <b>{booking.owner}</b>
                                 <time>{booking.start}<span className="wk-end">–{booking.end}</span></time>
-                                <small>{booking.owner} · {teamOf(booking)}</small>
+                                <small>{teamOf(booking)}</small>
                                 <ReservationHoverCard booking={booking} room={room} />
                               </button>
                             );

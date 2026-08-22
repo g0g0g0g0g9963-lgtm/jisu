@@ -248,12 +248,13 @@ function DateField({ value, min, onChange, rangeFrom, onRangeChange, variant = "
   const [rangeSettled, setRangeSettled] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
 
-  /* 반복 예약 체크를 누른 포인터 이벤트가 완전히 끝난 다음 달력을 연다.
-     같은 클릭에 의해 새로 생긴 달력이 곧바로 닫히는 현상을 막는다. */
+  /* 반복 예약 체크를 누른 포인터·클릭 이벤트와 새 영역의 배치가 모두 끝난
+     다음 달력을 연다. 바로 다음 프레임은 원래 클릭에 의해 다시 닫힐 수 있어
+     짧은 지연을 둔다. */
   useEffect(() => {
     if (!openOnMount) return;
-    const frame = window.requestAnimationFrame(() => setOpen(true));
-    return () => window.cancelAnimationFrame(frame);
+    const timer = window.setTimeout(() => setOpen(true), 120);
+    return () => window.clearTimeout(timer);
   }, [openOnMount]);
 
   // 달력을 새로 열 때는 언제나 시작일부터 고른다.

@@ -55,3 +55,47 @@
     linear-gradient(112deg, transparent 0 34%, rgba(255,255,255,.23) 46%, rgba(255,255,255,.07) 55%, transparent 67%) -145% 0 / 230% 100% no-repeat,
     linear-gradient(145deg, #cad4df 0%, #bac6d3 100%);
 }
+
+
+/* 문라이트 펄: 두 영역을 같은 중간 블루그레이로 통일하고 선이 지나가는 효과는 없앤다. */
+.booking-panel .selected-room-summary,
+.booking-panel .room-picker-card,
+.booking-panel .room-picker-card .room-picker-toggle {
+  background-color: #c6d0dc;
+  background-image:
+    radial-gradient(circle at 10% 5%, rgba(255,255,255,.72), rgba(255,255,255,.20) 25%, transparent 48%),
+    radial-gradient(circle at 92% 94%, rgba(172,194,222,.52), rgba(188,205,226,.17) 30%, transparent 55%),
+    linear-gradient(145deg, #ccd6e1 0%, #c2cdd9 52%, #c8d2de 100%);
+}
+
+.booking-panel .selected-room-summary {
+  animation: room-card-moonlight-top 4.8s ease-in-out infinite alternate;
+}
+
+.booking-panel .room-picker-card {
+  animation: room-card-moonlight-bottom 4.8s ease-in-out infinite alternate;
+}
+
+.booking-panel .room-picker-card .room-picker-toggle {
+  animation: none;
+}
+
+.booking-panel .room-picker-card .room-picker-toggle::before,
+.booking-panel .room-picker-card .room-picker-toggle::after {
+  display: none;
+}
+
+@keyframes room-card-moonlight-top {
+  from { box-shadow: inset 1px 0 rgba(255,255,255,.44), inset -1px 0 rgba(95,113,136,.16), inset 0 1px rgba(255,255,255,.68), -5px -5px 15px rgba(217,231,249,.20); }
+  to { box-shadow: inset 1px 0 rgba(255,255,255,.60), inset -1px 0 rgba(95,113,136,.12), inset 0 1px rgba(255,255,255,.82), -7px -7px 22px rgba(216,232,252,.52); }
+}
+
+@keyframes room-card-moonlight-bottom {
+  from { box-shadow: inset 1px 0 rgba(255,255,255,.40), inset -1px 0 rgba(95,113,136,.16), inset 0 -1px rgba(100,119,142,.20), 5px 6px 16px rgba(150,179,216,.18); }
+  to { box-shadow: inset 1px 0 rgba(255,255,255,.54), inset -1px 0 rgba(95,113,136,.12), inset 0 -1px rgba(100,119,142,.15), 8px 9px 24px rgba(150,181,221,.40); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .booking-panel .selected-room-summary,
+  .booking-panel .room-picker-card { animation: none; }
+}

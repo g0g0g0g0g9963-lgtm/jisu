@@ -380,50 +380,44 @@
   margin-top: 0;
 }
 
-/* 빠른예약 접힘 — 기존 펄 모듈을 시간표 전체 높이의 50px 레일로 확장한다. */
+/* 빠른예약 접힘 — 짧은 세로 탭과 은은한 고정 펄 광택을 유지한다. */
 .app-shell > .booking-panel.is-collapsed {
-  top: var(--rule-abs);
-  bottom: 0;
+  top: calc(var(--rule-abs) + 10px);
+  bottom: auto;
   width: 50px;
-  height: auto;
-  min-height: 320px;
-  align-items: stretch;
+  height: 225px;
+  min-height: 0;
+  align-items: center;
 }
 
 .booking-panel.is-collapsed .booking-panel-rail {
   width: 50px;
-  height: 100%;
-  min-height: 320px;
-  border-radius: 10px 0 0 10px;
-  transform: none;
-  box-shadow: inset 1px 0 rgb(255 255 255 / 18%), 0 6px 16px rgb(23 34 58 / 18%);
+  height: 225px;
+  min-height: 0;
+  border-radius: 8px 0 0 8px;
+  box-shadow: inset 1px 0 rgb(255 255 255 / 16%), 0 5px 13px rgb(23 34 58 / 16%);
 }
 
 .booking-panel.is-collapsed .booking-panel-rail:hover {
-  transform: none;
-  box-shadow: inset 1px 0 rgb(255 255 255 / 24%), 0 8px 20px rgb(23 34 58 / 24%);
-}
-
-.booking-panel.is-collapsed .booking-panel-rail:active {
-  transform: none;
+  box-shadow: inset 1px 0 rgb(255 255 255 / 20%), 0 7px 17px rgb(23 34 58 / 22%);
 }
 
 .booking-panel.is-collapsed .booking-panel-rail-main {
   position: relative;
-  padding: 18px 0 12px;
+  padding: 14px 0 10px;
   background-image:
-    linear-gradient(112deg, rgb(255 255 255 / 0%) 0 42%, rgb(255 255 255 / 17%) 49%, rgb(255 255 255 / 0%) 57% 100%),
-    linear-gradient(180deg, #09264f 0%, #2d4c76 47%, #16365f 72%, #061d42 100%);
-  background-position: 115% 0, 0 0;
-  background-size: 240% 100%, 100% 100%;
-  animation: 6s ease-in-out infinite alternate quick-rail-satin-flow;
+    radial-gradient(ellipse at 50% 43%, rgb(255 255 255 / 14%) 0%, rgb(255 255 255 / 5%) 34%, transparent 68%),
+    linear-gradient(180deg, #09264f 0%, #29456d 48%, #061d42 100%);
+  background-position: 0 0;
+  background-size: 100% 100%;
+  animation: none;
   box-shadow: inset 1px 0 rgb(255 255 255 / 14%);
 }
 
 .booking-panel.is-collapsed .booking-panel-rail:hover .booking-panel-rail-main {
   background-image:
-    linear-gradient(112deg, rgb(255 255 255 / 0%) 0 42%, rgb(255 255 255 / 22%) 49%, rgb(255 255 255 / 0%) 57% 100%),
-    linear-gradient(180deg, #0d2d58 0%, #365781 47%, #1c416d 72%, #09254b 100%);
+    radial-gradient(ellipse at 50% 43%, rgb(255 255 255 / 18%) 0%, rgb(255 255 255 / 7%) 34%, transparent 68%),
+    linear-gradient(180deg, #0d2d58 0%, #315078 48%, #09254b 100%);
 }
 
 .booking-panel.is-collapsed .booking-panel-rail-main > i {
@@ -437,18 +431,6 @@
 .booking-panel.is-collapsed .booking-panel-rail-arrow {
   height: 52px;
   flex-basis: 52px;
-}
-
-@keyframes quick-rail-satin-flow {
-  from { background-position: 115% 0, 0 0; }
-  to { background-position: -115% 0, 0 0; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .booking-panel.is-collapsed .booking-panel-rail-main {
-    animation: none;
-    background-position: 50% 0, 0 0;
-  }
 }
 
 /* 펼친 패널의 회의실 선택은 요약 카드와 버튼을 하나의 직사각형 필드로 합친다. */

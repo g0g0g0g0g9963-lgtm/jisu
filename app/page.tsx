@@ -1902,7 +1902,7 @@ export default function Home() {
             <span>빠른 예약</span>
           </span>
           <span className="booking-panel-rail-arrow" aria-hidden="true">
-            <DoubleChevronIcon direction="next" />
+            <ChevronIcon direction="prev" />
           </span>
         </button>
         <div className="booking-panel-content" id="quick-booking-content" aria-hidden={!bookingPanelOpen}>

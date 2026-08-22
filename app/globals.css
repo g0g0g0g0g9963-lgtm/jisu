@@ -6110,9 +6110,9 @@ p, li, dd,
   .header-account .header-user { display: none; }
 }
 
-/* ══ 날짜 머리줄 : 검정 글씨 · 주간도 같은 두 줄로 ═══════════════
-   남색은 왼쪽 층 탭·오른쪽 예약창의 남색과 같은 계열이라 제목으로서
-   두드러지지 않았다. 요일·날짜를 검정으로 내린다.
+/* ══ 날짜 머리줄 : 빠른 예약 헤더와 같은 진한 남색 ═══════════════
+   요일과 큰 날짜를 오른쪽 빠른 예약 헤더의 남색(#17223a)과 맞춰
+   화면 양쪽의 제목 색을 하나로 통일한다.
 
    주간도 일간과 같은 두 줄('WEEK 3' + '8/17 ~ 8/21')이 되었다.
    범위는 글자 수가 세 배라 66px로 적으면 1440px 화면에서 층 탭과 조작부가
@@ -6121,7 +6121,7 @@ p, li, dd,
    층 탭이 움직이는 폭도 그만큼에서 그친다. */
 @media (min-width: 1px) {
   .schedule-hero .hero-kicker,
-  .schedule-hero .hero-date h3.hero-date-big { color: #111111; }
+  .schedule-hero .hero-date h3.hero-date-big { color: #17223a; }
   /* 숫자는 h3 안의 span에 들어 있다(낭독기용 한글 날짜와 나누기 위해).
      앞쪽의 `.weekly-heading span { color: var(--ink) }`가 그 span을 잡아
      제목만 남색으로 남았다. 상자 색을 그대로 물려받게 한다. */
@@ -6351,4 +6351,199 @@ p, li, dd,
    시작선과 맞춘다. */
 @media (min-width: 1px) {
   .schedule-hero .hero-date { padding-left: 16px; }
+}
+
+/* ══ 빠른 예약 패널 접기·펼치기 ═══════════════════════════════════
+   펼친 상태에서는 지금의 예약 양식을 그대로 쓰고, 접으면 오른쪽에 세로 탭만
+   남긴다. 셸의 두 번째 열 자체를 줄이므로 일정표는 빈자리를 즉시 모두 쓴다. */
+@media (min-width: 1px) {
+  .app-shell {
+    transition: grid-template-columns .24s ease;
+  }
+
+  .app-shell.booking-panel-collapsed {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .booking-panel-content {
+    height: 100%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* 기존에는 form이 패널의 바로 아래 자식이었다. 내용 래퍼를 하나 둔 뒤에도
+     같은 세로 배치와 내부 스크롤이 유지되도록 동일한 flex 역할을 넘긴다. */
+  .booking-panel-content > form {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .booking-panel-rail { display: none; }
+
+  .booking-panel .booking-title {
+    position: relative;
+    padding-right: 66px;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .booking-panel-toggle {
+    width: 36px;
+    height: 36px;
+    position: absolute;
+    top: 50%;
+    right: 16px;
+    display: grid;
+    place-items: center;
+    border: 0;
+    border-radius: 9px;
+    color: #fff;
+    background: #ffffff1f;
+    cursor: pointer;
+    transform: translateY(-50%);
+    transition: background .16s ease, transform .16s ease;
+  }
+  .booking-panel-toggle:hover { background: #ffffff32; }
+  .booking-panel-toggle:active { transform: translateY(-50%) scale(.94); }
+  .booking-panel-toggle:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+  .booking-panel-toggle svg { width: 8px; height: 14px; }
+
+  .app-shell > .booking-panel.is-collapsed {
+    width: 58px;
+    height: 240px;
+    position: fixed;
+    z-index: 80;
+    top: calc(var(--rule-abs) + 10px);
+    right: 0;
+    padding: 0;
+    overflow: visible;
+    align-items: center;
+    border: 0;
+    background: transparent;
+  }
+
+  .booking-panel.is-collapsed .booking-panel-content { display: none; }
+
+  .booking-panel.is-collapsed .booking-panel-rail {
+    width: 58px;
+    height: 240px;
+    min-height: 0;
+    margin-top: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: stretch;
+    gap: 0;
+    overflow: hidden;
+    border: 0;
+    border-radius: 8px 0 0 8px;
+    color: #fff;
+    background: transparent;
+    box-shadow: 0 5px 13px #17223a24;
+    cursor: pointer;
+    transition: box-shadow .16s ease, transform .16s ease;
+  }
+  .booking-panel.is-collapsed .booking-panel-rail:hover {
+    box-shadow: 0 7px 17px #17223a33;
+    transform: translateY(-2px);
+  }
+  .booking-panel.is-collapsed .booking-panel-rail:active { transform: translateY(0) scale(.98); }
+  .booking-panel.is-collapsed .booking-panel-rail:focus-visible { outline: 3px solid #ed1639; outline-offset: -3px; }
+
+  .booking-panel.is-collapsed .booking-panel-rail-main {
+    width: 100%;
+    flex: 1;
+    min-height: 0;
+    padding: 16px 0 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    color: #fff;
+    background: linear-gradient(180deg, #09264f 0%, #061d42 100%);
+    transition: background .16s ease;
+  }
+  .booking-panel.is-collapsed .booking-panel-rail:hover .booking-panel-rail-main {
+    background: linear-gradient(180deg, #123461 0%, #0a244b 100%);
+  }
+  .booking-panel.is-collapsed .booking-panel-rail-main > svg {
+    width: 25px;
+    height: 25px;
+    flex: none;
+    color: #fff;
+  }
+  .booking-panel.is-collapsed .booking-panel-rail-main > i {
+    width: 25px;
+    height: 3px;
+    margin: 7px 0 12px;
+    flex: none;
+    border-radius: 999px;
+    background: #ff334f;
+  }
+  .booking-panel.is-collapsed .booking-panel-rail-main > span {
+    writing-mode: vertical-rl;
+    text-orientation: upright;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 500;
+    letter-spacing: .04em;
+    line-height: 1.1;
+    white-space: nowrap;
+  }
+
+  .booking-panel.is-collapsed .booking-panel-rail-arrow {
+    width: 100%;
+    height: 52px;
+    flex: 0 0 52px;
+    display: grid;
+    place-items: center;
+    color: #fff;
+    background: #ff2945;
+    box-shadow: none;
+    transition: background .16s ease;
+  }
+  .booking-panel.is-collapsed .booking-panel-rail:hover .booking-panel-rail-arrow { background: #ed1639; }
+  .booking-panel.is-collapsed .booking-panel-rail-arrow svg { width: 13px; height: 22px; }
+}
+
+/* 넓은 화면에서 날짜 머리줄 위쪽에 불필요하게 커진 여백을 이전의
+   촘촘한 간격으로 되돌린다. 날짜·층·이동 조작부와 아래 기준선이 함께
+   10px 올라가므로 서로의 정렬은 그대로 유지된다. */
+@media (min-width: 1440px) {
+  /* 날짜 머리줄 아래 띠의 최종 고정 위치. 다른 구성요소를 조정해도
+     이 값은 바꾸지 않는다. 왼쪽 남색·오른쪽 빨강 띠가 함께 움직인다. */
+  .app-shell { --rule-abs: 180px; }
+  .weekly-board .weekly-heading.schedule-hero,
+  .schedule-hero.weekly-heading {
+    padding-top: 6px;
+    padding-bottom: 14px;
+    margin-bottom: 8px;
+  }
+}
+
+/* Windows 화면 배율 때문에 실제 창 너비가 1200~1439px로 계산되는
+   노트북에서도 날짜만 윗줄로 밀어 올리지 않는다. 날짜·층·이동·보기
+   조작부를 다시 한 줄에 놓아 상단바 아래의 큰 빈 공간을 없앤다. */
+@media (min-width: 1200px) and (max-width: 1439px) {
+  /* Windows 배율 구간도 넓은 화면과 동일한 절대 위치를 사용한다. */
+  .app-shell { --rule-abs: 180px; }
+  .weekly-heading.schedule-hero,
+  .schedule-hero.weekly-heading,
+  .weekly-heading.schedule-hero:has(.hero-date-range),
+  .schedule-hero.weekly-heading:has(.hero-date-range) {
+    grid-template-columns: auto auto 28px auto minmax(12px, 1fr) auto;
+    grid-template-areas: "date floors gapl nav gapr actions";
+    row-gap: 0;
+    padding-top: 6px;
+    padding-bottom: 14px;
+    margin-bottom: 8px;
+  }
+  .schedule-hero .hero-date { margin-right: 20px; }
+  .schedule-hero .schedule-floor-switch { justify-self: start; }
+  .schedule-hero .schedule-date-switch { justify-self: start; }
+  .schedule-hero .schedule-heading-actions { justify-self: end; }
 }

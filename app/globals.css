@@ -6386,6 +6386,8 @@ p, li, dd,
   .booking-panel .booking-title {
     position: relative;
     padding-right: 66px;
+    border-radius: 12px;
+    overflow: hidden;
   }
 
   .booking-panel-toggle {

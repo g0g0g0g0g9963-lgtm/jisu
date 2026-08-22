@@ -6468,13 +6468,15 @@ p, li, dd,
     height: 44px;
     min-height: 44px;
     line-height: 1.4;
-    background: linear-gradient(145deg, #e2e6ec 0%, #d5dce5 100%);
+    color: #fff;
+    background: linear-gradient(145deg, #768497 0%, #667589 100%);
   }
   .booking-panel .room-picker-card .room-picker-toggle > span {
     display: inline-flex;
     align-items: center;
     min-height: 22px;
     overflow: visible;
+    color: #fff;
   }
 
   /* 둥근 오른쪽 아래 모서리 밖으로 뒤의 빨간 기준선이 한 점 보이지 않게
@@ -6489,7 +6491,7 @@ p, li, dd,
   }
   .booking-panel .selected-room-summary { flex: none; }
 
-  /* 선택 줄 전체는 블루그레이, 화살표는 한 단 밝은 블루로 둔다.
+  /* 선택 줄·버튼·화살표를 저채도 진한 블루그레이 계열로 통일한다.
      실크 빛은 약 3초에 한 번만 지나가도록 차분하게 유지한다. */
   .booking-panel .room-picker-toggle i {
     width: 34px;
@@ -6500,8 +6502,10 @@ p, li, dd,
     overflow: hidden;
     border: 0;
     border-radius: 9px;
-    background: linear-gradient(145deg, #74b8ef 0%, #5ea6e3 100%);
-    box-shadow: inset 0 0 0 1px #ffffff80, 0 2px 6px #17223a16;
+    background:
+      radial-gradient(circle at 50% 48%, #9ba8b7 0 34%, transparent 36%),
+      linear-gradient(145deg, #627186 0%, #536278 100%);
+    box-shadow: inset 0 0 0 1px #ffffff38, 0 2px 6px #17223a20;
     transform: none;
     transition: transform .16s ease, background .16s ease;
   }
@@ -6525,12 +6529,14 @@ p, li, dd,
     z-index: 2;
     top: 10px;
     left: 12px;
-    border-right: 2px solid #fff;
-    border-bottom: 2px solid #fff;
+    border-right: 2px solid #35445a;
+    border-bottom: 2px solid #35445a;
     transform: rotate(45deg);
   }
   .booking-panel .room-picker-toggle:hover i {
-    background: linear-gradient(145deg, #86c4f3 0%, #6db1e8 100%);
+    background:
+      radial-gradient(circle at 50% 48%, #aab5c2 0 34%, transparent 36%),
+      linear-gradient(145deg, #6c7b8f 0%, #5b6a7f 100%);
   }
   .booking-panel .room-picker-toggle.open i { transform: rotate(180deg); }
 

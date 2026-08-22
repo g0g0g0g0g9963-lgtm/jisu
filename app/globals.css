@@ -6509,3 +6509,16 @@ p, li, dd,
   .booking-panel.is-collapsed .booking-panel-rail:hover .booking-panel-rail-arrow { background: #ed1639; }
   .booking-panel.is-collapsed .booking-panel-rail-arrow svg { width: 9px; height: 16px; }
 }
+
+/* 넓은 화면에서 날짜 머리줄 위쪽에 불필요하게 커진 여백을 이전의
+   촘촘한 간격으로 되돌린다. 날짜·층·이동 조작부와 아래 기준선이 함께
+   10px 올라가므로 서로의 정렬은 그대로 유지된다. */
+@media (min-width: 1440px) {
+  .app-shell { --rule-abs: 170px; }
+  .weekly-board .weekly-heading.schedule-hero,
+  .schedule-hero.weekly-heading {
+    padding-top: 6px;
+    padding-bottom: 14px;
+    margin-bottom: 8px;
+  }
+}

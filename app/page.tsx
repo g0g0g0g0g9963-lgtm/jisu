@@ -302,6 +302,8 @@ function DateField({ value, min, onChange, rangeFrom, onRangeChange, variant = "
   const [dragTo, setDragTo] = useState<DateKey | null>(null);
   const rangeDraggedRef = useRef(false);
   const draggingRef = useRef(false);
+  const dragPointerRef = useRef<number | null>(null);
+  const suppressRangeClickRef = useRef(false);
   const dragFromRef = useRef<DateKey | null>(null);
   const dragToRef = useRef<DateKey | null>(null);
   const onRangeChangeRef = useRef(onRangeChange);
@@ -414,51 +416,39 @@ function DateField({ value, min, onChange, rangeFrom, onRangeChange, variant = "
     setRangeSettled(true);
   }, [onRangeChange, pickTarget, rangeFrom, value]);
 
-  // 드래그 감지는 달력이 열린 순간부터 문서에 붙여 둔다. 예전처럼 pointerdown 뒤
-  // 렌더링을 기다려 붙이면 빠르게 끌었을 때 첫 움직임을 놓칠 수 있다.
-  useEffect(() => {
-    if (!open || !rangeFrom) return;
-    const followDrag = (event: PointerEvent) => {
-      if (!draggingRef.current) return;
-      const target = document
-        .elementFromPoint(event.clientX, event.clientY)
-        ?.closest<HTMLButtonElement>(".date-panel-grid button[data-date-key]");
-      if (!target || target.getAttribute("aria-disabled") === "true") return;
-      const next = target.dataset.dateKey as DateKey | undefined;
-      if (!next || next === dragToRef.current) return;
-      rangeDraggedRef.current = true;
-      dragToRef.current = next;
-      setDragTo(next);
-      if (event.cancelable) event.preventDefault();
-    };
+  /**
+   * 반복 날짜 끌기는 버튼마다 이벤트를 나누지 않고, 다시 그려져도 사라지지 않는
+   * 달력 격자가 처음부터 끝까지 맡는다. 포인터를 격자에 캡처해 버튼 사이의 여백이나
+   * 빠른 움직임을 지나도 pointerup을 놓치지 않는다.
+   */
+  const dateKeyAtPoint = useCallback((clientX: number, clientY: number) => {
+    const target = document
+      .elementFromPoint(clientX, clientY)
+      ?.closest<HTMLButtonElement>(".date-panel-grid button[data-date-key]");
+    if (!target || target.getAttribute("aria-disabled") === "true") return null;
+    return (target.dataset.dateKey as DateKey | undefined) ?? null;
+  }, []);
 
-    const finish = () => {
-      if (!draggingRef.current) return;
-      const firstDate = dragFromRef.current;
-      const lastDate = dragToRef.current;
-      if (firstDate && lastDate && onRangeChangeRef.current && rangeDraggedRef.current) {
-        // 다 골라도 창은 닫지 않는다. 고른 기간이 맞는지 눈으로 확인하고
-        // 아래 '완료'로 직접 닫게 한다. 바로 닫히면 제대로 골랐는지 알 수 없다.
-        const [first, last] = firstDate <= lastDate ? [firstDate, lastDate] : [lastDate, firstDate];
-        onRangeChangeRef.current(first, last);
-        setPickTarget("end");
-        setRangeSettled(true);
-      }
-      draggingRef.current = false;
-      dragFromRef.current = null;
-      dragToRef.current = null;
-      setDragFrom(null);
-      setDragTo(null);
-    };
-    document.addEventListener("pointermove", followDrag, { passive: false });
-    document.addEventListener("pointerup", finish);
-    document.addEventListener("pointercancel", finish);
-    return () => {
-      document.removeEventListener("pointermove", followDrag);
-      document.removeEventListener("pointerup", finish);
-      document.removeEventListener("pointercancel", finish);
-    };
-  }, [open, rangeFrom]);
+  const clearRangeDrag = useCallback(() => {
+    draggingRef.current = false;
+    dragPointerRef.current = null;
+    dragFromRef.current = null;
+    dragToRef.current = null;
+    setDragFrom(null);
+    setDragTo(null);
+  }, []);
+
+  const commitRangeDrag = useCallback(() => {
+    const firstDate = dragFromRef.current;
+    const lastDate = dragToRef.current;
+    if (firstDate && lastDate && onRangeChangeRef.current && rangeDraggedRef.current) {
+      const [first, last] = firstDate <= lastDate ? [firstDate, lastDate] : [lastDate, firstDate];
+      onRangeChangeRef.current(first, last);
+      setPickTarget("end");
+      setRangeSettled(true);
+    }
+    clearRangeDrag();
+  }, [clearRangeDrag]);
 
   const [year, month] = viewMonth.split("-").map(Number);
   const firstWeekday = new Date(Date.UTC(year, month - 1, 1)).getUTCDay();
@@ -529,7 +519,56 @@ function DateField({ value, min, onChange, rangeFrom, onRangeChange, variant = "
               <span key={label} className={index === 0 ? "is-sun" : index === 6 ? "is-sat" : undefined}>{label}</span>
             ))}
           </div>
-          <div className={`date-panel-grid${rangeFrom ? " range-enabled" : ""}`}>
+          <div
+            className={`date-panel-grid${rangeFrom ? " range-enabled" : ""}`}
+            onDragStart={(event) => event.preventDefault()}
+            onPointerDown={(event) => {
+              if (!rangeFrom || (event.pointerType === "mouse" && event.button !== 0)) return;
+              const key = dateKeyAtPoint(event.clientX, event.clientY);
+              if (!key) return;
+              suppressRangeClickRef.current = false;
+              rangeDraggedRef.current = false;
+              draggingRef.current = true;
+              dragPointerRef.current = event.pointerId;
+              dragFromRef.current = key;
+              dragToRef.current = key;
+              setDragFrom(key);
+              setDragTo(key);
+              try { event.currentTarget.setPointerCapture(event.pointerId); } catch { /* 구형 터치 브라우저는 격자 버블링으로 계속 처리한다. */ }
+              event.preventDefault();
+            }}
+            onPointerMove={(event) => {
+              if (!rangeFrom || !draggingRef.current || dragPointerRef.current !== event.pointerId) return;
+              const key = dateKeyAtPoint(event.clientX, event.clientY);
+              if (!key || key === dragToRef.current) return;
+              rangeDraggedRef.current = true;
+              dragToRef.current = key;
+              setDragTo(key);
+              event.preventDefault();
+            }}
+            onPointerUp={(event) => {
+              if (!rangeFrom || !draggingRef.current || dragPointerRef.current !== event.pointerId) return;
+              const firstDate = dragFromRef.current;
+              suppressRangeClickRef.current = true;
+              window.setTimeout(() => { suppressRangeClickRef.current = false; }, 0);
+              try {
+                if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
+              } catch { /* 캡처를 지원하지 않는 환경 */ }
+              if (rangeDraggedRef.current) commitRangeDrag();
+              else {
+                clearRangeDrag();
+                if (firstDate) selectRangeDay(firstDate);
+              }
+              event.preventDefault();
+            }}
+            onPointerCancel={(event) => {
+              if (dragPointerRef.current !== event.pointerId) return;
+              try {
+                if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
+              } catch { /* 캡처를 지원하지 않는 환경 */ }
+              clearRangeDrag();
+            }}
+          >
             {Array.from({ length: firstWeekday }, (_, index) => <span key={`blank-${index}`} />)}
             {Array.from({ length: lastDay }, (_, index) => {
               const day = index + 1;
@@ -556,43 +595,20 @@ function DateField({ value, min, onChange, rangeFrom, onRangeChange, variant = "
                   // disabled면 마우스 이벤트가 오지 않아 그 위를 지나는 순간 끌기가 끊긴다.
                   aria-disabled={disabled}
                   className={`${isEdge ? "selected" : ""} ${inRange && !skipped ? "in-range" : ""} ${skipped ? "range-skip" : ""} ${disabled ? "disabled" : ""} ${isToday ? "is-today" : ""} ${weekendClass}`}
-                  onPointerDown={(event) => {
-                    if (disabled) return;
-                    if (event.pointerType === "mouse" && event.button !== 0) return;
-                    // 단일 날짜는 click을 기다리지 않고 실제 포인터가 닿은 순간
-                    // 확정한다. 팝업 스크롤이나 터치의 작은 움직임 때문에 click이
-                    // 취소돼도 날짜 선택은 이미 끝난다.
-                    if (!rangeFrom) {
-                      onChange(key);
-                      setOpen(false);
-                      return;
-                    }
-                    rangeDraggedRef.current = false;
-                    draggingRef.current = true;
-                    dragFromRef.current = key;
-                    dragToRef.current = key;
-                    setDragFrom(key);
-                    setDragTo(key);
-                  }}
-                  onPointerEnter={() => {
-                    // 마우스는 각 날짜에 진입하는 순간도 직접 추적한다. 터치는 위의
-                    // document 좌표 추적이 맡아 두 입력 방식이 서로 보완한다.
-                    if (!rangeFrom || disabled || !draggingRef.current || dragToRef.current === key) return;
-                    rangeDraggedRef.current = true;
-                    dragToRef.current = key;
-                    setDragTo(key);
-                  }}
-                  onClick={() => {
+                  onClick={(event) => {
                     if (disabled) return;
                     if (rangeFrom) {
-                      // 드래그 직후 발생하는 click은 중복 적용하지 않는다.
-                      if (rangeDraggedRef.current) {
-                        rangeDraggedRef.current = false;
+                      // 포인터 입력은 격자의 pointerup이 처리한다. Enter/Space로 생긴
+                      // 키보드 click만 여기서 처리한다.
+                      if (suppressRangeClickRef.current) {
+                        suppressRangeClickRef.current = false;
                         return;
                       }
                       selectRangeDay(key);
                       return;
                     }
+                    event.preventDefault();
+                    event.stopPropagation();
                     onChange(key);
                     setOpen(false);
                   }}

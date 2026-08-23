@@ -2749,3 +2749,53 @@ button {
 .app-shell .weekly-board {
   background: #eef1f5;
 }
+
+/* 회의실 선택창은 패널 바탕과 항목을 서로 다른 면으로 나눠
+   긴 목록에서도 층과 개별 회의실의 경계가 바로 보이게 한다. */
+.booking-panel .room-picker-options.room-picker-popover {
+  padding: 9px 10px 11px;
+  background: #f2f4f7;
+  border-color: #d9dfe8;
+}
+
+.booking-panel .room-picker-options .room-picker-floor-group > small {
+  top: -9px;
+  margin: 0 2px 7px;
+  padding: 5px 5px 7px;
+  background: #f2f4f7;
+  border-bottom: 1px solid #dce2ea;
+}
+
+.booking-panel .room-picker-options .room-picker-floor-group + .room-picker-floor-group {
+  margin-top: 8px;
+  padding-top: 3px;
+  border-top: 0;
+}
+
+.booking-panel .room-picker-options .room-picker-row {
+  gap: 0;
+  margin-bottom: 6px;
+  background: #fff;
+  border: 1px solid #e0e5ec;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgb(23 34 58 / 3%);
+  transition: background-color .16s ease, border-color .16s ease, box-shadow .16s ease;
+}
+
+.booking-panel .room-picker-options .room-picker-row:hover {
+  background: #f9fafc;
+  border-color: #c8d0dc;
+  box-shadow: 0 3px 9px rgb(23 34 58 / 7%);
+}
+
+.booking-panel .room-picker-options .room-picker-row:has(> button.selected) {
+  background: #e9eef6;
+  border-color: #8c9bb1;
+  box-shadow: inset 3px 0 #304b78;
+}
+
+.booking-panel .room-picker-options .room-picker-row > button:first-child,
+.booking-panel .room-picker-options .room-picker-row > button:first-child:hover,
+.booking-panel .room-picker-options .room-picker-row > button:first-child.selected {
+  background: transparent;
+}

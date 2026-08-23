@@ -2348,7 +2348,6 @@ export default function Home() {
                 <DateField
                   controlledOpen={repeatEndCalendarOpen}
                   onOpenChange={setRepeatEndCalendarOpen}
-                  inlineWhenOpen
                   skipWeekends={!repeatWeekends}
                   onSkipWeekendsChange={(skip) => setRepeatWeekends(!skip)}
                   value={repeatEnd}

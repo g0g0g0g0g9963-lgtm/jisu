@@ -1847,6 +1847,116 @@ button {
   border-bottom: 1px solid #dfe3ea;
 }
 
+/* 빠른예약 회의실 목록은 패널 안에서만 열린다. 정보와 위치 버튼을
+   두 칸으로 나눠 좁은 노트북 화면에서도 글자가 서로 겹치지 않게 한다. */
+.booking-panel .room-picker-options.room-picker-popover {
+  left: 0;
+  right: 0;
+  width: 100%;
+  max-width: 100%;
+  z-index: 1300;
+  background: #fff;
+}
+
+.booking-panel .room-picker-card:has(.room-picker-options) {
+  z-index: 200;
+}
+
+.booking-panel .room-picker-options .room-picker-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 38px;
+  align-items: stretch;
+  gap: 6px;
+  width: 100%;
+}
+
+.booking-panel .room-picker-options .room-picker-row > button:first-child {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas:
+    "name name"
+    "spec spec"
+    "status next";
+  align-content: center;
+  gap: 3px 8px;
+  min-width: 0;
+  min-height: 70px;
+  padding: 8px 10px !important;
+}
+
+.booking-panel .room-picker-options .room-picker-name {
+  grid-area: name;
+  min-width: 0;
+}
+
+.booking-panel .room-picker-options .room-picker-name strong,
+.booking-panel .room-picker-options .room-picker-row > button:first-child > em {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.booking-panel .room-picker-options .room-picker-row > button:first-child > em {
+  grid-area: spec;
+}
+
+.booking-panel .room-picker-options .room-picker-status {
+  grid-area: status;
+  position: static !important;
+  width: auto;
+  height: auto !important;
+  margin: 0;
+  padding: 2px 6px;
+  transform: none !important;
+  white-space: nowrap;
+}
+
+.booking-panel .room-picker-options .room-picker-next {
+  grid-area: next;
+  align-self: center;
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.booking-panel .room-picker-options .room-picker-row-map {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: auto !important;
+  min-height: 70px !important;
+  padding: 0;
+  color: #ed1639 !important;
+  background: #fff5f7 !important;
+  border: 1px solid #f2cbd4 !important;
+  border-radius: 7px;
+}
+
+.booking-panel .room-picker-options .room-picker-row-map:hover {
+  color: #fff !important;
+  background: #ed1639 !important;
+  border-color: #ed1639 !important;
+}
+
+.booking-panel .room-picker-options .room-picker-row-map svg {
+  width: 17px;
+  height: 17px;
+}
+
+/* 반복 달력은 예약 버튼 영역보다 위에 떠서, 패널이 짧아도 가려지지 않는다. */
+.booking-panel .repeat-settings .date-panel-float {
+  z-index: 1300;
+}
+
+/* 열림 애니메이션이 끝난 뒤 identity transform을 남기면 fixed 달력의
+   좌표 기준이 패널로 바뀐다. 효과는 유지하고 좌표 기준만 원래대로 돌린다. */
+.booking-panel .booking-panel-content {
+  animation-fill-mode: none !important;
+}
+
 .schedule-hero .schedule-floor-switch button {
   min-width: 55px;
   min-height: 44px;

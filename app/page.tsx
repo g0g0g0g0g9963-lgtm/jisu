@@ -771,11 +771,13 @@ export default function Home() {
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const flyTimer = window.setTimeout(() => {
       const bell = document.querySelector<HTMLElement>(".header-bookings-bell");
-      if (!bell || reduceMotion) return;
-      const bounds = bell.getBoundingClientRect();
+      const card = document.querySelector<HTMLElement>(".booking-complete-dialog");
+      if (!bell || !card || reduceMotion) return;
+      const bellBounds = bell.getBoundingClientRect();
+      const cardBounds = card.getBoundingClientRect();
       setToastFlight({
-        x: bounds.left + bounds.width / 2 - window.innerWidth / 2,
-        y: bounds.top + bounds.height / 2 - window.innerHeight / 2,
+        x: bellBounds.left + bellBounds.width / 2 - (cardBounds.left + cardBounds.width / 2),
+        y: bellBounds.top + bellBounds.height / 2 - (cardBounds.top + cardBounds.height / 2),
       });
     }, 1800);
     const finishTimer = window.setTimeout(() => {
@@ -2862,7 +2864,7 @@ export default function Home() {
             </svg>
           </span>
           <h2>{toast.text}</h2>
-          {toast.kind === "booking" && <p>예약 내역이 내 알림에 저장됩니다.</p>}
+          {toast.kind === "booking" && <p>내 알림에 저장됩니다.</p>}
           <div className="early-summary booking-complete-summary">
             <b>{toast.detail}</b>
             <span>{toast.time}</span>

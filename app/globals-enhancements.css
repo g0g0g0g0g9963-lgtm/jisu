@@ -1883,12 +1883,14 @@ button {
 
 .schedule-hero .schedule-view-switch {
   display: flex;
-  gap: 8px;
+  gap: 0;
   height: 40px;
   padding: 0;
-  background: transparent;
-  border: 0;
-  box-shadow: none;
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid #cfd6e1;
+  border-radius: 9px;
+  box-shadow: 0 1px 2px rgb(21 28 43 / 4%);
 }
 
 .schedule-hero .schedule-view-switch button {
@@ -1897,23 +1899,25 @@ button {
   padding: 0 17px;
   color: #4f596b;
   background: #fff;
-  border: 1px solid #cfd6e1;
-  border-radius: 8px;
+  border: 0;
+  border-radius: 0;
   font-size: 13px;
   font-weight: 700;
-  box-shadow: 0 1px 2px rgb(21 28 43 / 4%);
+  box-shadow: none;
+}
+
+.schedule-hero .schedule-view-switch button + button {
+  border-left: 1px solid #cfd6e1;
 }
 
 .schedule-hero .schedule-view-switch button:hover:not(.active) {
   color: #17223a;
   background: #f6f8fb;
-  border-color: #aeb8c8;
 }
 
 .schedule-hero .schedule-view-switch button.active {
   color: #fff;
   background: #17223a;
-  border-color: #17223a;
   box-shadow: none;
 }
 

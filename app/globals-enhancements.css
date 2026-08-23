@@ -2352,3 +2352,109 @@ button {
     animation: none;
   }
 }
+
+/* 일정표 팝오버는 표에서 이미 아는 내용은 반복하지 않고 핵심만 보여 준다. */
+.app-shell .reservation-hover-card {
+  width: 218px;
+  gap: 6px;
+  padding: 12px 13px;
+  border-radius: 9px;
+}
+
+.app-shell .reservation-hover-card > strong {
+  color: #17223a;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.app-shell .reservation-hover-card > span.reservation-hover-main {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2px;
+}
+
+.app-shell .reservation-hover-card .reservation-hover-main b {
+  color: #304b78;
+  font-size: 12px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.app-shell .reservation-hover-card .reservation-hover-main em {
+  overflow: hidden;
+  color: #526078;
+  font-size: 11.5px;
+  font-style: normal;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-shell .reservation-hover-card > span.reservation-hover-owner {
+  display: block;
+  overflow: hidden;
+  color: #7a8598;
+  font-size: 11px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-shell .reservation-hover-card .reservation-detail-hint {
+  display: block;
+  margin-top: 3px;
+  padding-top: 7px;
+  color: #b4123a;
+  border-top: 1px solid #e8ebf0;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 800;
+}
+
+/* 진행 중인 예약의 조기 종료는 예약 블록이 아니라 수정창 안에서만 제공한다. */
+.edit-dialog .edit-running-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 3px;
+  padding: 11px 12px;
+  background: #f6f7fa;
+  border-radius: 9px;
+}
+
+.edit-dialog .edit-running-action > span {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.edit-dialog .edit-running-action b {
+  color: #17223a;
+  font-size: 12.5px;
+  font-weight: 800;
+}
+
+.edit-dialog .edit-running-action em {
+  color: #6b7485;
+  font-size: 10.5px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.edit-dialog .edit-running-action button {
+  flex: none;
+  min-height: 36px;
+  padding: 0 11px;
+  color: #fff;
+  background: #17223a;
+  border: 0;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 11.5px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.edit-dialog .edit-running-action button:hover { background: #25324c; }

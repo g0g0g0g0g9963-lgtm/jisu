@@ -639,24 +639,16 @@ function RoomDetailPopover({
 
 function ReservationHoverCard({
   booking,
-  room,
   isMine,
-  repeating,
 }: {
   booking: Booking;
-  room: Room;
   isMine: boolean;
-  repeating: boolean;
 }) {
   return <span className="reservation-hover-card" role="tooltip">
-    <strong>예약 정보</strong>
-    <span><b>일시</b>{formatDateLabel(booking.date)} · {booking.start}–{booking.end}</span>
-    <span><b>회의실</b>{room.name}</span>
-    <span><b>예약자</b>{booking.owner} · {teamOf(booking)}</span>
-    <span><b>목적</b>{booking.purpose || "사내 회의"}</span>
-    <span><b>장비</b>{room.equipment.join(" · ") || "없음"}</span>
-    <span><b>반복</b>{repeating ? "반복 예약" : "단건 예약"}</span>
-    {isMine && <em className="reservation-detail-hint">눌러서 상세 보기</em>}
+    <strong>{isMine ? "내 예약" : "예약 정보"}</strong>
+    <span className="reservation-hover-main"><b>{booking.start}–{booking.end}</b><em>{booking.purpose || "사내 회의"}</em></span>
+    {!isMine && <span className="reservation-hover-owner">{booking.owner} · {teamOf(booking)}</span>}
+    {isMine && <em className="reservation-detail-hint">눌러서 수정·삭제</em>}
   </span>;
 }
 
@@ -1085,10 +1077,6 @@ export default function Home() {
       && item.end === booking.end && item.purpose === booking.purpose)
     .map((item) => item.id);
 
-  const isRepeatedBooking = (booking: Booking) => bookings.filter((item) => item.roomId === booking.roomId
-    && item.start === booking.start && item.end === booking.end && item.owner === booking.owner
-    && item.purpose === booking.purpose).length > 1;
-
   const cancelBookings = async (ids: string[]) => {
     if (ids.length === 0) return;
     setCancelBusy(true);
@@ -1169,6 +1157,8 @@ export default function Home() {
     isMyBooking(booking) && booking.date === today && nowMinutes !== null
     && minutesOf(booking.start) <= nowMinutes && nowMinutes < minutesOf(booking.end) - 10;
 
+  const editingBooking = editDraft ? bookings.find((booking) => booking.id === editDraft.id) ?? null : null;
+
   const confirmEarlyEnd = async () => {
     if (!earlyEnd) return;
     const nextEnd = earlyEndTime(earlyEnd);
@@ -1189,6 +1179,7 @@ export default function Home() {
     }
     await refreshBookings();
     setEarlyEnd(null);
+    setEditDraft(null);
     setToast({
       text: "회의를 끝냈습니다.",
       detail: roomById(earlyEnd.roomId)?.name ?? "",
@@ -2093,17 +2084,7 @@ export default function Home() {
                               <strong>{booking.owner}</strong>
                               <time>{booking.start}–{booking.end}</time>
                               <small>{teamOf(booking)}</small>
-                              {/* 지금 진행 중인 내 예약에만. 남은 시간을 바로 돌려줄 수 있다. */}
-                              {isRunningNow(booking) && (
-                                <span
-                                  className="early-end"
-                                  role="button"
-                                  tabIndex={0}
-                                  onClick={(event) => { event.stopPropagation(); setEarlyEnd(booking); }}
-                                  onKeyDown={(event) => { if (event.key === "Enter") { event.stopPropagation(); setEarlyEnd(booking); } }}
-                                >회의 일찍 끝내기</span>
-                              )}
-                              <ReservationHoverCard booking={booking} room={room} isMine={isMyBooking(booking)} repeating={isRepeatedBooking(booking)} />
+                              <ReservationHoverCard booking={booking} isMine={isMyBooking(booking)} />
                             </button>
                           );
                         })}
@@ -2190,7 +2171,7 @@ export default function Home() {
                                 <b>{booking.owner}</b>
                                 <time>{booking.start}<span className="wk-end">–{booking.end}</span></time>
                                 <small>{teamOf(booking)}</small>
-                                <ReservationHoverCard booking={booking} room={room} isMine={isMyBooking(booking)} repeating={isRepeatedBooking(booking)} />
+                                <ReservationHoverCard booking={booking} isMine={isMyBooking(booking)} />
                               </button>
                             );
                           })}
@@ -2812,6 +2793,12 @@ export default function Home() {
               <span className="field-label">본부</span>
               <input value={editDraft.team} onChange={(event) => setEditDraft({ ...editDraft, team: event.target.value })} placeholder="본부를 입력하세요" />
             </label>
+            {editingBooking && isRunningNow(editingBooking) && (
+              <div className="edit-running-action">
+                <span><b>현재 진행 중인 회의</b><em>일찍 끝내면 남은 시간이 바로 예약 가능해집니다.</em></span>
+                <button type="button" onClick={() => setEarlyEnd(editingBooking)}>회의 일찍 끝내기</button>
+              </div>
+            )}
           </div>
           {editNotice && <p className="edit-dialog-notice">{editNotice}</p>}
           <div className="edit-dialog-foot">

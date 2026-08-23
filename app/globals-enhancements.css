@@ -3544,3 +3544,62 @@ button {
 .booking-toast-layer .booking-complete-dialog .booking-complete-summary {
   gap: 7px;
 }
+
+/* 2026-08-24 화면 배경 확정안
+   Moonlight Pearl은 중앙을 밝게 두고 가장자리만 쿨 실버로 눌러
+   무늬 없이 빛의 깊이만 만든다. 네 면의 기존 6px 여백은 3px로 줄인다. */
+.app-shell .map-panel {
+  padding: 3px;
+  background: #fff;
+}
+
+.app-shell .map-week-split {
+  background-color: #edf2f8;
+  background-image:
+    radial-gradient(
+      ellipse 82% 48% at 50% 17%,
+      rgb(255 255 255 / 100%) 0%,
+      rgb(253 254 255 / 96%) 38%,
+      rgb(246 249 252 / 74%) 64%,
+      rgb(231 238 247 / 20%) 88%,
+      transparent 100%
+    ),
+    linear-gradient(
+      112deg,
+      #e7edf5 0%,
+      #f7f9fc 18%,
+      #fff 50%,
+      #f5f8fb 78%,
+      #e3eaf3 100%
+    );
+}
+
+.app-shell .weekly-board {
+  background: transparent;
+}
+
+/* 기존 블루 그라데이션 리본은 유지하되, 아래 흰 표의 좌우선과
+   정확히 맞춰 한 부품처럼 보이게 한다. */
+.app-shell .weekly-board .weekly-heading.schedule-hero {
+  background:
+    linear-gradient(
+      90deg,
+      rgb(23 34 58 / 4%) 0%,
+      rgb(71 98 149 / 22%) 34%,
+      rgb(53 82 139 / 58%) 70%,
+      #17223a 100%
+    ) center bottom / calc(100% - 6px) 4px no-repeat;
+}
+
+/* C안: 표를 카드처럼 두껍게 만들지 않고, 3px 숨을 둔 얇은 흰 시트로 띄운다. */
+.app-shell .weekly-board .week-timeline,
+.app-shell .weekly-board .daily-timeline,
+.app-shell .weekly-board .weekly-room-board {
+  margin: 3px 3px 3px;
+  background-color: #fff;
+  border: 1px solid rgb(174 186 203 / 48%);
+  border-radius: 6px;
+  box-shadow:
+    0 1px 1px rgb(23 34 58 / 4%),
+    0 12px 28px rgb(48 75 120 / 8%);
+}

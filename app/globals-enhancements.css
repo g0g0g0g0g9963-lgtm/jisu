@@ -3441,12 +3441,6 @@ button {
   box-shadow: none;
 }
 
-/* A안: 전체 구분선은 없애고 상단바 아래에 넓고 옅은 그림자만 남긴다. */
-.app-shell .topbar {
-  border-bottom: 0 !important;
-  box-shadow: 0 8px 24px rgb(23 34 58 / 6%);
-}
-
 /* BDO 공식 CDN 원본 로고의 비율과 선명도를 유지한다. */
 .topbar .bdo-logo {
   width: 92px;

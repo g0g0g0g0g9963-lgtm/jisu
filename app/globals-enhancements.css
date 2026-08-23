@@ -3424,3 +3424,19 @@ button {
   background: transparent;
   border-radius: 7px;
 }
+
+/* 3개 달력 아이콘 공통: 오늘 위치를 가리키는 작은 날짜 점만 BDO 레드로 통일한다. */
+.app-shell .calendar-icon-dot {
+  fill: #ed1639 !important;
+}
+
+/* 하단 예약 버튼은 상단 남색 헤더처럼 그림자 없이 평평한 12px 표면으로 맞춘다. */
+.booking-panel:not(.is-collapsed) .booking-submit .reserve-button,
+.booking-panel:not(.is-collapsed) .booking-submit .reserve-button:not(:disabled),
+.booking-panel:not(.is-collapsed) .booking-submit .reserve-button:hover:not(:disabled),
+.booking-panel:not(.is-collapsed) .booking-submit .reserve-button:active:not(:disabled) {
+  height: 60px;
+  min-height: 60px;
+  border-radius: 12px;
+  box-shadow: none;
+}

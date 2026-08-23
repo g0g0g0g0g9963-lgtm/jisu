@@ -325,7 +325,7 @@ function DateField({ value, min, onChange, rangeFrom, onRangeChange, variant = "
    * 예약 폼은 입력칸 영역만 스크롤되는데, 달력이 그보다 커서 위아래 어느 쪽으로
    * 펼쳐도 잘린다. 그 안에서 열릴 때는 화면 기준(fixed)으로 띄워 잘리지 않게 한다.
    */
-  const [floatAt, setFloatAt] = useState<{ left: number; top: number } | null>(null);
+  const [floatAt, setFloatAt] = useState<{ left: number; top: number; width?: number } | null>(null);
   useEffect(() => {
     if (!open || inlineWhenOpen) {
       setFloatAt(null);
@@ -354,14 +354,17 @@ function DateField({ value, min, onChange, rangeFrom, onRangeChange, variant = "
       }
 
       const box = wrap.getBoundingClientRect();
+      // 반복 기간 달력은 종료일 입력칸과 정확히 같은 폭으로 열어 하나의 컨트롤처럼 보이게 한다.
+      const width = rangeFrom ? box.width : undefined;
+      const panelWidth = width ?? panel.offsetWidth;
       // 끝까지 굴려도 모자라면 화면 아래에 붙여 둔다. 그래도 위로는 열지 않는다.
       const top = Math.min(box.bottom + 6, Math.max(8, window.innerHeight - 8 - height));
-      const left = Math.max(8, box.right - panel.offsetWidth);
+      const left = Math.max(8, box.right - panelWidth);
       // 값이 그대로면 다시 그리지 않는다. 스크롤마다 상태를 바꾸면 끌기가 끊긴다.
       setFloatAt((current) =>
-        current && Math.abs(current.left - left) < 1 && Math.abs(current.top - top) < 1
+        current && Math.abs(current.left - left) < 1 && Math.abs(current.top - top) < 1 && Math.abs((current.width ?? 0) - (width ?? 0)) < 1
           ? current
-          : { left, top });
+          : { left, top, width });
     };
     place(true);
     // 예전에는 스크롤이 나면 닫아 버렸다. 그래서 날짜를 고르는 순간
@@ -482,7 +485,7 @@ function DateField({ value, min, onChange, rangeFrom, onRangeChange, variant = "
       {open && (
         <div
           className={`date-panel${floatAt ? " date-panel-float" : ""}${inlineWhenOpen ? " date-panel-inline" : ""}`}
-          style={floatAt ? { position: "fixed", left: floatAt.left, top: floatAt.top, right: "auto" } : undefined}
+          style={floatAt ? { position: "fixed", left: floatAt.left, top: floatAt.top, right: "auto", width: floatAt.width } : undefined}
           role="dialog"
           aria-label="날짜 선택"
         >

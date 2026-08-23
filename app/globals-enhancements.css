@@ -2750,47 +2750,48 @@ button {
   background: #eef1f5;
 }
 
-/* 회의실 선택창은 패널 바탕과 항목을 서로 다른 면으로 나눠
-   긴 목록에서도 층과 개별 회의실의 경계가 바로 보이게 한다. */
+/* 회의실 선택창 A안: 반복되는 카드 외곽을 없애고 얇은 구분선으로
+   층과 회의실을 읽는 평면 목록을 만든다. */
 .booking-panel .room-picker-options.room-picker-popover {
-  padding: 9px 10px 11px;
-  background: #f2f4f7;
+  padding: 8px 12px 10px;
+  background: #fff;
   border-color: #d9dfe8;
 }
 
 .booking-panel .room-picker-options .room-picker-floor-group > small {
-  top: -9px;
-  margin: 0 2px 7px;
-  padding: 5px 5px 7px;
-  background: #f2f4f7;
-  border-bottom: 1px solid #dce2ea;
+  top: -8px;
+  margin: 0;
+  padding: 7px 5px 8px;
+  background: #fff;
+  border-bottom: 1px solid #cfd6e1;
 }
 
 .booking-panel .room-picker-options .room-picker-floor-group + .room-picker-floor-group {
-  margin-top: 8px;
-  padding-top: 3px;
+  margin-top: 10px;
+  padding-top: 0;
   border-top: 0;
 }
 
 .booking-panel .room-picker-options .room-picker-row {
   gap: 0;
-  margin-bottom: 6px;
-  background: #fff;
-  border: 1px solid #e0e5ec;
-  border-radius: 8px;
-  box-shadow: 0 1px 2px rgb(23 34 58 / 3%);
-  transition: background-color .16s ease, border-color .16s ease, box-shadow .16s ease;
+  margin: 0;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid #e3e7ed;
+  border-radius: 0;
+  box-shadow: none;
+  transition: background-color .16s ease, box-shadow .16s ease;
 }
 
 .booking-panel .room-picker-options .room-picker-row:hover {
-  background: #f9fafc;
-  border-color: #c8d0dc;
-  box-shadow: 0 3px 9px rgb(23 34 58 / 7%);
+  background: #f7f9fc;
+  border-color: #e3e7ed;
+  box-shadow: none;
 }
 
 .booking-panel .room-picker-options .room-picker-row:has(> button.selected) {
-  background: #e9eef6;
-  border-color: #8c9bb1;
+  background: #f0f3f8;
+  border-color: #d8dee8;
   box-shadow: inset 3px 0 #304b78;
 }
 
@@ -2798,4 +2799,39 @@ button {
 .booking-panel .room-picker-options .room-picker-row > button:first-child:hover,
 .booking-panel .room-picker-options .room-picker-row > button:first-child.selected {
   background: transparent;
+}
+
+/* 예약 단계 C안: 네이비 버튼 대신 01–04 편집 번호와 짧은 레드 선을 쓴다. */
+.booking-panel:not(.is-collapsed) .booking-section-heading {
+  gap: 10px;
+  min-height: 24px;
+  padding-left: 9px;
+  border-left: 3px solid #ed1639;
+}
+
+.booking-panel:not(.is-collapsed) .booking-section-heading > span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: auto;
+  height: auto;
+  min-width: 29px;
+  flex: 0 0 auto;
+  color: #17223a;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  font-family: Oswald, Pretendard, sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.booking-panel:not(.is-collapsed) .booking-section-heading > span::before {
+  content: "0";
+}
+
+.booking-panel:not(.is-collapsed) .booking-section-heading > b {
+  font-size: 15.5px;
+  font-weight: 750;
 }

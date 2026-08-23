@@ -2685,3 +2685,12 @@ button {
 .booking-panel .reserve-button:not(:disabled) > span {
   color: #fff;
 }
+
+/* 넓은 네이비 헤더에 맞춰 영문 머리표와 한글 제목의 비중을 한 단계 높인다. */
+.booking-panel:not(.is-collapsed) .booking-title .booking-title-copy h2 {
+  font-size: 22px;
+}
+
+.booking-panel:not(.is-collapsed) .booking-title .booking-title-copy::before {
+  font-size: 12.5px;
+}

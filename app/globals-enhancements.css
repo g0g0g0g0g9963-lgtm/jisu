@@ -2152,3 +2152,203 @@ button {
   background: #17223a;
   border-color: #17223a;
 }
+
+/* 예약 확인창과 같은 규격의 완료 카드. 예약 성공일 때만 종으로 이동한다. */
+.booking-toast-layer {
+  position: fixed;
+  z-index: 1450;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+.booking-toast-layer.booking-complete-layer {
+  pointer-events: auto;
+  background: #17223a52;
+  animation: booking-complete-backdrop-in .18s ease-out both;
+}
+
+.booking-toast-layer .booking-toast.early-dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: min(calc(100vw - 40px), 360px);
+  min-width: 0;
+  max-width: none;
+  margin: 0;
+  padding: 20px 22px 18px;
+  transform: translate(-50%, -50%);
+  border: 0;
+  border-radius: 10px;
+  text-align: left;
+  justify-items: stretch;
+  gap: 0;
+  pointer-events: auto;
+  box-shadow: 0 18px 44px #17223a33;
+  animation: booking-complete-card-in .24s cubic-bezier(.2, .8, .2, 1) both;
+}
+
+.booking-toast-layer .booking-complete-dialog {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  grid-template-rows: auto auto auto;
+  column-gap: 12px;
+  align-items: center;
+}
+
+.booking-toast-layer .booking-toast-check {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+  width: 40px;
+  height: 40px;
+  color: #c21238;
+  background: #fff;
+  border-radius: 50%;
+  place-items: center;
+  display: grid;
+  box-shadow: inset 0 0 0 2px #c21238;
+}
+
+.booking-toast-layer .booking-toast-check svg {
+  width: 21px;
+  height: 21px;
+  display: block;
+}
+
+.booking-toast-layer .booking-toast-check svg path { stroke: currentColor; }
+
+.booking-toast-layer .booking-toast h2 {
+  grid-column: 2;
+  margin: 0 28px 4px 0;
+  color: #17223a;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.booking-toast-layer .booking-toast > p {
+  grid-column: 2;
+  margin: 0;
+  color: #6b7485;
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+
+.booking-toast-layer .booking-complete-summary {
+  grid-column: 1 / -1;
+  margin-top: 16px;
+  padding: 12px 14px;
+  gap: 4px;
+  background: #f6f7fa;
+  border-radius: 10px;
+}
+
+.booking-toast-layer .booking-complete-summary b {
+  color: #17223a;
+  font-size: 13.5px;
+  font-weight: 700;
+}
+
+.booking-toast-layer .booking-complete-summary span {
+  color: #c21238;
+  font-size: 12.5px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.booking-toast-layer .booking-toast-close {
+  position: absolute;
+  top: 13px;
+  right: 13px;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  color: #6b7485;
+  background: transparent;
+  border: 0;
+  border-radius: 7px;
+  cursor: pointer;
+  place-items: center;
+  display: grid;
+}
+
+.booking-toast-layer .booking-toast-close:hover { color: #17223a; background: #f1f3f7; }
+.booking-toast-layer .booking-toast-close svg { width: 14px; height: 14px; }
+
+.booking-toast-layer.is-flying .booking-toast {
+  pointer-events: none;
+  animation: booking-complete-to-bell .7s cubic-bezier(.55, .02, .3, 1) both;
+}
+
+.booking-toast-layer.is-flying.booking-complete-layer {
+  animation: booking-complete-backdrop-out .46s ease-out both;
+}
+
+.header-account .header-nav .header-bookings-bell.booking-arrival {
+  animation: booking-bell-arrival .72s cubic-bezier(.2, .8, .2, 1) both;
+}
+
+.header-account .header-nav .header-bookings-bell.booking-arrival::after {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border: 2px solid #ed1639;
+  border-radius: 50%;
+  animation: booking-bell-ring .72s ease-out both;
+}
+
+.header-account .header-nav .header-bookings-bell.booking-arrival .header-bookings-dot {
+  animation: booking-dot-pop .72s cubic-bezier(.2, .8, .2, 1) both;
+}
+
+@keyframes booking-complete-card-in {
+  from { opacity: 0; transform: translate(-50%, calc(-50% + 10px)) scale(.97); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+@keyframes booking-complete-backdrop-in {
+  from { background: #17223a00; }
+  to { background: #17223a52; }
+}
+
+@keyframes booking-complete-to-bell {
+  0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  72% { opacity: .8; }
+  100% { opacity: 0; transform: translate(calc(-50% + var(--toast-shift-x)), calc(-50% + var(--toast-shift-y))) scale(.08); }
+}
+
+@keyframes booking-complete-backdrop-out {
+  from { background: #17223a52; }
+  to { background: #17223a00; }
+}
+
+@keyframes booking-bell-arrival {
+  0%, 100% { color: #304b78; transform: rotate(0); }
+  24% { color: #ed1639; transform: rotate(-12deg) scale(1.08); }
+  48% { transform: rotate(10deg) scale(1.08); }
+  72% { transform: rotate(-5deg); }
+}
+
+@keyframes booking-bell-ring {
+  from { opacity: .65; transform: scale(.45); }
+  to { opacity: 0; transform: scale(1.55); }
+}
+
+@keyframes booking-dot-pop {
+  0% { transform: scale(0); }
+  45% { transform: scale(1.5); }
+  100% { transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .booking-toast-layer,
+  .booking-toast-layer .booking-toast.early-dialog,
+  .booking-toast-layer.is-flying .booking-toast,
+  .booking-toast-layer.is-flying.booking-complete-layer,
+  .header-account .header-nav .header-bookings-bell.booking-arrival,
+  .header-account .header-nav .header-bookings-bell.booking-arrival::after,
+  .header-account .header-nav .header-bookings-bell.booking-arrival .header-bookings-dot {
+    animation: none;
+  }
+}

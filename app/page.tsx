@@ -1,6 +1,6 @@
 "use client";
 
-import { FocusEvent as ReactFocusEvent, FormEvent, KeyboardEvent as ReactKeyboardEvent, PointerEvent as ReactPointerEvent, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { CSSProperties, FocusEvent as ReactFocusEvent, FormEvent, KeyboardEvent as ReactKeyboardEvent, PointerEvent as ReactPointerEvent, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import siteConfig from "./config/site.json";
 import equipmentCatalog from "./config/equipment.json";
 import officeTeams from "./config/teams.json";
@@ -99,6 +99,8 @@ type Toast = {
   /** 회의실과 날짜. 시간은 색을 달리 주려고 따로 둔다. */
   detail: string;
   time: string;
+  /** 예약 완료만 상단 알림으로 이동한다. 수정·취소 안내는 제자리에 남긴다. */
+  kind?: "booking" | "notice";
 };
 
 const OWNER_STORAGE_KEY = "bdo-meeting-owner";
@@ -684,6 +686,8 @@ export default function Home() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [notice, setNotice] = useState("");
   const [toast, setToast] = useState<Toast | null>(null);
+  const [toastFlight, setToastFlight] = useState<{ x: number; y: number } | null>(null);
+  const [bellArrival, setBellArrival] = useState(false);
   const [syncError, setSyncError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   // SSO 모드에서는 로그인 계정이 예약자다. null이면 익명 모드(이름 직접 입력).
@@ -767,6 +771,42 @@ export default function Home() {
 
   const { date, start, end } = slot;
   const setDate = (next: DateKey) => setSlot((current) => ({ ...current, date: next }));
+
+  // 예약 완료 카드는 충분히 읽을 시간을 둔 뒤 상단 알림 종으로 들어간다.
+  // 위치를 고정값으로 두지 않고 실제 종의 좌표를 재서 노트북·모니터 폭 모두 맞춘다.
+  useEffect(() => {
+    if (!toast || toast.kind !== "booking") {
+      setToastFlight(null);
+      return;
+    }
+
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const flyTimer = window.setTimeout(() => {
+      const bell = document.querySelector<HTMLElement>(".header-bookings-bell");
+      if (!bell || reduceMotion) return;
+      const bounds = bell.getBoundingClientRect();
+      setToastFlight({
+        x: bounds.left + bounds.width / 2 - window.innerWidth / 2,
+        y: bounds.top + bounds.height / 2 - window.innerHeight / 2,
+      });
+    }, 1800);
+    const finishTimer = window.setTimeout(() => {
+      setToast(null);
+      setToastFlight(null);
+      setBellArrival(true);
+    }, reduceMotion ? 2200 : 2500);
+
+    return () => {
+      window.clearTimeout(flyTimer);
+      window.clearTimeout(finishTimer);
+    };
+  }, [toast]);
+
+  useEffect(() => {
+    if (!bellArrival) return;
+    const timer = window.setTimeout(() => setBellArrival(false), 850);
+    return () => window.clearTimeout(timer);
+  }, [bellArrival]);
 
   // 예약의 진실의 원천은 서버 DB다. 30초 주기 + 창 포커스 시 다시 읽어
   // 다른 사람이 잡은 예약을 화면에 반영한다.
@@ -1628,6 +1668,7 @@ export default function Home() {
         ? `${selected.name} · 반복 ${dates.length}회`
         : `${selected.name} · ${formatDateLabel(dates[0])}`,
       time: `${start}–${end}`,
+      kind: "booking",
     });
     // 방금 잡은 시간이 양식에 그대로 남으면 "이미 예약된 시간"으로 보인다.
     // 같은 길이로 비어 있는 시간대를 찾아 옮겨 두어 이어서 예약하기 쉽게 한다.
@@ -1683,7 +1724,7 @@ export default function Home() {
             <span className="header-bookings-wrap">
               <button
                 type="button"
-                className="header-nav-item header-bookings-bell"
+                className={`header-nav-item header-bookings-bell${bellArrival ? " booking-arrival" : ""}`}
                 aria-label={`내 알림${upcomingMyBookings.length > 0 ? `, 예정 예약 ${upcomingMyBookings.length}건` : ""}`}
                 aria-expanded={notificationsOpen}
                 aria-controls="header-notifications-popover"
@@ -2603,7 +2644,7 @@ export default function Home() {
           <div className="early-summary booking-confirm-summary">
             <b>{selected.name}</b>
             <span>{formatDateLabel(date)} · {start}–{end}</span>
-            <span>{spokenDuration(minutesOf(end) - minutesOf(start))} · {submitPreviewDates.length}회</span>
+            <span>{spokenDuration(minutesOf(end) - minutesOf(start))}{submitPreviewDates.length > 1 ? ` · ${submitPreviewDates.length}회` : ""}</span>
             {purpose.trim() && <span>{purpose.trim()}</span>}
           </div>
           <div className="early-foot">
@@ -2886,17 +2927,29 @@ export default function Home() {
           </div>
         );
       })()}
-      {/* 예전에는 3.5초 뒤 저절로 사라졌다. 내용을 다 읽기 전에 닫히는
-          경우가 있어, 이제는 닫기를 눌러야 사라진다. */}
-      {toast && <div className="booking-toast" role="status" aria-live="polite">
-        <span className="booking-toast-check" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" focusable="false">
-            <path d="M5 12.5 10 17.5 19 7.5" stroke="#fff" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </span>
-        <b>{toast.text}</b>
-        <span className="booking-toast-detail">{toast.detail} <em>{toast.time}</em></span>
-        <button type="button" className="booking-toast-close" aria-label="알림 닫기" onClick={() => setToast(null)}><CloseIcon /></button>
+      {toast && <div className={`booking-toast-layer${toast.kind === "booking" ? " booking-complete-layer" : ""}${toastFlight ? " is-flying" : ""}`}>
+        <section
+          className="booking-toast early-dialog booking-complete-dialog"
+          role="status"
+          aria-live="polite"
+          style={toastFlight ? {
+            "--toast-shift-x": `${toastFlight.x}px`,
+            "--toast-shift-y": `${toastFlight.y}px`,
+          } as CSSProperties : undefined}
+        >
+          <span className="booking-toast-check" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" focusable="false">
+              <path d="M5 12.5 10 17.5 19 7.5" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </span>
+          <h2>{toast.text}</h2>
+          {toast.kind === "booking" && <p>예약 내역이 내 알림에 저장됩니다.</p>}
+          <div className="early-summary booking-complete-summary">
+            <b>{toast.detail}</b>
+            <span>{toast.time}</span>
+          </div>
+          <button type="button" className="booking-toast-close" aria-label="알림 닫기" onClick={() => setToast(null)}><CloseIcon /></button>
+        </section>
       </div>}
       <footer><span>※ 수용 인원과 장비 정보는 시제품용이며 관리자 설정에서 수정할 수 있습니다.</span><strong>사내 회의실 예약 시스템 · Prototype</strong></footer>
     </main>

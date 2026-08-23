@@ -2738,7 +2738,7 @@ button {
   transform: translateY(-50%) rotate(45deg);
 }
 
-/* 회의 현황은 A 시안의 미스트 그레이로 묶되 화면 전체에는 깔지 않는다.
+/* 회의 현황은 B 시안의 클라우드 그레이로 묶되 화면 전체에는 깔지 않는다.
    네 면의 흰 여백을 같은 6px로 좁혀 표를 넓히면서 프레임은 유지한다. */
 .app-shell .map-panel {
   padding: 6px;
@@ -2747,5 +2747,5 @@ button {
 
 .app-shell .map-week-split,
 .app-shell .weekly-board {
-  background: #f3f6fa;
+  background: #eef1f5;
 }

@@ -2737,3 +2737,15 @@ button {
   top: 50%;
   transform: translateY(-50%) rotate(45deg);
 }
+
+/* 회의 현황은 C 시안의 옅은 네이비 그레이로 묶되 화면 전체에는 깔지 않는다.
+   흰 외곽 여백을 기존보다 조금 줄여 모니터에서 표가 더 넓게 보이게 한다. */
+.app-shell .map-panel {
+  padding: 8px 18px 10px;
+  background: #fff;
+}
+
+.app-shell .map-week-split,
+.app-shell .weekly-board {
+  background: #e8edf5;
+}

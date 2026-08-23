@@ -710,8 +710,6 @@ export default function Home() {
   // 조기 종료 확인 창에 띄울 예약.
   const [earlyEnd, setEarlyEnd] = useState<Booking | null>(null);
   const [earlyEndBusy, setEarlyEndBusy] = useState(false);
-  const [actionIdentity, setActionIdentity] = useState("");
-  const [actionNotice, setActionNotice] = useState("");
   // 주간 확인 창을 누른 자리에 띄우기 위한 좌표.
   const [confirmAt, setConfirmAt] = useState<{ x: number; y: number } | null>(null);
   // 표에서 값을 가져온 뒤 아직 예약하기를 누르지 않은 상태. 표의 점선 블록과
@@ -1037,7 +1035,7 @@ export default function Home() {
   const cancelBookings = async (ids: string[]) => {
     if (ids.length === 0) return;
     setCancelBusy(true);
-    const results = await Promise.all(ids.map((id) => deleteBookingRequest(id, myBookingOwner.trim())));
+    const results = await Promise.all(ids.map((id) => deleteBookingRequest(id, currentUser?.name ?? myBookingOwner.trim())));
     setCancelBusy(false);
     setCancelSelection(null);
     await refreshBookings();
@@ -1114,17 +1112,8 @@ export default function Home() {
     isMyBooking(booking) && booking.date === today && nowMinutes !== null
     && minutesOf(booking.start) <= nowMinutes && nowMinutes < minutesOf(booking.end) - 10;
 
-  const actionOwner = () => currentUser?.name ?? actionIdentity.trim();
-
-  const actionAuthorized = (booking: Booking) => {
-    if (currentUser || actionOwner() === booking.owner) return true;
-    setActionNotice("예약자 이름을 확인해 주세요.");
-    return false;
-  };
-
   const confirmEarlyEnd = async () => {
     if (!earlyEnd) return;
-    if (!actionAuthorized(earlyEnd)) return;
     const nextEnd = earlyEndTime(earlyEnd);
     setEarlyEndBusy(true);
     const result = await patchBookingRequest(earlyEnd.id, {
@@ -1132,7 +1121,7 @@ export default function Home() {
       date: earlyEnd.date,
       start: earlyEnd.start,
       end: nextEnd,
-      owner: actionOwner(),
+      owner: currentUser?.name ?? earlyEnd.owner,
       team: earlyEnd.team ?? "",
       purpose: earlyEnd.purpose,
     });
@@ -1153,7 +1142,7 @@ export default function Home() {
   const deleteEditing = async () => {
     if (!editDraft) return;
     setEditBusy(true);
-    const result = await deleteBookingRequest(editDraft.id, myBookingOwner.trim());
+    const result = await deleteBookingRequest(editDraft.id, currentUser?.name ?? myBookingOwner.trim());
     setEditBusy(false);
     if (!result.ok) {
       setEditNotice(result.message);
@@ -2048,8 +2037,8 @@ export default function Home() {
                                   className="early-end"
                                   role="button"
                                   tabIndex={0}
-                                  onClick={(event) => { event.stopPropagation(); setActionIdentity(myBookingOwner); setActionNotice(""); setEarlyEnd(booking); }}
-                                  onKeyDown={(event) => { if (event.key === "Enter") { event.stopPropagation(); setActionIdentity(myBookingOwner); setActionNotice(""); setEarlyEnd(booking); } }}
+                                  onClick={(event) => { event.stopPropagation(); setEarlyEnd(booking); }}
+                                  onKeyDown={(event) => { if (event.key === "Enter") { event.stopPropagation(); setEarlyEnd(booking); } }}
                                 >회의 일찍 끝내기</span>
                               )}
                               <ReservationHoverCard booking={booking} room={room} isMine={isMyBooking(booking)} repeating={isRepeatedBooking(booking)} />
@@ -2797,8 +2786,6 @@ export default function Home() {
             <span>{earlyEnd.start}–{earlyEnd.end} → <em>{earlyEnd.start}–{earlyEndTime(earlyEnd)}</em></span>
             <span className="early-free">{spokenDuration(minutesOf(earlyEnd.end) - minutesOf(earlyEndTime(earlyEnd)))} 다시 열립니다</span>
           </div>
-          {!currentUser && <label className="action-identity"><span>예약자 확인</span><input value={actionIdentity} onChange={(event) => { setActionIdentity(event.target.value); setActionNotice(""); }} placeholder="예약자 이름" /></label>}
-          {actionNotice && <p className="action-notice" role="alert">{actionNotice}</p>}
           <div className="early-foot">
             <button type="button" onClick={() => setEarlyEnd(null)}>그대로 두기</button>
             <button type="button" className="early-go" disabled={earlyEndBusy} onClick={confirmEarlyEnd}>

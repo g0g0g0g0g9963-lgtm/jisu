@@ -1714,13 +1714,10 @@ button {
 
 /* 예약 카드 상세·종료·연장 */
 .reservation-hover-card .reservation-detail-hint{color:#c21238;border-top:1px solid #e6e9ef;margin-top:3px;padding-top:7px;font-size:11px;font-style:normal;font-weight:800}
-.reservation-hover-card.is-private{min-width:210px}
-.schedule-design-cards .daily-timeline .timeline-event .extend-booking{z-index:3;color:#163f70;white-space:nowrap;background:#fff;border-radius:999px;padding:3px 9px;font-size:11px;font-weight:800;position:absolute;right:7px;bottom:32px;box-shadow:inset 0 0 0 1px #b9c9df}
-.schedule-design-cards .daily-timeline .timeline-event .extend-booking:hover{color:#fff;background:#163f70}
 .action-identity{display:grid;gap:6px;margin-top:12px}.action-identity span{color:#5f6474;font-size:11px;font-weight:700}.action-identity input{height:40px;border:1px solid #d9dee8;border-radius:8px;padding:0 11px;font:inherit}.action-identity input:focus{border-color:#ed1639;outline:2px solid #ed163926}
-.action-notice{color:#b32138;margin:8px 0 0;font-size:11.5px;font-weight:700}.extend-dialog h2{color:#17223a}
+.action-notice{color:#b32138;margin:8px 0 0;font-size:11.5px;font-weight:700}
 
 /* 키보드·터치 */
 .timeline-day-body:focus-visible{z-index:8;outline:3px solid #22366f;outline-offset:-3px}
-@media (pointer:coarse){.booking-panel button,.booking-panel input,.booking-panel select,.weekly-cell-add,.early-foot button{min-height:44px}.schedule-design-cards .daily-timeline .timeline-event{min-width:44px}.schedule-design-cards .daily-timeline .timeline-event .early-end,.schedule-design-cards .daily-timeline .timeline-event .extend-booking{min-height:36px;display:flex;align-items:center}.booking-panel .room-picker-popover{width:min(480px,calc(100vw - 24px))}}
+@media (pointer:coarse){.booking-panel button,.booking-panel input,.booking-panel select,.weekly-cell-add,.early-foot button{min-height:44px}.schedule-design-cards .daily-timeline .timeline-event{min-width:44px}.schedule-design-cards .daily-timeline .timeline-event .early-end{min-height:36px;display:flex;align-items:center}.booking-panel .room-picker-popover{width:min(480px,calc(100vw - 24px))}}
 @media (max-width:900px){.booking-panel .room-picker-popover{width:100%;right:0}.time-picker-slots{grid-template-columns:repeat(3,minmax(0,1fr))}}

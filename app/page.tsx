@@ -608,23 +608,13 @@ function ReservationHoverCard({
   booking,
   room,
   isMine,
-  privateMode,
   repeating,
 }: {
   booking: Booking;
   room: Room;
   isMine: boolean;
-  privateMode: boolean;
   repeating: boolean;
 }) {
-  if (privateMode) {
-    return <span className="reservation-hover-card is-private" role="tooltip">
-      <strong>예약 정보</strong>
-      <span><b>시간</b>{booking.start}–{booking.end}</span>
-      <span><b>상태</b>사용 중 · 사내 회의</span>
-      <span><b>회의실</b>{room.name}</span>
-    </span>;
-  }
   return <span className="reservation-hover-card" role="tooltip">
     <strong>예약 정보</strong>
     <span><b>일시</b>{formatDateLabel(booking.date)} · {booking.start}–{booking.end}</span>
@@ -709,8 +699,6 @@ export default function Home() {
   // 조기 종료 확인 창에 띄울 예약.
   const [earlyEnd, setEarlyEnd] = useState<Booking | null>(null);
   const [earlyEndBusy, setEarlyEndBusy] = useState(false);
-  const [extendBooking, setExtendBooking] = useState<Booking | null>(null);
-  const [extendBusy, setExtendBusy] = useState(false);
   const [actionIdentity, setActionIdentity] = useState("");
   const [actionNotice, setActionNotice] = useState("");
   // 주간 확인 창을 누른 자리에 띄우기 위한 좌표.
@@ -816,7 +804,6 @@ export default function Home() {
       setSlotConfirmation(null);
       setWeeklyPick(null);
       setSubmitPreviewDates(null);
-      setExtendBooking(null);
       setEarlyEnd(null);
     };
     document.addEventListener("click", closePickers);
@@ -1113,14 +1100,6 @@ export default function Home() {
     isMyBooking(booking) && booking.date === today && nowMinutes !== null
     && minutesOf(booking.start) <= nowMinutes && nowMinutes < minutesOf(booking.end) - 10;
 
-  const canExtendBooking = (booking: Booking): boolean => {
-    const extendedEnd = addMinutes(booking.end, bookingDefaults.slotMinutes);
-    return isMyBooking(booking) && booking.date === today && nowMinutes !== null
-      && minutesOf(booking.start) <= nowMinutes && nowMinutes < minutesOf(booking.end)
-      && minutesOf(extendedEnd) <= minutesOf(bookingDefaults.closingTime)
-      && slotIsFree(booking.roomId, booking.date, booking.end, extendedEnd, booking.id);
-  };
-
   const actionOwner = () => currentUser?.name ?? actionIdentity.trim();
 
   const actionAuthorized = (booking: Booking) => {
@@ -1154,34 +1133,6 @@ export default function Home() {
       text: "회의를 끝냈습니다.",
       detail: roomById(earlyEnd.roomId)?.name ?? "",
       time: `${nextEnd}부터 예약 가능`,
-    });
-  };
-
-  const confirmExtendBooking = async () => {
-    if (!extendBooking || !canExtendBooking(extendBooking) || !actionAuthorized(extendBooking)) return;
-    const nextEnd = addMinutes(extendBooking.end, bookingDefaults.slotMinutes);
-    setExtendBusy(true);
-    const result = await patchBookingRequest(extendBooking.id, {
-      roomId: extendBooking.roomId,
-      date: extendBooking.date,
-      start: extendBooking.start,
-      end: nextEnd,
-      owner: actionOwner(),
-      team: extendBooking.team ?? "",
-      purpose: extendBooking.purpose,
-    });
-    setExtendBusy(false);
-    if (!result.ok) {
-      setActionNotice(result.message);
-      await refreshBookings();
-      return;
-    }
-    await refreshBookings();
-    setExtendBooking(null);
-    setToast({
-      text: "예약을 30분 연장했습니다.",
-      detail: roomById(extendBooking.roomId)?.name ?? "",
-      time: `${extendBooking.end}–${nextEnd} 추가`,
     });
   };
 
@@ -2025,18 +1976,17 @@ export default function Home() {
                           return (
                             <button
                               type="button"
-                              className={`timeline-event tone-${index % 3}${isMyBooking(booking) && !monitorMode ? " is-mine" : ""} ${sizeClass}`}
+                              className={`timeline-event tone-${index % 3}${isMyBooking(booking) ? " is-mine" : ""} ${sizeClass}`}
                               key={booking.id}
                               style={{ top: `${top}%`, height: `${height}%`, left, right }}
-                              aria-label={monitorMode ? `${booking.start}–${booking.end} · 사용 중`
-                                : isMyBooking(booking) ? `내 예약 ${booking.start}–${booking.end} · 눌러서 수정하거나 삭제합니다`
+                              aria-label={isMyBooking(booking) ? `내 예약 ${booking.start}–${booking.end} · 눌러서 수정하거나 삭제합니다`
                                 : `${booking.start}–${booking.end} / ${booking.owner} · ${teamOf(booking)}`}
                               onPointerDown={(event) => event.stopPropagation()}
-                              onClick={(event) => { event.stopPropagation(); setSelectedId(room.id); if (!monitorMode) openEditor(booking); }}
+                              onClick={(event) => { event.stopPropagation(); setSelectedId(room.id); openEditor(booking); }}
                             >
-                              <strong>{monitorMode ? "사용 중" : booking.owner}</strong>
+                              <strong>{booking.owner}</strong>
                               <time>{booking.start}–{booking.end}</time>
-                              <small>{monitorMode ? "사내 회의" : teamOf(booking)}</small>
+                              <small>{teamOf(booking)}</small>
                               {/* 지금 진행 중인 내 예약에만. 남은 시간을 바로 돌려줄 수 있다. */}
                               {isRunningNow(booking) && (
                                 <span
@@ -2047,16 +1997,7 @@ export default function Home() {
                                   onKeyDown={(event) => { if (event.key === "Enter") { event.stopPropagation(); setActionIdentity(myBookingOwner); setActionNotice(""); setEarlyEnd(booking); } }}
                                 >회의 일찍 끝내기</span>
                               )}
-                              {canExtendBooking(booking) && (
-                                <span
-                                  className="extend-booking"
-                                  role="button"
-                                  tabIndex={0}
-                                  onClick={(event) => { event.stopPropagation(); setActionIdentity(myBookingOwner); setActionNotice(""); setExtendBooking(booking); }}
-                                  onKeyDown={(event) => { if (event.key === "Enter") { event.stopPropagation(); setActionIdentity(myBookingOwner); setActionNotice(""); setExtendBooking(booking); } }}
-                                >30분 연장</span>
-                              )}
-                              <ReservationHoverCard booking={booking} room={room} isMine={isMyBooking(booking)} privateMode={monitorMode} repeating={isRepeatedBooking(booking)} />
+                              <ReservationHoverCard booking={booking} room={room} isMine={isMyBooking(booking)} repeating={isRepeatedBooking(booking)} />
                             </button>
                           );
                         })}
@@ -2127,18 +2068,17 @@ export default function Home() {
                             return (
                               <button
                                 type="button"
-                                className={`weekly-room-event tone-${index % 3}${isMyBooking(booking) && !monitorMode ? " is-mine" : ""} ${sizeClass}`}
+                                className={`weekly-room-event tone-${index % 3}${isMyBooking(booking) ? " is-mine" : ""} ${sizeClass}`}
                                 key={booking.id}
                                 style={{ top: `${top}%`, height: `${height}%`, left: `${booking.lane * width}%`, width: `${width}%` }}
-                                aria-label={monitorMode ? `${booking.start}–${booking.end} · 사용 중`
-                                  : isMyBooking(booking) ? `내 예약 ${booking.start}–${booking.end} · 눌러서 수정하거나 삭제합니다`
+                                aria-label={isMyBooking(booking) ? `내 예약 ${booking.start}–${booking.end} · 눌러서 수정하거나 삭제합니다`
                                   : `${booking.start}–${booking.end} / ${booking.owner} · ${teamOf(booking)}`}
-                                onClick={() => { setSelectedId(room.id); setDate(day); if (!monitorMode) openEditor(booking); }}
+                                onClick={() => { setSelectedId(room.id); setDate(day); openEditor(booking); }}
                               >
-                                <b>{monitorMode ? "사용 중" : booking.owner}</b>
+                                <b>{booking.owner}</b>
                                 <time>{booking.start}<span className="wk-end">–{booking.end}</span></time>
-                                <small>{monitorMode ? "사내 회의" : teamOf(booking)}</small>
-                                <ReservationHoverCard booking={booking} room={room} isMine={isMyBooking(booking)} privateMode={monitorMode} repeating={isRepeatedBooking(booking)} />
+                                <small>{teamOf(booking)}</small>
+                                <ReservationHoverCard booking={booking} room={room} isMine={isMyBooking(booking)} repeating={isRepeatedBooking(booking)} />
                               </button>
                             );
                           })}
@@ -2798,23 +2738,6 @@ export default function Home() {
             <button type="button" className="early-go" disabled={earlyEndBusy} onClick={confirmEarlyEnd}>
               {earlyEndBusy ? "끝내는 중…" : "끝내기"}
             </button>
-          </div>
-        </section>
-      </div>}
-      {extendBooking && <div className="edit-backdrop" role="presentation" onMouseDown={() => setExtendBooking(null)}>
-        <section className="early-dialog extend-dialog" role="dialog" aria-modal="true" aria-labelledby="extend-booking-title" onMouseDown={(event) => event.stopPropagation()}>
-          <h2 id="extend-booking-title">30분 연장할까요?</h2>
-          <p>다음 예약이 없어 현재 회의를 연장할 수 있습니다.</p>
-          <div className="early-summary">
-            <b>{roomById(extendBooking.roomId)?.name} · {extendBooking.purpose}</b>
-            <span>{extendBooking.start}–{extendBooking.end} → <em>{extendBooking.start}–{addMinutes(extendBooking.end, bookingDefaults.slotMinutes)}</em></span>
-            <span className="early-free">추가된 30분 동안 회의실을 계속 사용합니다</span>
-          </div>
-          {!currentUser && <label className="action-identity"><span>예약자 확인</span><input value={actionIdentity} onChange={(event) => { setActionIdentity(event.target.value); setActionNotice(""); }} placeholder="예약자 이름" /></label>}
-          {actionNotice && <p className="action-notice" role="alert">{actionNotice}</p>}
-          <div className="early-foot">
-            <button type="button" onClick={() => setExtendBooking(null)}>그대로 두기</button>
-            <button type="button" className="early-go" disabled={extendBusy || !canExtendBooking(extendBooking)} onClick={confirmExtendBooking}>{extendBusy ? "연장하는 중…" : "30분 연장"}</button>
           </div>
         </section>
       </div>}

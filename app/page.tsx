@@ -1957,7 +1957,11 @@ export default function Home() {
                         aria-pressed={selected.id === room.id}
                         onClick={() => { setSelectedId(room.id); setMapDetailId(null); }}
                       >
-                        <strong>{room.name}</strong>
+                        <span className="daily-room-title">
+                          <strong>{room.name}</strong>
+                          <i aria-hidden="true" />
+                          <small>{room.floor}F</small>
+                        </span>
                         <span className="daily-room-selected-icon"><SelectedRoomIcon /></span>
                         {/* 지금 쓸 수 있는지가 이 표에서 가장 먼저 봐야 할 정보다.
                             주간현황과도 같은 형식으로 맞춘다. */}

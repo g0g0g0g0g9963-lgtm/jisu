@@ -220,6 +220,36 @@
   transition: background-color 140ms ease, box-shadow 140ms ease;
 }
 
+.schedule-design-cards .daily-timeline .daily-room-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  min-width: 0;
+}
+
+.schedule-design-cards .daily-timeline .daily-room-title > strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.schedule-design-cards .daily-timeline .daily-room-title > i {
+  flex: none;
+  width: 1px;
+  height: 12px;
+  background: #d4dae3;
+}
+
+.schedule-design-cards .daily-timeline .daily-room-title > small {
+  flex: none;
+  color: #858e9d;
+  letter-spacing: .04em;
+  font-size: 10.5px;
+  font-weight: 650;
+}
+
 .schedule-design-cards .daily-timeline .daily-room:not(.active) .daily-room-head:hover {
   background: #f8f9fb;
 }
@@ -243,6 +273,11 @@
 }
 
 .schedule-design-cards .daily-timeline .daily-room.active .daily-room-head > strong {
+  color: #17223a;
+  font-weight: 750;
+}
+
+.schedule-design-cards .daily-timeline .daily-room.active .daily-room-title > strong {
   color: #17223a;
   font-weight: 750;
 }

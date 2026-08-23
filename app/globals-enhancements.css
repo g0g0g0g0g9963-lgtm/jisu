@@ -3447,9 +3447,9 @@ button {
   box-shadow: 0 8px 24px rgb(23 34 58 / 6%);
 }
 
-/* 첨부된 정식 로고의 레드 하단 바까지 이미지 그대로 보여 준다. */
+/* BDO 공식 CDN 원본 로고의 비율과 선명도를 유지한다. */
 .topbar .bdo-logo {
-  width: 104px;
+  width: 92px;
   height: auto;
   margin-bottom: 0;
   clip-path: none;

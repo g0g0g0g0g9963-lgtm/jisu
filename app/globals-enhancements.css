@@ -2998,3 +2998,90 @@ button {
   height: 100dvh;
   overflow: hidden;
 }
+
+/* 접힘 레일 A1: 광택·펄 없이 BDO 네이비와 레드만 쓰는 평면형. */
+.booking-panel.is-collapsed .booking-panel-rail {
+  width: 54px;
+  height: 218px;
+  border: 0;
+  border-left: 1px solid rgb(255 255 255 / 14%);
+  border-radius: 11px 0 0 11px;
+  box-shadow: -6px 10px 22px rgb(21 39 68 / 17%);
+}
+
+.booking-panel.is-collapsed .booking-panel-rail:hover {
+  transform: translateY(-1px);
+  box-shadow: -7px 12px 24px rgb(21 39 68 / 20%);
+}
+
+.booking-panel.is-collapsed .booking-panel-rail-main,
+.booking-panel.is-collapsed .booking-panel-rail:hover .booking-panel-rail-main {
+  padding: 13px 0 9px;
+  background: #172b4d;
+  animation: none;
+  box-shadow: none;
+}
+
+.booking-panel.is-collapsed .booking-panel-rail-main > svg {
+  width: 20px;
+  height: 20px;
+  color: #eaf0f9;
+}
+
+.booking-panel.is-collapsed .booking-panel-rail-main > i {
+  width: 18px;
+  height: 2px;
+  margin: 9px 0 6px;
+  background: #f31b42;
+}
+
+.booking-panel.is-collapsed .booking-panel-rail-main > span {
+  margin: auto 0;
+  letter-spacing: .04em;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.booking-panel.is-collapsed .booking-panel-rail-arrow {
+  height: 58px;
+  flex-basis: 58px;
+  background: #f31b42;
+}
+
+.booking-panel.is-collapsed .booking-panel-rail:hover .booking-panel-rail-arrow {
+  background: #d90f32;
+}
+
+/* 주간의 낮은 예약 블록에서는 잘리는 부서명을 억지로 노출하지 않는다. */
+.schedule-design-cards .weekly-room-board .weekly-room-event > small {
+  display: none;
+}
+
+/* 빠른예약을 펼쳐도 층 선택은 큰 날짜 옆의 원래 한 줄에 둔다. 남는 공간을
+   양쪽으로 나눠 날짜 이동 묶음은 이전보다 조금 오른쪽에 자리 잡는다. */
+@media (min-width: 1100px) {
+  .app-shell:not(.booking-panel-collapsed) .weekly-heading.schedule-hero,
+  .app-shell:not(.booking-panel-collapsed) .schedule-hero.weekly-heading {
+    grid-template-columns: auto auto minmax(18px, 1fr) auto minmax(42px, 1.2fr) auto;
+    grid-template-areas: "date floors gapl nav gapr actions";
+    align-items: end;
+  }
+
+  .app-shell:not(.booking-panel-collapsed) .schedule-hero .schedule-floor-switch {
+    grid-area: floors;
+    align-self: end;
+  }
+
+  .app-shell:not(.booking-panel-collapsed) .schedule-hero .schedule-date-switch {
+    grid-area: nav;
+    justify-self: center;
+  }
+}
+
+/* 반복 기간을 끄는 동안 브라우저의 화면 스크롤 제스처가 드래그를 뺏지 않게 한다. */
+.date-panel-grid.range-enabled,
+.date-panel-grid.range-enabled button {
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}

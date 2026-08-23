@@ -639,16 +639,13 @@ function RoomDetailPopover({
 
 function ReservationHoverCard({
   booking,
-  isMine,
 }: {
   booking: Booking;
-  isMine: boolean;
 }) {
   return <span className="reservation-hover-card" role="tooltip">
-    <strong>{isMine ? "내 예약" : "예약 정보"}</strong>
+    <strong>내 예약</strong>
     <span className="reservation-hover-main"><b>{booking.start}–{booking.end}</b><em>{booking.purpose || "사내 회의"}</em></span>
-    {!isMine && <span className="reservation-hover-owner">{booking.owner} · {teamOf(booking)}</span>}
-    {isMine && <em className="reservation-detail-hint">눌러서 수정·삭제</em>}
+    <em className="reservation-detail-hint">눌러서 수정·삭제</em>
   </span>;
 }
 
@@ -2056,7 +2053,7 @@ export default function Home() {
                               <strong>{booking.owner}</strong>
                               <time>{booking.start}–{booking.end}</time>
                               <small>{teamOf(booking)}</small>
-                              <ReservationHoverCard booking={booking} isMine={isMyBooking(booking)} />
+                              {isMyBooking(booking) && <ReservationHoverCard booking={booking} />}
                             </button>
                           );
                         })}
@@ -2127,7 +2124,7 @@ export default function Home() {
                                 <b>{booking.owner}</b>
                                 <time>{booking.start}<span className="wk-end">–{booking.end}</span></time>
                                 <small>{teamOf(booking)}</small>
-                                <ReservationHoverCard booking={booking} isMine={isMyBooking(booking)} />
+                                {isMyBooking(booking) && <ReservationHoverCard booking={booking} />}
                               </button>
                             );
                           })}

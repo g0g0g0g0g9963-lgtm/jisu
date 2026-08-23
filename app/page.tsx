@@ -729,6 +729,7 @@ export default function Home() {
   // 주간 화면 더블클릭은 일간 드래그와 달리 시간을 정한 적이 없다.
   // 회의실·날짜만 고르고, 시간은 빠른 예약 창에서 직접 고르게 한다.
   const [weeklyPick, setWeeklyPick] = useState<{ roomId: Room["id"]; date: DateKey } | null>(null);
+  const [alternativesExpanded, setAlternativesExpanded] = useState(false);
   // 주간 더블클릭으로 넘어온 뒤, 시간을 아직 스스로 고르지 않았다는 표시.
   // 시작·종료 시간 중 하나라도 바꾸면 풀린다.
   const [timeNeedsPick, setTimeNeedsPick] = useState(false);
@@ -920,6 +921,10 @@ export default function Home() {
     return suggestions.slice(0, 4);
   }, [date, end, roomChoices, selected, selectedTimeConflict, slotIsFree, start]);
 
+  useEffect(() => {
+    setAlternativesExpanded(false);
+  }, [selectedId, date, start, end]);
+
   const availableCount = floorRooms.filter((room) => statusOf(room).status === "available").length;
   const weekDays = useMemo(() => getWorkWeek(date), [date]);
   // 주간 화면에서는 날짜 칸이 한 주를 통째로 가리키고 화살표도 일주일씩 움직인다.
@@ -974,11 +979,6 @@ export default function Home() {
     return () => observer.disconnect();
   }, [scheduleView, floor, floorRooms.length]);
 
-  /** 층마다 지금 비어 있는 회의실 수. 층을 고르기 전에 알 수 있어야 한다. */
-  const floorAvailability = floors.map((item) => {
-    const list = rooms.filter((room) => room.floor === item);
-    return { floor: item, free: list.filter((room) => statusOf(room).status === "available").length, total: list.length };
-  });
   const myBookings = useMemo(() => bookings
     .filter((booking) => myBookingOwner.trim() && booking.owner === myBookingOwner.trim())
     .sort((a, b) => `${a.date}${a.start}`.localeCompare(`${b.date}${b.start}`)), [bookings, myBookingOwner]);
@@ -1855,11 +1855,9 @@ export default function Home() {
 
                 {/* 층 선택. 밑줄 탭이라 옆의 일간/주간 스위치와 모양이 겹치지 않는다. */}
                 <div className="schedule-floor-switch" aria-label="층 선택">
-                  {floorAvailability.map(({ floor: item, free }) => (
-                    <button key={item} type="button" className={floor === item ? "active" : ""} onClick={() => selectFloor(item)}>
-                      {/* 오늘이면 '지금' 기준, 다른 날이면 그 날짜에 예약이
-                          없는 방 수다. 같은 숫자라도 뜻이 다르므로 말도 달리한다. */}
-                      {item}층<b>{free}개<em> 사용 가능</em></b>
+                  {floors.map((item) => (
+                    <button key={item} type="button" className={floor === item ? "active" : ""} aria-label={`${item}층`} aria-pressed={floor === item} onClick={() => selectFloor(item)}>
+                      {item}F
                     </button>
                   ))}
                 </div>
@@ -2509,11 +2507,16 @@ export default function Home() {
             {selectedTimeConflict && !notice && <div className="notice error">이미 예약된 시간입니다. 다른 시간을 선택해 주세요.</div>}
             {selectedTimeConflict && bookingAlternatives.length > 0 && <section className="booking-alternatives" aria-label="예약 가능한 대안">
               <b>대신 예약할 수 있어요</b>
-              {bookingAlternatives.map((alternative) => (
+              {bookingAlternatives.slice(0, alternativesExpanded ? bookingAlternatives.length : 2).map((alternative) => (
                 <button type="button" key={`${alternative.roomId}-${alternative.start}-${alternative.end}`} onClick={() => applyAlternative(alternative)}>
                   <span>{alternative.label}<i>{roomById(alternative.roomId)?.floor}층</i></span><em>{alternative.reason}</em>
                 </button>
               ))}
+              {bookingAlternatives.length > 2 && (
+                <button type="button" className="booking-alternatives-more" aria-expanded={alternativesExpanded} onClick={() => setAlternativesExpanded((current) => !current)}>
+                  {alternativesExpanded ? "대안 접기" : `대안 ${bookingAlternatives.length - 2}개 더 보기`}
+                </button>
+              )}
             </section>}
             <section className="booking-preview-summary" aria-label="예약 전 미리보기">
               <div><span>회의실</span><b>{selected.name}</b></div>

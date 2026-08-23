@@ -1757,3 +1757,36 @@ button {
 /* 예약 대안에서는 회의실 층을 놓치지 않도록 항상 별도 표기한다. */
 .booking-alternatives button>span{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .booking-alternatives button>span i{color:#304b78;white-space:nowrap;background:#f1f4f9;border-radius:999px;padding:2px 7px;font-size:10px;font-style:normal;font-weight:800}
+
+/* 빠른예약의 정보량은 유지하면서 필드 사이 여백만 약 10% 줄인다. */
+.app-shell .booking-panel .booking-fields{gap:11px}
+.app-shell .booking-panel .booking-fields .form-row .field-label,
+.app-shell .booking-panel .booking-fields label>.field-label{margin-bottom:5px}
+.app-shell .booking-panel .booking-fields>.form-row-owner,
+.app-shell .booking-panel .booking-fields>.form-row-owner+.attendee-add{margin-top:8px}
+@media (max-width:1150px){.app-shell .booking-panel .booking-fields{gap:9px}}
+
+/* 충돌 대안은 두 개를 먼저 보여주고 나머지는 요청할 때만 펼친다. */
+.booking-alternatives button.booking-alternatives-more{display:flex;align-items:center;justify-content:center;min-height:32px;color:#304b78;background:transparent;border:0;padding:4px 8px;font-size:11px;font-weight:800}
+.booking-alternatives button.booking-alternatives-more:hover,
+.booking-alternatives button.booking-alternatives-more:focus-visible{color:#17223a;background:#f1f4f9;border-color:transparent;outline:2px solid #304b7824}
+
+/* 예약 블록은 구조를 유지하고 의미 있는 블루·핑크 색조만 아주 약하게 복원한다. */
+.app-shell .schedule-design-cards .daily-timeline .timeline-event:not(.is-mine),
+.app-shell .schedule-design-cards .weekly-room-board .weekly-room-event:not(.is-mine){
+  color:#18345f;
+  background:#f3f7fb;
+  border-color:#dce6ef;
+  border-left-color:#9eb8d0;
+}
+.app-shell .schedule-design-cards .daily-timeline .timeline-event.is-mine,
+.app-shell .schedule-design-cards .weekly-room-board .weekly-room-event.is-mine{
+  color:#8f1736;
+  background:#fff5f7;
+  border-color:#efdce2;
+  border-left-color:#d9869c;
+}
+.app-shell .schedule-design-cards .daily-timeline .timeline-event:not(.is-mine):hover,
+.app-shell .schedule-design-cards .weekly-room-board .weekly-room-event:not(.is-mine):hover{background:#f8fbfe;border-color:#cbd9e6}
+.app-shell .schedule-design-cards .daily-timeline .timeline-event.is-mine:hover,
+.app-shell .schedule-design-cards .weekly-room-board .weekly-room-event.is-mine:hover{background:#fff9fa;border-color:#e6cbd3}

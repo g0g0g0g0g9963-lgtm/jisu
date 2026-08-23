@@ -67,6 +67,11 @@ type PendingTouchDrag = {
 const TOUCH_DRAG_HOLD_MS = 360;
 const TOUCH_DRAG_CANCEL_DISTANCE = 10;
 
+type BookingAlternative = SlotSelection & {
+  label: string;
+  reason: string;
+};
+
 /** 예약 양식의 날짜와 시간. 세 값이 함께 움직여서 하나로 묶어 둔다. */
 type SlotForm = {
   date: DateKey;
@@ -599,12 +604,36 @@ function RoomDetailPopover({
   );
 }
 
-function ReservationHoverCard({ booking, room }: { booking: Booking; room: Room }) {
+function ReservationHoverCard({
+  booking,
+  room,
+  isMine,
+  privateMode,
+  repeating,
+}: {
+  booking: Booking;
+  room: Room;
+  isMine: boolean;
+  privateMode: boolean;
+  repeating: boolean;
+}) {
+  if (privateMode) {
+    return <span className="reservation-hover-card is-private" role="tooltip">
+      <strong>예약 정보</strong>
+      <span><b>시간</b>{booking.start}–{booking.end}</span>
+      <span><b>상태</b>사용 중 · 사내 회의</span>
+      <span><b>회의실</b>{room.name}</span>
+    </span>;
+  }
   return <span className="reservation-hover-card" role="tooltip">
     <strong>예약 정보</strong>
     <span><b>일시</b>{formatDateLabel(booking.date)} · {booking.start}–{booking.end}</span>
     <span><b>회의실</b>{room.name}</span>
     <span><b>예약자</b>{booking.owner} · {teamOf(booking)}</span>
+    <span><b>목적</b>{booking.purpose || "사내 회의"}</span>
+    <span><b>장비</b>{room.equipment.join(" · ") || "없음"}</span>
+    <span><b>반복</b>{repeating ? "반복 예약" : "단건 예약"}</span>
+    {isMine && <em className="reservation-detail-hint">눌러서 상세 보기</em>}
   </span>;
 }
 
@@ -647,6 +676,7 @@ export default function Home() {
   const [mapPurpose, setMapPurpose] = useState<"browse" | "pick">("browse");
   const [allDay, setAllDay] = useState(false);
   const [roomPickerOpen, setRoomPickerOpen] = useState(false);
+  const [timePickerOpen, setTimePickerOpen] = useState<"start" | "end" | null>(null);
   const [repeatWeekly, setRepeatWeekly] = useState(false);
   const [repeatEndCalendarOpen, setRepeatEndCalendarOpen] = useState(false);
   // 반복은 평일만 잡는 것이 기본이다. 주말에도 회의를 잡는 사람을 위해
@@ -679,6 +709,10 @@ export default function Home() {
   // 조기 종료 확인 창에 띄울 예약.
   const [earlyEnd, setEarlyEnd] = useState<Booking | null>(null);
   const [earlyEndBusy, setEarlyEndBusy] = useState(false);
+  const [extendBooking, setExtendBooking] = useState<Booking | null>(null);
+  const [extendBusy, setExtendBusy] = useState(false);
+  const [actionIdentity, setActionIdentity] = useState("");
+  const [actionNotice, setActionNotice] = useState("");
   // 주간 확인 창을 누른 자리에 띄우기 위한 좌표.
   const [confirmAt, setConfirmAt] = useState<{ x: number; y: number } | null>(null);
   // 표에서 값을 가져온 뒤 아직 예약하기를 누르지 않은 상태. 표의 점선 블록과
@@ -697,7 +731,10 @@ export default function Home() {
   // 빠른 예약은 기본으로 펼쳐 두되, 사용자가 일정표를 넓게 보고 싶을 때
   // 오른쪽의 얇은 세로 탭으로 접을 수 있다. 폼은 숨기기만 하므로 작성 중인
   // 회의실·날짜·시간·입력값은 접었다 다시 펴도 그대로 남는다.
-  const [bookingPanelOpen, setBookingPanelOpen] = useState(true);
+  const [bookingPanelOpen, setBookingPanelOpen] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("mode") !== "monitor" && params.get("display") !== "monitor";
+  });
   const [slotDrag, setSlotDrag] = useState<SlotDrag | null>(null);
   const [slotConfirmation, setSlotConfirmation] = useState<SlotSelection | null>(null);
   const pendingTouchDrag = useRef<PendingTouchDrag | null>(null);
@@ -707,6 +744,11 @@ export default function Home() {
   // 주간 더블클릭으로 넘어온 뒤, 시간을 아직 스스로 고르지 않았다는 표시.
   // 시작·종료 시간 중 하나라도 바꾸면 풀린다.
   const [timeNeedsPick, setTimeNeedsPick] = useState(false);
+  const [submitPreviewDates, setSubmitPreviewDates] = useState<string[] | null>(null);
+  const [monitorMode] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("mode") === "monitor" || params.get("display") === "monitor";
+  });
 
   const { date, start, end } = slot;
   const setDate = (next: DateKey) => setSlot((current) => ({ ...current, date: next }));
@@ -759,6 +801,32 @@ export default function Home() {
     return () => window.removeEventListener("keydown", closeOnEscape);
   }, [mapDetailId]);
 
+  useEffect(() => {
+    const closePickers = (event: MouseEvent) => {
+      const target = event.target as Node | null;
+      const insideRoomPicker = Boolean(target && document.querySelector(".room-picker-card")?.contains(target));
+      const insideTimePicker = Boolean(target && document.querySelector(".booking-time-section")?.contains(target));
+      if (!insideRoomPicker) setRoomPickerOpen(false);
+      if (!insideTimePicker) setTimePickerOpen(null);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setRoomPickerOpen(false);
+      setTimePickerOpen(null);
+      setSlotConfirmation(null);
+      setWeeklyPick(null);
+      setSubmitPreviewDates(null);
+      setExtendBooking(null);
+      setEarlyEnd(null);
+    };
+    document.addEventListener("click", closePickers);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("click", closePickers);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, []);
+
   // 회의실 상태는 오늘 예약과 현재 시각에서 계산한다. 고정값이 아니다.
   // 상태는 '보고 있는 날짜' 기준으로 낸다. 예전에는 늘 오늘 예약만 봐서,
   // 다음 주를 보고 있어도 "사용 가능"이 오늘 기준으로 떠 있었다.
@@ -804,9 +872,67 @@ export default function Home() {
   );
   const selectedTimeConflict = conflictDates.length > 0;
 
-  const visibleStartTimeOptions = duration
-    ? startTimeOptions.filter((time) => minutesOf(time) + duration <= minutesOf(lastSelectableTime))
-    : startTimeOptions;
+  const slotIsFree = useCallback((roomId: string, targetDate: DateKey, slotStart: string, slotEnd: string, ignoreId?: string) => (
+    !bookings.some((booking) => booking.id !== ignoreId && booking.roomId === roomId && booking.date === targetDate
+      && booking.start < slotEnd && booking.end > slotStart)
+  ), [bookings]);
+
+  const roomChoices = useMemo(() => rooms.map((room) => {
+    const availableForSlot = slotIsFree(room.id, date, start, end);
+    const next = bookings
+      .filter((booking) => booking.roomId === room.id && booking.date === date && booking.start >= end)
+      .sort((a, b) => a.start.localeCompare(b.start))[0];
+    return { room, availableForSlot, next };
+  }).sort((a, b) => Number(b.availableForSlot) - Number(a.availableForSlot)
+    || Number(b.room.floor === floor) - Number(a.room.floor === floor)
+    || a.room.capacity - b.room.capacity), [bookings, date, end, floor, slotIsFree, start]);
+
+  const availableStartOptions = useMemo(() => startTimeOptions.filter((candidate) => {
+    const candidateEnd = addMinutes(candidate, duration || bookingDefaults.defaultDurationMinutes);
+    return minutesOf(candidateEnd) <= minutesOf(lastSelectableTime)
+      && slotIsFree(selected.id, date, candidate, candidateEnd);
+  }), [date, duration, selected.id, slotIsFree]);
+
+  const availableEndOptions = useMemo(() => timeOptions.filter((candidate) => (
+    minutesOf(candidate) > minutesOf(start) && slotIsFree(selected.id, date, start, candidate)
+  )), [date, selected.id, slotIsFree, start]);
+
+  const bookingAlternatives = useMemo<BookingAlternative[]>(() => {
+    if (!selectedTimeConflict) return [];
+    const suggestions: BookingAlternative[] = [];
+    const seen = new Set<string>();
+    const add = (item: BookingAlternative) => {
+      const key = `${item.roomId}-${item.date}-${item.start}-${item.end}`;
+      if (!seen.has(key)) { seen.add(key); suggestions.push(item); }
+    };
+
+    roomChoices.filter((item) => item.room.id !== selected.id && item.availableForSlot).slice(0, 2).forEach(({ room }) => add({
+      roomId: room.id, date, start, end, label: `${room.name} · ${start}–${end}`, reason: "같은 시간에 이용 가능",
+    }));
+
+    const length = minutesOf(end) - minutesOf(start);
+    for (const offset of [30, -30, 60, -60]) {
+      const nextStartMinutes = minutesOf(start) + offset;
+      const nextEndMinutes = nextStartMinutes + length;
+      if (nextStartMinutes < minutesOf(bookingDefaults.openingTime) || nextEndMinutes > minutesOf(bookingDefaults.closingTime)) continue;
+      const nextStart = formatMinutes(nextStartMinutes);
+      const nextEnd = formatMinutes(nextEndMinutes);
+      if (slotIsFree(selected.id, date, nextStart, nextEnd)) add({
+        roomId: selected.id, date, start: nextStart, end: nextEnd,
+        label: `${selected.name} · ${nextStart}–${nextEnd}`, reason: offset > 0 ? `${offset}분 뒤 이용 가능` : `${Math.abs(offset)}분 앞 이용 가능`,
+      });
+    }
+
+    if (length > bookingDefaults.slotMinutes) {
+      const shorterEnd = formatMinutes(minutesOf(end) - bookingDefaults.slotMinutes);
+      if (slotIsFree(selected.id, date, start, shorterEnd)) add({
+        roomId: selected.id, date, start, end: shorterEnd,
+        label: `${selected.name} · ${start}–${shorterEnd}`, reason: `${bookingDefaults.slotMinutes}분 짧게 이용 가능`,
+      });
+    }
+    return suggestions.slice(0, 4);
+  }, [date, end, roomChoices, selected, selectedTimeConflict, slotIsFree, start]);
+
   const availableCount = floorRooms.filter((room) => statusOf(room).status === "available").length;
   const weekDays = useMemo(() => getWorkWeek(date), [date]);
   // 주간 화면에서는 날짜 칸이 한 주를 통째로 가리키고 화살표도 일주일씩 움직인다.
@@ -903,6 +1029,10 @@ export default function Home() {
       && item.end === booking.end && item.purpose === booking.purpose)
     .map((item) => item.id);
 
+  const isRepeatedBooking = (booking: Booking) => bookings.filter((item) => item.roomId === booking.roomId
+    && item.start === booking.start && item.end === booking.end && item.owner === booking.owner
+    && item.purpose === booking.purpose).length > 1;
+
   const cancelBookings = async (ids: string[]) => {
     if (ids.length === 0) return;
     setCancelBusy(true);
@@ -983,8 +1113,25 @@ export default function Home() {
     isMyBooking(booking) && booking.date === today && nowMinutes !== null
     && minutesOf(booking.start) <= nowMinutes && nowMinutes < minutesOf(booking.end) - 10;
 
+  const canExtendBooking = (booking: Booking): boolean => {
+    const extendedEnd = addMinutes(booking.end, bookingDefaults.slotMinutes);
+    return isMyBooking(booking) && booking.date === today && nowMinutes !== null
+      && minutesOf(booking.start) <= nowMinutes && nowMinutes < minutesOf(booking.end)
+      && minutesOf(extendedEnd) <= minutesOf(bookingDefaults.closingTime)
+      && slotIsFree(booking.roomId, booking.date, booking.end, extendedEnd, booking.id);
+  };
+
+  const actionOwner = () => currentUser?.name ?? actionIdentity.trim();
+
+  const actionAuthorized = (booking: Booking) => {
+    if (currentUser || actionOwner() === booking.owner) return true;
+    setActionNotice("예약자 이름을 확인해 주세요.");
+    return false;
+  };
+
   const confirmEarlyEnd = async () => {
     if (!earlyEnd) return;
+    if (!actionAuthorized(earlyEnd)) return;
     const nextEnd = earlyEndTime(earlyEnd);
     setEarlyEndBusy(true);
     const result = await patchBookingRequest(earlyEnd.id, {
@@ -992,7 +1139,7 @@ export default function Home() {
       date: earlyEnd.date,
       start: earlyEnd.start,
       end: nextEnd,
-      owner: myBookingOwner.trim(),
+      owner: actionOwner(),
       team: earlyEnd.team ?? "",
       purpose: earlyEnd.purpose,
     });
@@ -1007,6 +1154,34 @@ export default function Home() {
       text: "회의를 끝냈습니다.",
       detail: roomById(earlyEnd.roomId)?.name ?? "",
       time: `${nextEnd}부터 예약 가능`,
+    });
+  };
+
+  const confirmExtendBooking = async () => {
+    if (!extendBooking || !canExtendBooking(extendBooking) || !actionAuthorized(extendBooking)) return;
+    const nextEnd = addMinutes(extendBooking.end, bookingDefaults.slotMinutes);
+    setExtendBusy(true);
+    const result = await patchBookingRequest(extendBooking.id, {
+      roomId: extendBooking.roomId,
+      date: extendBooking.date,
+      start: extendBooking.start,
+      end: nextEnd,
+      owner: actionOwner(),
+      team: extendBooking.team ?? "",
+      purpose: extendBooking.purpose,
+    });
+    setExtendBusy(false);
+    if (!result.ok) {
+      setActionNotice(result.message);
+      await refreshBookings();
+      return;
+    }
+    await refreshBookings();
+    setExtendBooking(null);
+    setToast({
+      text: "예약을 30분 연장했습니다.",
+      detail: roomById(extendBooking.roomId)?.name ?? "",
+      time: `${extendBooking.end}–${nextEnd} 추가`,
     });
   };
 
@@ -1332,6 +1507,28 @@ export default function Home() {
     applySlotSelection(slotConfirmation);
   };
 
+  const applyAlternative = (alternative: BookingAlternative) => {
+    applySlotSelection(alternative);
+    const room = roomById(alternative.roomId);
+    if (room) setFloor(room.floor);
+  };
+
+  const handleTimelineKey = (room: Room, reservationDate: DateKey, event: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (event.key === "Escape") {
+      setSlotConfirmation(null);
+      setDraftActive(false);
+      return;
+    }
+    if (event.key !== "ArrowUp" && event.key !== "ArrowDown" && event.key !== "Enter") return;
+    event.preventDefault();
+    const length = Math.max(bookingDefaults.slotMinutes, minutesOf(end) - minutesOf(start));
+    let nextStartMinutes = minutesOf(start);
+    if (event.key === "ArrowUp") nextStartMinutes -= bookingDefaults.slotMinutes;
+    if (event.key === "ArrowDown") nextStartMinutes += bookingDefaults.slotMinutes;
+    nextStartMinutes = Math.max(minutesOf(bookingDefaults.openingTime), Math.min(nextStartMinutes, minutesOf(bookingDefaults.closingTime) - length));
+    applySlotSelection({ roomId: room.id, date: reservationDate, start: formatMinutes(nextStartMinutes), end: formatMinutes(nextStartMinutes + length) });
+  };
+
   const changeStart = (nextStart: string) => {
     setAllDay(false);
     setSlot((current) => ({
@@ -1418,7 +1615,7 @@ export default function Home() {
       setRepeatAsk({ conflicts: conflictDates, free });
       return;
     }
-    await sendBooking(reservationDates);
+    setSubmitPreviewDates(reservationDates);
   };
 
   /** 실제로 서버에 보내는 부분. '겹치는 날만 빼고' 보낼 때도 같은 길을 쓴다. */
@@ -1426,6 +1623,7 @@ export default function Home() {
     const ownerName = owner.trim();
     const teamName = team.trim();
     setRepeatAsk(null);
+    setSubmitPreviewDates(null);
     setSubmitting(true);
     const result = await postBookings({
       roomId: selected.id,
@@ -1488,7 +1686,7 @@ export default function Home() {
   };
 
   return (
-    <main className={`app-shell ${showMap ? "map-open" : ""} ${bookingPanelOpen ? "" : "booking-panel-collapsed"}`}>
+    <main className={`app-shell ${showMap ? "map-open" : ""} ${bookingPanelOpen ? "" : "booking-panel-collapsed"} ${monitorMode ? "monitor-mode" : ""}`}>
       {syncError && <div className="sync-error-banner" role="alert">{syncError}</div>}
       <header className="topbar">
         <div className="brand-wrap">
@@ -1776,10 +1974,14 @@ export default function Home() {
                       </button>
                       <div
                         className={`timeline-day-body${slotDrag?.pointerType === "touch" && slotDrag.roomId === room.id && slotDrag.date === date ? " touch-dragging" : ""}`}
+                        role="gridcell"
+                        tabIndex={0}
+                        aria-label={`${room.name} ${formatDateLabel(date)} 시간 선택. 위아래 방향키로 30분 이동, Enter로 선택`}
                         onPointerDown={(event) => startSlotDrag(room, date, event)}
                         onPointerMove={(event) => updateSlotDrag(room, date, event)}
                         onPointerUp={(event) => finishSlotDrag(room, date, event)}
                         onPointerCancel={cancelSlotDrag}
+                        onKeyDown={(event) => handleTimelineKey(room, date, event)}
                       >
                         {(() => {
                           const selection = slotDrag?.roomId === room.id && slotDrag.date === date
@@ -1823,29 +2025,38 @@ export default function Home() {
                           return (
                             <button
                               type="button"
-                              className={`timeline-event tone-${index % 3}${isMyBooking(booking) ? " is-mine" : ""} ${sizeClass}`}
+                              className={`timeline-event tone-${index % 3}${isMyBooking(booking) && !monitorMode ? " is-mine" : ""} ${sizeClass}`}
                               key={booking.id}
                               style={{ top: `${top}%`, height: `${height}%`, left, right }}
-                              aria-label={isMyBooking(booking)
-                                ? `내 예약 ${booking.start}–${booking.end} · 눌러서 수정하거나 삭제합니다`
+                              aria-label={monitorMode ? `${booking.start}–${booking.end} · 사용 중`
+                                : isMyBooking(booking) ? `내 예약 ${booking.start}–${booking.end} · 눌러서 수정하거나 삭제합니다`
                                 : `${booking.start}–${booking.end} / ${booking.owner} · ${teamOf(booking)}`}
                               onPointerDown={(event) => event.stopPropagation()}
-                              onClick={(event) => { event.stopPropagation(); setSelectedId(room.id); openEditor(booking); }}
+                              onClick={(event) => { event.stopPropagation(); setSelectedId(room.id); if (!monitorMode) openEditor(booking); }}
                             >
-                              <strong>{booking.owner}</strong>
+                              <strong>{monitorMode ? "사용 중" : booking.owner}</strong>
                               <time>{booking.start}–{booking.end}</time>
-                              <small>{teamOf(booking)}</small>
+                              <small>{monitorMode ? "사내 회의" : teamOf(booking)}</small>
                               {/* 지금 진행 중인 내 예약에만. 남은 시간을 바로 돌려줄 수 있다. */}
                               {isRunningNow(booking) && (
                                 <span
                                   className="early-end"
                                   role="button"
                                   tabIndex={0}
-                                  onClick={(event) => { event.stopPropagation(); setEarlyEnd(booking); }}
-                                  onKeyDown={(event) => { if (event.key === "Enter") { event.stopPropagation(); setEarlyEnd(booking); } }}
+                                  onClick={(event) => { event.stopPropagation(); setActionIdentity(myBookingOwner); setActionNotice(""); setEarlyEnd(booking); }}
+                                  onKeyDown={(event) => { if (event.key === "Enter") { event.stopPropagation(); setActionIdentity(myBookingOwner); setActionNotice(""); setEarlyEnd(booking); } }}
                                 >회의 일찍 끝내기</span>
                               )}
-                              <ReservationHoverCard booking={booking} room={room} />
+                              {canExtendBooking(booking) && (
+                                <span
+                                  className="extend-booking"
+                                  role="button"
+                                  tabIndex={0}
+                                  onClick={(event) => { event.stopPropagation(); setActionIdentity(myBookingOwner); setActionNotice(""); setExtendBooking(booking); }}
+                                  onKeyDown={(event) => { if (event.key === "Enter") { event.stopPropagation(); setActionIdentity(myBookingOwner); setActionNotice(""); setExtendBooking(booking); } }}
+                                >30분 연장</span>
+                              )}
+                              <ReservationHoverCard booking={booking} room={room} isMine={isMyBooking(booking)} privateMode={monitorMode} repeating={isRepeatedBooking(booking)} />
                             </button>
                           );
                         })}
@@ -1916,18 +2127,18 @@ export default function Home() {
                             return (
                               <button
                                 type="button"
-                                className={`weekly-room-event tone-${index % 3}${isMyBooking(booking) ? " is-mine" : ""} ${sizeClass}`}
+                                className={`weekly-room-event tone-${index % 3}${isMyBooking(booking) && !monitorMode ? " is-mine" : ""} ${sizeClass}`}
                                 key={booking.id}
                                 style={{ top: `${top}%`, height: `${height}%`, left: `${booking.lane * width}%`, width: `${width}%` }}
-                                aria-label={isMyBooking(booking)
-                                  ? `내 예약 ${booking.start}–${booking.end} · 눌러서 수정하거나 삭제합니다`
+                                aria-label={monitorMode ? `${booking.start}–${booking.end} · 사용 중`
+                                  : isMyBooking(booking) ? `내 예약 ${booking.start}–${booking.end} · 눌러서 수정하거나 삭제합니다`
                                   : `${booking.start}–${booking.end} / ${booking.owner} · ${teamOf(booking)}`}
-                                onClick={() => { setSelectedId(room.id); setDate(day); openEditor(booking); }}
+                                onClick={() => { setSelectedId(room.id); setDate(day); if (!monitorMode) openEditor(booking); }}
                               >
-                                <b>{booking.owner}</b>
+                                <b>{monitorMode ? "사용 중" : booking.owner}</b>
                                 <time>{booking.start}<span className="wk-end">–{booking.end}</span></time>
-                                <small>{teamOf(booking)}</small>
-                                <ReservationHoverCard booking={booking} room={room} />
+                                <small>{monitorMode ? "사내 회의" : teamOf(booking)}</small>
+                                <ReservationHoverCard booking={booking} room={room} isMine={isMyBooking(booking)} privateMode={monitorMode} repeating={isRepeatedBooking(booking)} />
                               </button>
                             );
                           })}
@@ -2022,7 +2233,7 @@ export default function Home() {
               className={`room-picker-toggle ${roomPickerOpen ? "open" : ""}`}
               aria-label={`회의실 선택: ${selected.name}`}
               aria-expanded={roomPickerOpen}
-              onClick={() => setRoomPickerOpen((current) => !current)}
+              onClick={() => { setTimePickerOpen(null); setRoomPickerOpen((current) => !current); }}
             >
               <span className="room-picker-field-copy">
                 <span className="room-picker-field-title"><span className={`status-dot ${selectedStatus.status}`} /><strong>{selected.name}</strong></span>
@@ -2030,19 +2241,20 @@ export default function Home() {
               </span>
               <i aria-hidden="true" />
             </button>
-            {roomPickerOpen && <div className="room-picker-options">
+            {roomPickerOpen && <div className="room-picker-options room-picker-popover" role="dialog" aria-label="회의실 선택" onPointerDown={(event) => event.stopPropagation()}>
               {floors.map((item) => (
                 <div className="room-picker-floor-group" key={item}>
                   <small>{item}F</small>
-                  {rooms.filter((room) => room.floor === item).map((room) => {
+                  {roomChoices.filter(({ room }) => room.floor === item).map(({ room, availableForSlot, next }) => {
                     const status = statusOf(room);
                     return <div className="room-picker-row" key={room.id}>
                       <button type="button" className={selected.id === room.id ? "selected" : ""} onClick={() => selectRoom(room)}>
                         {/* 점과 이름을 한 덩어리로 묶는다. 따로 두면 좁을 때 점만 남고
                             이름이 다음 줄로 떨어져 나갈 자리가 없다. */}
                         <span className="room-picker-name"><span className={`status-dot ${status.status}`} /><strong>{room.name}</strong></span>
-                        <em>{formatCapacity(room.capacity)}</em>
-                        <span className={`room-picker-status ${status.status}`}>{status.statusLabel}</span>
+                        <em>{room.floor}층 · {formatCapacity(room.capacity)} · {room.equipment.join(" · ")}</em>
+                        <span className={`room-picker-status ${availableForSlot ? "available" : "occupied"}`}>{availableForSlot ? "선택 시간 예약 가능" : "선택 시간 사용 중"}</span>
+                        <small className="room-picker-next">{next ? `다음 예약 ${next.start}` : "이후 예약 없음"}</small>
                       </button>
                       <button
                         type="button"
@@ -2098,9 +2310,36 @@ export default function Home() {
               {/* 고르고 나면 커서(포커스)를 놓아 준다. select는 값을 고른
                   뒤에도 포커스가 남아, 다른 칸과 달리 빨간 포커스 테두리가
                   할 일이 끝난 뒤에도 계속 떠 있는 것처럼 보였다. */}
-              <label className={timeNeedsPick ? "needs-input" : undefined}><span className="field-label">시작 시간</span><select id="start-time-select" value={start} onChange={(event) => { changeStart(event.target.value); event.target.blur(); }}>{visibleStartTimeOptions.map((time) => <option key={time}>{time}</option>)}</select></label>
-              <label className={timeNeedsPick ? "needs-input" : undefined}><span className="field-label">종료 시간</span><select value={end} onChange={(event) => { changeEnd(event.target.value); event.target.blur(); }}>{timeOptions.map((time) => <option key={time}>{time}</option>)}</select></label>
+              <label className={timeNeedsPick ? "needs-input" : undefined}><span className="field-label">시작 시간</span><button id="start-time-select" className="time-picker-toggle" type="button" aria-haspopup="listbox" aria-expanded={timePickerOpen === "start"} onClick={() => { setRoomPickerOpen(false); setTimePickerOpen((current) => current === "start" ? null : "start"); }}>{start}</button></label>
+              <label className={timeNeedsPick ? "needs-input" : undefined}><span className="field-label">종료 시간</span><button className="time-picker-toggle" type="button" aria-haspopup="listbox" aria-expanded={timePickerOpen === "end"} onClick={() => { setRoomPickerOpen(false); setTimePickerOpen((current) => current === "end" ? null : "end"); }}>{end}</button></label>
               </div>
+
+              {timePickerOpen && <div className="time-picker-popover" role="listbox" aria-label={timePickerOpen === "start" ? "예약 가능한 시작 시간" : "예약 가능한 종료 시간"} onPointerDown={(event) => event.stopPropagation()}>
+                <div className="time-picker-popover-head"><b>{timePickerOpen === "start" ? "시작 시간" : "종료 시간"}</b><span>예약 가능한 시간만 표시</span></div>
+                <div className="time-picker-slots">
+                  {timePickerOpen === "start" && availableStartOptions.map((time) => (
+                    <button
+                      type="button"
+                      role="option"
+                      aria-selected={start === time}
+                      className={start === time ? "selected" : ""}
+                      key={time}
+                      onClick={() => { changeStart(time); setTimePickerOpen(null); }}
+                    >{time}</button>
+                  ))}
+                  {timePickerOpen === "end" && availableEndOptions.map((time) => (
+                    <button
+                      type="button"
+                      role="option"
+                      aria-selected={end === time}
+                      className={end === time ? "selected" : ""}
+                      key={time}
+                      onClick={() => { changeEnd(time); setTimePickerOpen(null); }}
+                    >{time}</button>
+                  ))}
+                </div>
+                {(timePickerOpen === "start" ? availableStartOptions : availableEndOptions).length === 0 && <p>선택 가능한 시간이 없습니다.</p>}
+              </div>}
 
             <label className="repeat-option">
               <input type="checkbox" checked={repeatWeekly} onChange={(event) => {
@@ -2322,6 +2561,21 @@ export default function Home() {
             <div className="booking-submit">
             {notice && <div className={`notice ${notice.includes("완료") ? "success" : "error"}`}>{notice}</div>}
             {selectedTimeConflict && !notice && <div className="notice error">이미 예약된 시간입니다. 다른 시간을 선택해 주세요.</div>}
+            {selectedTimeConflict && bookingAlternatives.length > 0 && <section className="booking-alternatives" aria-label="예약 가능한 대안">
+              <b>대신 예약할 수 있어요</b>
+              {bookingAlternatives.map((alternative) => (
+                <button type="button" key={`${alternative.roomId}-${alternative.start}-${alternative.end}`} onClick={() => applyAlternative(alternative)}>
+                  <span>{alternative.label}</span><em>{alternative.reason}</em>
+                </button>
+              ))}
+            </section>}
+            <section className="booking-preview-summary" aria-label="예약 전 미리보기">
+              <div><span>회의실</span><b>{selected.name}</b></div>
+              <div><span>날짜와 시간</span><b>{formatDateLabel(date)} · {start}–{end}</b></div>
+              <div><span>총 이용 시간</span><b>{spokenDuration(minutesOf(end) - minutesOf(start))}</b></div>
+              <div><span>반복 횟수</span><b>{reservationDates.length}회</b></div>
+              <p className={selectedTimeConflict ? "warning" : "available"}>{selectedTimeConflict ? `충돌 ${conflictDates.length}건 · 대안을 선택해 주세요` : "예약 가능한 시간입니다"}</p>
+            </section>
             <button id="reserve-button" className="reserve-button" type="submit" disabled={selectedTimeConflict || submitting}>
               <span>{selected.name}</span>
               {/* 반복 예약이면 몇 건이 만들어지는지 버튼이 직접 말해야 한다.
@@ -2334,6 +2588,22 @@ export default function Home() {
           </form>
         </div>
       </aside>
+      {submitPreviewDates && <div className="edit-backdrop booking-confirm-backdrop" role="presentation" onMouseDown={() => setSubmitPreviewDates(null)}>
+        <section className="early-dialog booking-confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="booking-confirm-title" onMouseDown={(event) => event.stopPropagation()}>
+          <h2 id="booking-confirm-title">예약 내용을 확인해 주세요</h2>
+          <p>아래 내용으로 예약을 진행합니다.</p>
+          <div className="early-summary booking-confirm-summary">
+            <b>{selected.name}</b>
+            <span>{formatDateLabel(date)} · {start}–{end}</span>
+            <span>{spokenDuration(minutesOf(end) - minutesOf(start))} · {submitPreviewDates.length}회</span>
+            {purpose.trim() && <span>{purpose.trim()}</span>}
+          </div>
+          <div className="early-foot">
+            <button type="button" onClick={() => setSubmitPreviewDates(null)}>다시 확인</button>
+            <button type="button" className="early-go" disabled={submitting} onClick={() => sendBooking(submitPreviewDates)}>{submitting ? "예약하는 중…" : "예약하기"}</button>
+          </div>
+        </section>
+      </div>}
       {myBookingsOpen && <div className="my-bookings-backdrop" role="presentation" onMouseDown={() => { setMyBookingsOpen(false); setCancelSelection(null); }}>
         <section className="my-bookings-dialog" role="dialog" aria-modal="true" aria-labelledby="my-bookings-title" onMouseDown={(event) => event.stopPropagation()}>
           <div className="my-bookings-dialog-head"><div><h2 id="my-bookings-title">내 예약</h2></div><button type="button" onClick={() => { setMyBookingsOpen(false); setCancelSelection(null); }} aria-label="내 예약 닫기"><CloseIcon /></button></div>
@@ -2521,11 +2791,30 @@ export default function Home() {
             <span>{earlyEnd.start}–{earlyEnd.end} → <em>{earlyEnd.start}–{earlyEndTime(earlyEnd)}</em></span>
             <span className="early-free">{spokenDuration(minutesOf(earlyEnd.end) - minutesOf(earlyEndTime(earlyEnd)))} 다시 열립니다</span>
           </div>
+          {!currentUser && <label className="action-identity"><span>예약자 확인</span><input value={actionIdentity} onChange={(event) => { setActionIdentity(event.target.value); setActionNotice(""); }} placeholder="예약자 이름" /></label>}
+          {actionNotice && <p className="action-notice" role="alert">{actionNotice}</p>}
           <div className="early-foot">
             <button type="button" onClick={() => setEarlyEnd(null)}>그대로 두기</button>
             <button type="button" className="early-go" disabled={earlyEndBusy} onClick={confirmEarlyEnd}>
               {earlyEndBusy ? "끝내는 중…" : "끝내기"}
             </button>
+          </div>
+        </section>
+      </div>}
+      {extendBooking && <div className="edit-backdrop" role="presentation" onMouseDown={() => setExtendBooking(null)}>
+        <section className="early-dialog extend-dialog" role="dialog" aria-modal="true" aria-labelledby="extend-booking-title" onMouseDown={(event) => event.stopPropagation()}>
+          <h2 id="extend-booking-title">30분 연장할까요?</h2>
+          <p>다음 예약이 없어 현재 회의를 연장할 수 있습니다.</p>
+          <div className="early-summary">
+            <b>{roomById(extendBooking.roomId)?.name} · {extendBooking.purpose}</b>
+            <span>{extendBooking.start}–{extendBooking.end} → <em>{extendBooking.start}–{addMinutes(extendBooking.end, bookingDefaults.slotMinutes)}</em></span>
+            <span className="early-free">추가된 30분 동안 회의실을 계속 사용합니다</span>
+          </div>
+          {!currentUser && <label className="action-identity"><span>예약자 확인</span><input value={actionIdentity} onChange={(event) => { setActionIdentity(event.target.value); setActionNotice(""); }} placeholder="예약자 이름" /></label>}
+          {actionNotice && <p className="action-notice" role="alert">{actionNotice}</p>}
+          <div className="early-foot">
+            <button type="button" onClick={() => setExtendBooking(null)}>그대로 두기</button>
+            <button type="button" className="early-go" disabled={extendBusy || !canExtendBooking(extendBooking)} onClick={confirmExtendBooking}>{extendBusy ? "연장하는 중…" : "30분 연장"}</button>
           </div>
         </section>
       </div>}
@@ -2552,8 +2841,8 @@ export default function Home() {
           </div>
           <div className="early-foot">
             <button type="button" onClick={() => setRepeatAsk(null)}>그만두기</button>
-            <button type="button" className="early-go" disabled={submitting} onClick={() => sendBooking(repeatAsk.free)}>
-              {submitting ? "예약하는 중…" : `${repeatAsk.free.length}일만 예약하기`}
+            <button type="button" className="early-go" disabled={submitting} onClick={() => { setSubmitPreviewDates(repeatAsk.free); setRepeatAsk(null); }}>
+              {`${repeatAsk.free.length}일만 예약하기`}
             </button>
           </div>
         </section>

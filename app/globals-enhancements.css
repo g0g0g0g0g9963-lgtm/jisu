@@ -1679,3 +1679,48 @@ button {
 }
 @media (pointer:coarse){.daily-timeline .timeline-day-body{touch-action:pan-y}.daily-timeline .timeline-day-body.touch-dragging{touch-action:none}.weekly-room-cell .weekly-cell-add{touch-action:manipulation}}
 .timeline-drag-selection .timeline-drag-label{z-index:2;color:#fff;white-space:nowrap;pointer-events:none;background:#c21238;border-radius:999px;padding:5px 9px;font-size:11px;font-weight:800;line-height:1;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 4px 12px #8e0f3152}
+
+/* 단계별 빠른예약 선택기 */
+.booking-panel .room-picker-card{position:relative;z-index:24}
+.booking-panel .room-picker-popover{z-index:40;width:min(520px,calc(100vw - 40px));max-height:min(520px,68vh);position:absolute;top:calc(100% + 7px);right:0;left:auto;background:#fff;border:1px solid #dfe3eb;border-radius:10px;box-shadow:0 18px 42px #10182b2e}
+.booking-panel .room-picker-popover .room-picker-row>button:first-child{min-height:58px;padding:8px 112px 8px 11px}
+.booking-panel .room-picker-popover .room-picker-row>button:first-child>em{display:block;max-width:290px;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
+.booking-panel .room-picker-next{color:#8a93a4;font-size:10.5px;font-weight:600;position:absolute;right:70px;bottom:7px}
+.booking-panel .booking-time-section{position:relative;z-index:100}
+.booking-panel .booking-info-section{position:relative;z-index:1}
+.booking-panel .time-picker-toggle{width:100%;height:38px;color:#17223a;text-align:left;background:#f5f6f9;border:1px solid transparent;border-radius:8px;padding:0 38px 0 11px;font:inherit;font-size:13px;font-variant-numeric:tabular-nums;position:relative}
+.booking-panel .time-picker-toggle:after{content:"⌄";color:#5f6474;font-size:18px;position:absolute;right:12px;top:50%;transform:translateY(-56%)}
+.booking-panel .time-picker-toggle:hover{background:#eff1f6}
+.booking-panel .time-picker-toggle:focus-visible{outline:2px solid #ed1639;outline-offset:2px}
+.booking-panel .time-picker-popover{z-index:120;pointer-events:auto;background:#fff;border:1px solid #dfe3eb;border-radius:10px;padding:12px;position:absolute;top:92px;right:0;left:0;box-shadow:0 16px 36px #10182b29}
+.time-picker-popover-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:10px}
+.time-picker-popover-head b{color:#17223a;font-size:13px}.time-picker-popover-head span{color:#7b8495;font-size:10.5px}
+.time-picker-slots{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;max-height:210px;overflow-y:auto}
+.time-picker-slots button{min-height:38px;color:#344057;background:#f5f6f9;border:0;border-radius:7px;font:inherit;font-size:12px;font-weight:700}
+.time-picker-slots button:hover,.time-picker-slots button:focus-visible{color:#17223a;background:#e9edf5;outline:2px solid #ed1639;outline-offset:1px}
+.time-picker-slots button.selected{color:#fff;background:#17223a}
+
+/* 충돌 대안과 예약 전 요약 */
+.booking-alternatives{display:grid;gap:6px;margin:0 0 10px}
+.booking-alternatives>b{color:#17223a;font-size:12px}
+.booking-alternatives button{min-height:44px;text-align:left;background:#fff;border:1px solid #dfe3eb;border-radius:8px;padding:7px 10px;font:inherit;display:grid;gap:2px}
+.booking-alternatives button:hover,.booking-alternatives button:focus-visible{border-color:#22366f;outline:2px solid #22366f24;outline-offset:1px}
+.booking-alternatives button span{color:#17223a;font-size:11.5px;font-weight:800}.booking-alternatives button em{color:#6b7485;font-size:10.5px;font-style:normal}
+.booking-preview-summary{background:#f5f6f9;border-radius:9px;padding:9px 11px;margin:0 0 10px;display:grid;gap:5px}
+.booking-preview-summary>div{display:grid;grid-template-columns:76px 1fr;gap:8px;align-items:baseline}
+.booking-preview-summary span{color:#7b8495;font-size:10.5px}.booking-preview-summary b{color:#17223a;font-size:11.5px;font-weight:700}
+.booking-preview-summary p{border-top:1px solid #e1e4eb;margin:3px 0 0;padding-top:7px;font-size:11px;font-weight:800}.booking-preview-summary p.available{color:#0f7757}.booking-preview-summary p.warning{color:#b32138}
+.booking-confirm-summary{gap:7px}.booking-confirm-dialog h2{color:#17223a}
+
+/* 예약 카드 상세·종료·연장 */
+.reservation-hover-card .reservation-detail-hint{color:#c21238;border-top:1px solid #e6e9ef;margin-top:3px;padding-top:7px;font-size:11px;font-style:normal;font-weight:800}
+.reservation-hover-card.is-private{min-width:210px}
+.schedule-design-cards .daily-timeline .timeline-event .extend-booking{z-index:3;color:#163f70;white-space:nowrap;background:#fff;border-radius:999px;padding:3px 9px;font-size:11px;font-weight:800;position:absolute;right:7px;bottom:32px;box-shadow:inset 0 0 0 1px #b9c9df}
+.schedule-design-cards .daily-timeline .timeline-event .extend-booking:hover{color:#fff;background:#163f70}
+.action-identity{display:grid;gap:6px;margin-top:12px}.action-identity span{color:#5f6474;font-size:11px;font-weight:700}.action-identity input{height:40px;border:1px solid #d9dee8;border-radius:8px;padding:0 11px;font:inherit}.action-identity input:focus{border-color:#ed1639;outline:2px solid #ed163926}
+.action-notice{color:#b32138;margin:8px 0 0;font-size:11.5px;font-weight:700}.extend-dialog h2{color:#17223a}
+
+/* 키보드·터치 */
+.timeline-day-body:focus-visible{z-index:8;outline:3px solid #22366f;outline-offset:-3px}
+@media (pointer:coarse){.booking-panel button,.booking-panel input,.booking-panel select,.weekly-cell-add,.early-foot button{min-height:44px}.schedule-design-cards .daily-timeline .timeline-event{min-width:44px}.schedule-design-cards .daily-timeline .timeline-event .early-end,.schedule-design-cards .daily-timeline .timeline-event .extend-booking{min-height:36px;display:flex;align-items:center}.booking-panel .room-picker-popover{width:min(480px,calc(100vw - 24px))}}
+@media (max-width:900px){.booking-panel .room-picker-popover{width:100%;right:0}.time-picker-slots{grid-template-columns:repeat(3,minmax(0,1fr))}}

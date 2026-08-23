@@ -190,6 +190,16 @@ function CalendarIcon() {
   );
 }
 
+/** 상단 내 예약 진입점. 알림과 구분되는 얇은 선형 종 아이콘을 쓴다. */
+function BellIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+      <path d="M6.75 9.5a5.25 5.25 0 0 1 10.5 0c0 6 2.25 6.25 2.25 7.75H4.5c0-1.5 2.25-1.75 2.25-7.75Z" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M9.75 20a2.55 2.55 0 0 0 4.5 0" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 const WEEKDAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
 
 /** 비품 id → 이름. 예약에는 id만 남아 있어, 「내 예약」처럼 나중에 다시 보여줄 때 필요하다. */
@@ -1659,8 +1669,17 @@ export default function Home() {
           {/* 시계와 날짜는 뺐다. 보고 있는 날짜가 왼쪽에 크게 있고,
               현재 시각은 일정표의 빨간 선이 알려 준다. */}
           <nav className="header-nav" aria-label="사용자 메뉴">
-            <button type="button" className="header-nav-item" onClick={() => setMyBookingsOpen(true)}>내 예약</button>
             <a className="header-nav-item" href="/회의실예약_매뉴얼.pdf" target="_blank" rel="noopener noreferrer">매뉴얼</a>
+            <button
+              type="button"
+              className="header-nav-item header-bookings-bell"
+              aria-label={`내 예약${upcomingMyBookings.length > 0 ? `, 예정 예약 ${upcomingMyBookings.length}건` : ""}`}
+              title="내 예약"
+              onClick={() => setMyBookingsOpen(true)}
+            >
+              <BellIcon />
+              {upcomingMyBookings.length > 0 && <span className="header-bookings-dot" aria-hidden="true" />}
+            </button>
           </nav>
           {/* 이니셜은 이름에서 뽑는다. 원은 장식이라 낭독기에서는 건너뛰고
               이름만 읽히게 한다. */}

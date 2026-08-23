@@ -1790,3 +1790,10 @@ button {
 .app-shell .schedule-design-cards .weekly-room-board .weekly-room-event:not(.is-mine):hover{background:#f8fbfe;border-color:#cbd9e6}
 .app-shell .schedule-design-cards .daily-timeline .timeline-event.is-mine:hover,
 .app-shell .schedule-design-cards .weekly-room-board .weekly-room-event.is-mine:hover{background:#fff9fa;border-color:#e6cbd3}
+
+/* 헤더 A안: 매뉴얼 → 알림 → 구분선 → 프로필. */
+.header-account .header-nav .header-bookings-bell{position:relative;display:grid;place-items:center;width:40px;height:40px;padding:0;color:#304b78;border-radius:8px}
+.header-account .header-nav .header-bookings-bell:hover{color:#17223a;background:#f1f4f9}
+.header-account .header-nav .header-bookings-bell:focus-visible{outline:2px solid #304b78;outline-offset:2px}
+.header-account .header-nav .header-bookings-bell svg{width:21px;height:21px}
+.header-account .header-nav .header-bookings-dot{position:absolute;top:7px;right:7px;width:7px;height:7px;background:#ed1639;border:2px solid #fff;border-radius:50%;box-sizing:content-box}

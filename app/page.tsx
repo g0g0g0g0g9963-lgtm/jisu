@@ -2233,7 +2233,7 @@ export default function Home() {
               {floors.map((item) => (
                 <div className="room-picker-floor-group" key={item}>
                   <small>{item}F</small>
-                  {roomChoices.filter(({ room }) => room.floor === item).map(({ room, availableForSlot, next }) => {
+                  {roomChoices.filter(({ room }) => room.floor === item).map(({ room }) => {
                     const status = statusOf(room);
                     return <div className="room-picker-row" key={room.id}>
                       <button type="button" className={selected.id === room.id ? "selected" : ""} onClick={() => selectRoom(room)}>
@@ -2241,8 +2241,6 @@ export default function Home() {
                             이름이 다음 줄로 떨어져 나갈 자리가 없다. */}
                         <span className="room-picker-name"><span className={`status-dot ${status.status}`} /><strong>{room.name}</strong></span>
                         <em>{room.floor}층 · {formatCapacity(room.capacity)} · {room.equipment.join(" · ")}</em>
-                        <span className={`room-picker-status ${availableForSlot ? "available" : "occupied"}`}>{availableForSlot ? "선택 시간 예약 가능" : "선택 시간 사용 중"}</span>
-                        <small className="room-picker-next">{next ? `다음 예약 ${next.start}` : "이후 예약 없음"}</small>
                       </button>
                       <button
                         type="button"

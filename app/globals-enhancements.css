@@ -1864,7 +1864,7 @@ button {
 
 .booking-panel .room-picker-options .room-picker-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 38px;
+  grid-template-columns: minmax(0, 1fr) 44px;
   align-items: stretch;
   gap: 6px;
   width: 100%;
@@ -1872,15 +1872,14 @@ button {
 
 .booking-panel .room-picker-options .room-picker-row > button:first-child {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   grid-template-areas:
-    "name name"
-    "spec spec"
-    "status next";
+    "name"
+    "spec";
   align-content: center;
   gap: 3px 8px;
   min-width: 0;
-  min-height: 70px;
+  min-height: 58px;
   padding: 8px 10px !important;
 }
 
@@ -1925,20 +1924,21 @@ button {
 .booking-panel .room-picker-options .room-picker-row-map {
   display: grid;
   place-items: center;
-  width: 38px;
+  width: 44px;
   height: auto !important;
-  min-height: 70px !important;
+  min-height: 58px !important;
   padding: 0;
   color: #ed1639 !important;
-  background: #fff5f7 !important;
-  border: 1px solid #f2cbd4 !important;
-  border-radius: 7px;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0;
+  box-shadow: none !important;
 }
 
 .booking-panel .room-picker-options .room-picker-row-map:hover {
-  color: #fff !important;
-  background: #ed1639 !important;
-  border-color: #ed1639 !important;
+  color: #b90f2f !important;
+  background: transparent !important;
+  border-color: transparent !important;
 }
 
 .booking-panel .room-picker-options .room-picker-row-map svg {

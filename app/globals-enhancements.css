@@ -1797,3 +1797,24 @@ button {
 .header-account .header-nav .header-bookings-bell:focus-visible{outline:2px solid #304b78;outline-offset:2px}
 .header-account .header-nav .header-bookings-bell svg{width:21px;height:21px}
 .header-account .header-nav .header-bookings-dot{position:absolute;top:7px;right:7px;width:7px;height:7px;background:#ed1639;border:2px solid #fff;border-radius:50%;box-sizing:content-box}
+
+/* 종 바로 아래에서 열리는 간결한 예약 알림. */
+.header-account .header-bookings-wrap{position:relative;display:flex;align-items:center}
+.app-shell .topbar:has(.header-notifications-popover){z-index:1400;overflow:visible}
+.header-account .header-notifications-popover{position:absolute;z-index:1500;top:calc(100% + 10px);right:0;width:min(320px,calc(100vw - 24px));overflow:visible;color:#17223a;background:#fff;border:1px solid #d9dee8;border-radius:10px;box-shadow:0 12px 30px #141a2d24}
+.header-account .header-notifications-popover::before{content:"";position:absolute;top:-6px;right:14px;width:10px;height:10px;background:#fff;border-top:1px solid #d9dee8;border-left:1px solid #d9dee8;transform:rotate(45deg)}
+.header-notifications-head{position:relative;padding:14px 16px 9px}
+.header-notifications-head b{font-size:14px;font-weight:800}
+.header-notification-list{padding:0 16px}
+.header-notification-item{display:grid;grid-template-columns:30px minmax(0,1fr);gap:10px;align-items:start;padding:10px 0;border-top:1px solid #edf0f4}
+.header-notification-item:first-child{border-top:0}
+.header-notification-icon{display:grid;place-items:center;width:28px;height:28px;color:#304b78;background:#f1f4f9;border-radius:7px}
+.header-notification-icon svg{width:16px;height:16px}
+.header-notification-item>span:last-child{min-width:0;display:grid;gap:2px}
+.header-notification-item b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;font-weight:800}
+.header-notification-item small{color:#6b7485;font-size:11px}
+.header-notification-empty{margin:0;padding:18px 0;color:#6b7485;text-align:center;font-size:12px}
+.header-notification-more{margin:0;padding:8px 0 10px;color:#6b7485;text-align:center;font-size:11px}
+.header-notifications-all{width:100%;min-height:42px;color:#22366f;background:#fff;border:0;border-top:1px solid #e1e5ec;border-radius:0 0 10px 10px;font:inherit;font-size:12px;font-weight:800;cursor:pointer}
+.header-notifications-all:hover{background:#f5f7fa}
+.header-notifications-all:focus-visible{outline:2px solid #304b78;outline-offset:-3px}

@@ -2458,3 +2458,34 @@ button {
 }
 
 .edit-dialog .edit-running-action button:hover { background: #25324c; }
+
+/* 본문은 SUIT, 큰 날짜와 영문 요일은 Roboto Condensed Bold를 사용한다. */
+@font-face {
+  font-family: "SUIT";
+  src: url("https://cdn.jsdelivr.net/gh/sun-typeface/SUIT@2/fonts/variable/woff2/SUIT-Variable.woff2") format("woff2-variations");
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Roboto Condensed";
+  src: url("https://fonts.gstatic.com/s/robotocondensed/v31/ieVo2ZhZI2eCN5jzbjEETS9weq8-_d6T_POl0fRJeyVVpcBO5Xw.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+}
+
+body,
+button,
+input,
+select,
+textarea {
+  font-family: "SUIT", Pretendard, "Apple SD Gothic Neo", sans-serif;
+}
+
+.schedule-hero .hero-kicker,
+.schedule-hero .hero-date h3.hero-date-big {
+  font-family: "Roboto Condensed", "Arial Narrow", "SUIT", sans-serif;
+  font-weight: 700;
+}

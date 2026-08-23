@@ -1672,3 +1672,8 @@ button {
   transform: translateY(-1px);
   box-shadow: 0 10px 21px rgb(237 22 57 / 23%);
 }
+
+/* 왼쪽 TIME 축은 숫자만 남긴다. 회의실 영역의 시간 격자는 유지한다. */
+.schedule-design-cards .daily-timeline .time-axis-body {
+  background-image: none;
+}

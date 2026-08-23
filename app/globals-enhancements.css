@@ -2990,3 +2990,11 @@ button {
     justify-self: end;
   }
 }
+
+/* 예약 확인창은 빠른예약의 모든 팝업·입력 영역보다 위에서 화면 전체를 덮는다. */
+.booking-confirm-backdrop {
+  z-index: 3000;
+  width: 100vw;
+  height: 100dvh;
+  overflow: hidden;
+}

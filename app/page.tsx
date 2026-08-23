@@ -298,15 +298,20 @@ function DateField({ value, min, onChange, rangeFrom, onRangeChange, variant = "
     onOpenChange?.(resolved);
   }, [controlledOpen, onOpenChange, open]);
   const [viewMonth, setViewMonth] = useState(() => value.slice(0, 7));
-  const [dragging, setDragging] = useState(false);
   const [dragFrom, setDragFrom] = useState<DateKey | null>(null);
   const [dragTo, setDragTo] = useState<DateKey | null>(null);
   const rangeDraggedRef = useRef(false);
+  const draggingRef = useRef(false);
+  const dragFromRef = useRef<DateKey | null>(null);
+  const dragToRef = useRef<DateKey | null>(null);
+  const onRangeChangeRef = useRef(onRangeChange);
   // 기간 고르기에서 지금 무엇을 고르는 중인지. 위의 시작일·종료일 상자로 바꾼다.
   const [pickTarget, setPickTarget] = useState<"start" | "end">("start");
   // 기간을 다 골랐는지. 다 골랐어도 창은 닫지 않고 '완료'를 기다린다.
   const [rangeSettled, setRangeSettled] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => { onRangeChangeRef.current = onRangeChange; }, [onRangeChange]);
 
   // 달력을 새로 열 때는 언제나 시작일부터 고른다.
   useEffect(() => { if (open) { setPickTarget("start"); setRangeSettled(false); } }, [open]);
@@ -409,46 +414,51 @@ function DateField({ value, min, onChange, rangeFrom, onRangeChange, variant = "
     setRangeSettled(true);
   }, [onRangeChange, pickTarget, rangeFrom, value]);
 
-  // 실제로 날짜 사이를 끌었을 때만 문서의 pointerup에서 기간을 확정한다.
-  // 단순 클릭은 아래 날짜 버튼의 onClick이 맡아 빠른 클릭도 놓치지 않는다.
+  // 드래그 감지는 달력이 열린 순간부터 문서에 붙여 둔다. 예전처럼 pointerdown 뒤
+  // 렌더링을 기다려 붙이면 빠르게 끌었을 때 첫 움직임을 놓칠 수 있다.
   useEffect(() => {
-    if (!dragging) return;
-    const finish = () => {
-      if (dragFrom && dragTo && onRangeChange && rangeDraggedRef.current) {
-        // 다 골라도 창은 닫지 않는다. 고른 기간이 맞는지 눈으로 확인하고
-        // 아래 '완료'로 직접 닫게 한다. 바로 닫히면 제대로 골랐는지 알 수 없다.
-        const [first, last] = dragFrom <= dragTo ? [dragFrom, dragTo] : [dragTo, dragFrom];
-        onRangeChange(first, last);
-        setPickTarget("end");
-        setRangeSettled(true);
-      }
-      setDragging(false);
-      setDragFrom(null);
-      setDragTo(null);
-    };
-    document.addEventListener("pointerup", finish);
-    return () => document.removeEventListener("pointerup", finish);
-  }, [dragging, dragFrom, dragTo, onRangeChange]);
-
-  // 터치 환경에서는 pointer가 시작 버튼에 붙잡혀 옆 날짜의 이벤트가 오지 않는다.
-  // 실제 포인터 좌표 아래의 날짜를 찾아 갱신하면 마우스와 터치 모두 같은 방식으로
-  // 시작일에서 종료일까지 끌어서 고를 수 있다.
-  useEffect(() => {
-    if (!dragging || !rangeFrom) return;
+    if (!open || !rangeFrom) return;
     const followDrag = (event: PointerEvent) => {
+      if (!draggingRef.current) return;
       const target = document
         .elementFromPoint(event.clientX, event.clientY)
         ?.closest<HTMLButtonElement>(".date-panel-grid button[data-date-key]");
       if (!target || target.getAttribute("aria-disabled") === "true") return;
       const next = target.dataset.dateKey as DateKey | undefined;
-      if (!next || next === dragTo) return;
+      if (!next || next === dragToRef.current) return;
       rangeDraggedRef.current = true;
+      dragToRef.current = next;
       setDragTo(next);
       if (event.cancelable) event.preventDefault();
     };
+
+    const finish = () => {
+      if (!draggingRef.current) return;
+      const firstDate = dragFromRef.current;
+      const lastDate = dragToRef.current;
+      if (firstDate && lastDate && onRangeChangeRef.current && rangeDraggedRef.current) {
+        // 다 골라도 창은 닫지 않는다. 고른 기간이 맞는지 눈으로 확인하고
+        // 아래 '완료'로 직접 닫게 한다. 바로 닫히면 제대로 골랐는지 알 수 없다.
+        const [first, last] = firstDate <= lastDate ? [firstDate, lastDate] : [lastDate, firstDate];
+        onRangeChangeRef.current(first, last);
+        setPickTarget("end");
+        setRangeSettled(true);
+      }
+      draggingRef.current = false;
+      dragFromRef.current = null;
+      dragToRef.current = null;
+      setDragFrom(null);
+      setDragTo(null);
+    };
     document.addEventListener("pointermove", followDrag, { passive: false });
-    return () => document.removeEventListener("pointermove", followDrag);
-  }, [dragging, dragTo, rangeFrom]);
+    document.addEventListener("pointerup", finish);
+    document.addEventListener("pointercancel", finish);
+    return () => {
+      document.removeEventListener("pointermove", followDrag);
+      document.removeEventListener("pointerup", finish);
+      document.removeEventListener("pointercancel", finish);
+    };
+  }, [open, rangeFrom]);
 
   const [year, month] = viewMonth.split("-").map(Number);
   const firstWeekday = new Date(Date.UTC(year, month - 1, 1)).getUTCDay();
@@ -548,16 +558,14 @@ function DateField({ value, min, onChange, rangeFrom, onRangeChange, variant = "
                   className={`${isEdge ? "selected" : ""} ${inRange && !skipped ? "in-range" : ""} ${skipped ? "range-skip" : ""} ${disabled ? "disabled" : ""} ${isToday ? "is-today" : ""} ${weekendClass}`}
                   onPointerDown={(event) => {
                     if (!rangeFrom || disabled) return;
+                    if (event.pointerType === "mouse" && event.button !== 0) return;
                     rangeDraggedRef.current = false;
-                    setDragging(true);
+                    draggingRef.current = true;
+                    dragFromRef.current = key;
+                    dragToRef.current = key;
                     setDragFrom(key);
                     setDragTo(key);
-                  }}
-                  onPointerMove={() => {
-                    if (dragging && !disabled && dragTo !== key) {
-                      rangeDraggedRef.current = true;
-                      setDragTo(key);
-                    }
+                    try { event.currentTarget.setPointerCapture(event.pointerId); } catch { /* 지원하지 않는 브라우저는 문서 이벤트로 처리한다. */ }
                   }}
                   onClick={() => {
                     if (disabled) return;
@@ -706,6 +714,7 @@ export default function Home() {
   const [allDay, setAllDay] = useState(false);
   const [roomPickerOpen, setRoomPickerOpen] = useState(false);
   const [timePickerOpen, setTimePickerOpen] = useState<"start" | "end" | null>(null);
+  const [bookingDateCalendarOpen, setBookingDateCalendarOpen] = useState(false);
   const [repeatWeekly, setRepeatWeekly] = useState(false);
   const [repeatEndCalendarOpen, setRepeatEndCalendarOpen] = useState(false);
   // 반복은 평일만 잡는 것이 기본이다. 주말에도 회의를 잡는 사람을 위해
@@ -2191,7 +2200,13 @@ export default function Home() {
               aria-label="빠른 예약 접기"
               aria-expanded={bookingPanelOpen}
               aria-controls="quick-booking-content"
-              onClick={() => setBookingPanelOpen(false)}
+              onClick={() => {
+                setBookingPanelOpen(false);
+                setRoomPickerOpen(false);
+                setTimePickerOpen(null);
+                setBookingDateCalendarOpen(false);
+                setRepeatEndCalendarOpen(false);
+              }}
             ><DoubleChevronIcon direction="prev" /></button>
 
             <div className="booking-title-copy"><h2>빠른 예약</h2></div>
@@ -2214,7 +2229,12 @@ export default function Home() {
               className={`room-picker-toggle ${roomPickerOpen ? "open" : ""}`}
               aria-label={`회의실 선택: ${selected.name} ${selected.floor}층`}
               aria-expanded={roomPickerOpen}
-              onClick={() => { setTimePickerOpen(null); setRoomPickerOpen((current) => !current); }}
+              onClick={() => {
+                setTimePickerOpen(null);
+                setBookingDateCalendarOpen(false);
+                setRepeatEndCalendarOpen(false);
+                setRoomPickerOpen((current) => !current);
+              }}
             >
               <span className="room-picker-field-copy">
                 <span className="room-picker-field-title"><span className={`status-dot ${selectedStatus.status}`} /><strong>{selected.name}</strong><small className="room-picker-field-floor">{selected.floor}F</small></span>
@@ -2277,7 +2297,19 @@ export default function Home() {
             <div className="booking-fields">
             <section className="booking-form-section booking-date-section">
               <div className="booking-section-heading"><span>2</span><b>예약 날짜</b></div>
-              <div className="booking-date-row"><DateField value={date} onChange={setDate} /></div>
+              <div className="booking-date-row"><DateField
+                controlledOpen={bookingDateCalendarOpen}
+                onOpenChange={(next) => {
+                  setBookingDateCalendarOpen(next);
+                  if (next) {
+                    setRoomPickerOpen(false);
+                    setTimePickerOpen(null);
+                    setRepeatEndCalendarOpen(false);
+                  }
+                }}
+                value={date}
+                onChange={(next) => { setDate(next); setBookingDateCalendarOpen(false); }}
+              /></div>
             </section>
 
             <section className="booking-form-section booking-time-section">
@@ -2289,8 +2321,8 @@ export default function Home() {
               {/* 고르고 나면 커서(포커스)를 놓아 준다. select는 값을 고른
                   뒤에도 포커스가 남아, 다른 칸과 달리 빨간 포커스 테두리가
                   할 일이 끝난 뒤에도 계속 떠 있는 것처럼 보였다. */}
-              <label className={timeNeedsPick ? "needs-input" : undefined}><span className="field-label">시작 시간</span><button id="start-time-select" className="time-picker-toggle" type="button" aria-haspopup="listbox" aria-expanded={timePickerOpen === "start"} onClick={() => { setRoomPickerOpen(false); setTimePickerOpen((current) => current === "start" ? null : "start"); }}>{start}</button></label>
-              <label className={timeNeedsPick ? "needs-input" : undefined}><span className="field-label">종료 시간</span><button className="time-picker-toggle" type="button" aria-haspopup="listbox" aria-expanded={timePickerOpen === "end"} onClick={() => { setRoomPickerOpen(false); setTimePickerOpen((current) => current === "end" ? null : "end"); }}>{end}</button></label>
+              <label className={timeNeedsPick ? "needs-input" : undefined}><span className="field-label">시작 시간</span><button id="start-time-select" className="time-picker-toggle" type="button" aria-haspopup="listbox" aria-expanded={timePickerOpen === "start"} onClick={() => { setRoomPickerOpen(false); setBookingDateCalendarOpen(false); setRepeatEndCalendarOpen(false); setTimePickerOpen((current) => current === "start" ? null : "start"); }}>{start}</button></label>
+              <label className={timeNeedsPick ? "needs-input" : undefined}><span className="field-label">종료 시간</span><button className="time-picker-toggle" type="button" aria-haspopup="listbox" aria-expanded={timePickerOpen === "end"} onClick={() => { setRoomPickerOpen(false); setBookingDateCalendarOpen(false); setRepeatEndCalendarOpen(false); setTimePickerOpen((current) => current === "end" ? null : "end"); }}>{end}</button></label>
               </div>
 
               {timePickerOpen && <div className="time-picker-popover" role="listbox" aria-label={timePickerOpen === "start" ? "예약 가능한 시작 시간" : "예약 가능한 종료 시간"} onPointerDown={(event) => event.stopPropagation()}>
@@ -2325,6 +2357,9 @@ export default function Home() {
                 const checked = event.target.checked;
                 setRepeatWeekly(checked);
                 setRepeatEndCalendarOpen(checked);
+                setBookingDateCalendarOpen(false);
+                setRoomPickerOpen(false);
+                setTimePickerOpen(null);
                 if (checked && !repeatEndTouched) {
                   setRepeatEnd(moveDate(date, bookingDefaults.defaultRepeatSpanDays));
                 }
@@ -2340,7 +2375,14 @@ export default function Home() {
                     고르라는 뜻이므로 달력을 한 번 더 누르게 하지 않는다. */}
                 <DateField
                   controlledOpen={repeatEndCalendarOpen}
-                  onOpenChange={setRepeatEndCalendarOpen}
+                  onOpenChange={(next) => {
+                    setRepeatEndCalendarOpen(next);
+                    if (next) {
+                      setBookingDateCalendarOpen(false);
+                      setRoomPickerOpen(false);
+                      setTimePickerOpen(null);
+                    }
+                  }}
                   skipWeekends={!repeatWeekends}
                   onSkipWeekendsChange={(skip) => setRepeatWeekends(!skip)}
                   value={repeatEnd}

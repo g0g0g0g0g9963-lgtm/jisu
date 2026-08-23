@@ -2669,25 +2669,14 @@ button {
 
 /* 상단 리본과 선택선이 겹치지 않도록 선택 표시는 회의실 이름 아래에 둔다. */
 .schedule-design-cards .daily-timeline .daily-room.active .daily-room-head {
-  box-shadow: none;
+  box-shadow: inset 0 -3px #ed1639;
 }
 
 .schedule-design-cards .daily-timeline .daily-room.active .daily-room-title > strong {
-  position: relative;
-  padding-bottom: 5px;
-  margin-bottom: -5px;
-}
-
-.schedule-design-cards .daily-timeline .daily-room.active .daily-room-title > strong::after {
-  content: "";
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  height: 2px;
-  background: #ed1639;
+  padding-bottom: 0;
+  margin-bottom: 0;
 }
 
 .schedule-design-cards .daily-timeline .daily-room.active .daily-room-head:focus-visible {
-  box-shadow: inset 0 0 0 2px rgb(48 75 120 / 38%);
+  box-shadow: inset 0 -3px #ed1639, inset 0 0 0 2px rgb(48 75 120 / 38%);
 }

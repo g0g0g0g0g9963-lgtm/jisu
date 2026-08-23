@@ -2200,12 +2200,12 @@ export default function Home() {
             <button
               type="button"
               className={`room-picker-toggle ${roomPickerOpen ? "open" : ""}`}
-              aria-label={`회의실 선택: ${selected.name}`}
+              aria-label={`회의실 선택: ${selected.name} ${selected.floor}층`}
               aria-expanded={roomPickerOpen}
               onClick={() => { setTimePickerOpen(null); setRoomPickerOpen((current) => !current); }}
             >
               <span className="room-picker-field-copy">
-                <span className="room-picker-field-title"><span className={`status-dot ${selectedStatus.status}`} /><strong>{selected.name}</strong></span>
+                <span className="room-picker-field-title"><span className={`status-dot ${selectedStatus.status}`} /><strong>{selected.name}</strong><small className="room-picker-field-floor">{selected.floor}F</small></span>
                 <span className="room-picker-field-specs"><em>{formatCapacity(selected.capacity)}</em>{selected.equipment.slice(0, 2).map((item) => <em key={item}>{item}</em>)}</span>
               </span>
               <i aria-hidden="true" />

@@ -2540,3 +2540,92 @@ button {
   line-height: .9;
   letter-spacing: -.005em;
 }
+
+/* 빠른예약은 모니터에서도 한눈에 읽히도록 한 단계 큰 본문 위계를 사용한다. */
+.booking-panel .room-picker-field-title > strong {
+  flex: 0 1 auto;
+  font-size: 15px;
+}
+
+.booking-panel .room-picker-field-floor {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 7px;
+  color: #657187;
+  letter-spacing: .02em;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.booking-panel .room-picker-field-floor::before {
+  content: "";
+  width: 1px;
+  height: 12px;
+  background: #cfd5df;
+}
+
+.booking-panel .room-picker-field-specs > em {
+  font-size: 11px;
+}
+
+.booking-panel:not(.is-collapsed) .booking-title .booking-title-copy h2 {
+  font-size: 19px;
+}
+
+.booking-panel:not(.is-collapsed) .booking-title .booking-title-copy::before {
+  font-size: 11.5px;
+}
+
+.booking-panel:not(.is-collapsed) .booking-section-heading b {
+  font-size: 13.5px;
+}
+
+.booking-panel:not(.is-collapsed) .booking-section-heading > span {
+  font-size: 11.5px;
+}
+
+.booking-panel:not(.is-collapsed) .booking-fields .field-label,
+.booking-panel:not(.is-collapsed) .booking-fields label > .field-label,
+.booking-panel:not(.is-collapsed) .form-row-duration > .field-label {
+  font-size: 13px;
+}
+
+.booking-panel:not(.is-collapsed) .booking-fields input:not([type="checkbox"]),
+.booking-panel:not(.is-collapsed) .booking-fields select,
+.booking-panel:not(.is-collapsed) .booking-fields textarea,
+.booking-panel:not(.is-collapsed) .booking-fields .date-field-value,
+.booking-panel:not(.is-collapsed) .booking-fields .time-picker-toggle {
+  font-size: 15px;
+}
+
+.booking-panel:not(.is-collapsed) .repeat-option,
+.booking-panel:not(.is-collapsed) .repeat-option b,
+.booking-panel:not(.is-collapsed) .duration-switch button,
+.booking-panel:not(.is-collapsed) .attendee-add {
+  font-size: 13.5px;
+}
+
+.booking-panel:not(.is-collapsed) .repeat-option em,
+.booking-panel:not(.is-collapsed) .attendee-add em {
+  font-size: 12px;
+}
+
+.booking-panel:not(.is-collapsed) .room-picker-options .room-picker-name strong {
+  font-size: 13.5px;
+}
+
+.booking-panel:not(.is-collapsed) .room-picker-options .room-picker-row em,
+.booking-panel:not(.is-collapsed) .time-picker-popover,
+.booking-panel:not(.is-collapsed) .date-panel,
+.booking-panel:not(.is-collapsed) .team-suggestions {
+  font-size: 12px;
+}
+
+.booking-panel:not(.is-collapsed) .booking-submit .reserve-button > span {
+  font-size: 13px;
+}
+
+.booking-panel:not(.is-collapsed) .booking-submit .reserve-button > strong {
+  font-size: 17px;
+}

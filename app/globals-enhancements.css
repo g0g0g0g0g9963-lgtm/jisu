@@ -2631,3 +2631,18 @@ button {
 .booking-panel:not(.is-collapsed) .booking-submit .reserve-button > strong {
   font-size: 17px;
 }
+
+/* 날짜·보기 제어 영역의 끝을 잡는 브랜드 리본.
+   왼쪽은 화면에 스며들 듯 옅고, 오른쪽으로 갈수록 BDO 네이비가 선명해진다. */
+.weekly-board .weekly-heading.schedule-hero {
+  position: relative;
+  border-bottom: 0;
+  background:
+    linear-gradient(
+      90deg,
+      rgb(23 34 58 / 4%) 0%,
+      rgb(71 98 149 / 22%) 34%,
+      rgb(53 82 139 / 58%) 70%,
+      #17223a 100%
+    ) left bottom / 100% 4px no-repeat;
+}

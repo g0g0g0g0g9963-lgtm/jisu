@@ -3440,3 +3440,33 @@ button {
   border-radius: 12px;
   box-shadow: none;
 }
+
+/* A안: 전체 구분선은 없애고 상단바 아래에 넓고 옅은 그림자만 남긴다. */
+.app-shell .topbar {
+  border-bottom: 0 !important;
+  box-shadow: 0 8px 24px rgb(23 34 58 / 6%);
+}
+
+/* 첨부된 정식 로고의 레드 하단 바까지 이미지 그대로 보여 준다. */
+.topbar .bdo-logo {
+  width: 104px;
+  height: auto;
+  margin-bottom: 0;
+  clip-path: none;
+}
+
+/* 완료 알림은 체크 장식 없이 제목과 예약 정보를 한 축으로 정렬한다. */
+.booking-toast-layer .booking-toast.early-dialog.booking-complete-dialog {
+  grid-template-columns: minmax(0, 1fr);
+  column-gap: 0;
+  padding-left: 18px;
+}
+
+.booking-toast-layer .booking-complete-dialog h2 {
+  grid-column: 1;
+}
+
+.booking-toast-layer .booking-complete-dialog .booking-complete-summary {
+  grid-column: 1;
+  grid-row: 2;
+}

@@ -2953,11 +2953,6 @@ export default function Home() {
             "--toast-shift-y": `${toastFlight.y}px`,
           } as CSSProperties : undefined}
         >
-          <span className="booking-toast-check" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" focusable="false">
-              <path d="M5 12.5 10 17.5 19 7.5" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </span>
           <h2>{toast.text}</h2>
           {toast.kind === "booking" && <p>내 알림에 저장됩니다.</p>}
           <div className="early-summary booking-complete-summary">

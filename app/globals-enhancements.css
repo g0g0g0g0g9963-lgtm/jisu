@@ -3061,7 +3061,9 @@ button {
    양쪽으로 나눠 날짜 이동 묶음은 이전보다 조금 오른쪽에 자리 잡는다. */
 @media (min-width: 1100px) {
   .app-shell:not(.booking-panel-collapsed) .weekly-heading.schedule-hero,
-  .app-shell:not(.booking-panel-collapsed) .schedule-hero.weekly-heading {
+  .app-shell:not(.booking-panel-collapsed) .schedule-hero.weekly-heading,
+  .app-shell:not(.booking-panel-collapsed) .weekly-heading.schedule-hero:has(.hero-date-range),
+  .app-shell:not(.booking-panel-collapsed) .schedule-hero.weekly-heading:has(.hero-date-range) {
     grid-template-columns: auto auto minmax(18px, 1fr) auto minmax(42px, 1.2fr) auto;
     grid-template-areas: "date floors gapl nav gapr actions";
     align-items: end;

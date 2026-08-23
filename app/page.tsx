@@ -305,7 +305,6 @@ function DateField({ value, min, onChange, rangeFrom, onRangeChange, variant = "
   const dragFromRef = useRef<DateKey | null>(null);
   const dragToRef = useRef<DateKey | null>(null);
   const onRangeChangeRef = useRef(onRangeChange);
-  const singlePointerSelectedRef = useRef<DateKey | null>(null);
   // 기간 고르기에서 지금 무엇을 고르는 중인지. 위의 시작일·종료일 상자로 바꾼다.
   const [pickTarget, setPickTarget] = useState<"start" | "end">("start");
   // 기간을 다 골랐는지. 다 골랐어도 창은 닫지 않고 '완료'를 기다린다.
@@ -558,33 +557,33 @@ function DateField({ value, min, onChange, rangeFrom, onRangeChange, variant = "
                   aria-disabled={disabled}
                   className={`${isEdge ? "selected" : ""} ${inRange && !skipped ? "in-range" : ""} ${skipped ? "range-skip" : ""} ${disabled ? "disabled" : ""} ${isToday ? "is-today" : ""} ${weekendClass}`}
                   onPointerDown={(event) => {
-                    if (!rangeFrom || disabled) return;
+                    if (disabled) return;
                     if (event.pointerType === "mouse" && event.button !== 0) return;
+                    // 단일 날짜는 click을 기다리지 않고 실제 포인터가 닿은 순간
+                    // 확정한다. 팝업 스크롤이나 터치의 작은 움직임 때문에 click이
+                    // 취소돼도 날짜 선택은 이미 끝난다.
+                    if (!rangeFrom) {
+                      onChange(key);
+                      setOpen(false);
+                      return;
+                    }
                     rangeDraggedRef.current = false;
                     draggingRef.current = true;
                     dragFromRef.current = key;
                     dragToRef.current = key;
                     setDragFrom(key);
                     setDragTo(key);
-                    try { event.currentTarget.setPointerCapture(event.pointerId); } catch { /* 지원하지 않는 브라우저는 문서 이벤트로 처리한다. */ }
                   }}
-                  onPointerUp={(event) => {
-                    // 터치 화면은 아주 조금만 움직여도 합성 click이 취소될 수 있다.
-                    // 단일 날짜는 손을 뗀 순간 확정해 모니터에서도 한 번에 반영한다.
-                    if (rangeFrom || disabled || event.pointerType === "mouse") return;
-                    singlePointerSelectedRef.current = key;
-                    onChange(key);
-                    setOpen(false);
-                    window.setTimeout(() => {
-                      if (singlePointerSelectedRef.current === key) singlePointerSelectedRef.current = null;
-                    }, 0);
+                  onPointerEnter={() => {
+                    // 마우스는 각 날짜에 진입하는 순간도 직접 추적한다. 터치는 위의
+                    // document 좌표 추적이 맡아 두 입력 방식이 서로 보완한다.
+                    if (!rangeFrom || disabled || !draggingRef.current || dragToRef.current === key) return;
+                    rangeDraggedRef.current = true;
+                    dragToRef.current = key;
+                    setDragTo(key);
                   }}
                   onClick={() => {
                     if (disabled) return;
-                    if (singlePointerSelectedRef.current === key) {
-                      singlePointerSelectedRef.current = null;
-                      return;
-                    }
                     if (rangeFrom) {
                       // 드래그 직후 발생하는 click은 중복 적용하지 않는다.
                       if (rangeDraggedRef.current) {

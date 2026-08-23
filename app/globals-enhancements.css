@@ -2750,17 +2750,23 @@ button {
   background-color: #edf1f6;
   background-image:
     radial-gradient(
-      ellipse at 22% 0%,
-      rgb(255 255 255 / 90%) 0%,
-      rgb(255 255 255 / 30%) 39%,
-      transparent 70%
+      ellipse at 20% -4%,
+      rgb(255 255 255 / 100%) 0%,
+      rgb(255 255 255 / 48%) 36%,
+      transparent 68%
+    ),
+    radial-gradient(
+      ellipse at 82% 8%,
+      rgb(255 255 255 / 76%) 0%,
+      rgb(255 255 255 / 20%) 40%,
+      transparent 69%
     ),
     linear-gradient(
       118deg,
-      #f5f7fa 0%,
-      #e9eef5 48%,
-      #f8fafc 74%,
-      #edf1f6 100%
+      #f8fafc 0%,
+      #e7edf5 46%,
+      #fcfdff 73%,
+      #ebf0f6 100%
     );
 }
 

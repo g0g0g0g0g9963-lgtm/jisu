@@ -1957,6 +1957,66 @@ button {
   animation-fill-mode: none !important;
 }
 
+/* 빠른예약 머리글: 좌우를 같은 폭으로 잡아 제목을 패널의 실제 정중앙에 둔다. */
+.booking-panel:not(.is-collapsed) .booking-title {
+  display: grid !important;
+  grid-template-columns: 76px minmax(0, 1fr) 76px;
+  align-items: center;
+  gap: 0;
+  padding: 14px 16px !important;
+}
+
+.booking-panel:not(.is-collapsed) .booking-title .booking-panel-toggle {
+  position: static !important;
+  grid-column: 1;
+  grid-row: 1;
+  justify-self: start;
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  min-height: 44px;
+  margin: 0;
+}
+
+.booking-panel:not(.is-collapsed) .booking-title .booking-title-copy {
+  display: block !important;
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+  text-align: center;
+}
+
+.booking-panel:not(.is-collapsed) .booking-title .booking-title-copy::before {
+  display: block;
+  flex-basis: auto;
+  text-align: center;
+}
+
+.booking-panel:not(.is-collapsed) .booking-title .booking-title-copy h2 {
+  margin: 0;
+  text-align: center;
+}
+
+.booking-panel:not(.is-collapsed) .booking-title .booking-title-state {
+  display: flex !important;
+  grid-column: 3;
+  grid-row: 1;
+  justify-self: end;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+.booking-panel .booking-title .booking-title-state::before {
+  content: none !important;
+  display: none !important;
+}
+
+.booking-panel:not(.is-collapsed) .booking-title .booking-title-state .draft-chip {
+  margin: 0 !important;
+  padding: 5px 9px;
+  font-size: 11px;
+}
+
 .schedule-hero .schedule-floor-switch button {
   min-width: 55px;
   min-height: 44px;

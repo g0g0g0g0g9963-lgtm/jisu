@@ -2192,10 +2192,6 @@ export default function Home() {
           {filledNotice.title} {filledNotice.detail} · 아직 예약 전입니다
         </span>}
           <div className="booking-title">
-            {/* 예약하기를 누를 때까지 내려가지 않는 딱지. 알림은 3초 뒤 사라지지만
-                이건 남아서 '아직 안 끝났다'를 계속 말한다. */}
-            <div><h2>빠른 예약</h2>{draftActive && <span className="draft-chip">작성 중</span>}</div>
-
             <button
               type="button"
               className="booking-panel-toggle"
@@ -2204,6 +2200,12 @@ export default function Home() {
               aria-controls="quick-booking-content"
               onClick={() => setBookingPanelOpen(false)}
             ><DoubleChevronIcon direction="prev" /></button>
+
+            <div className="booking-title-copy"><h2>빠른 예약</h2></div>
+
+            {/* 예약하기를 누를 때까지 내려가지 않는 딱지. 알림은 3초 뒤 사라지지만
+                이건 남아서 '아직 안 끝났다'를 계속 말한다. */}
+            <div className="booking-title-state">{draftActive && <span className="draft-chip">작성 중</span>}</div>
           </div>
           <div className="booking-section-heading booking-room-heading">
             <span>1</span><b>회의실</b>

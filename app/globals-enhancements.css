@@ -2680,3 +2680,8 @@ button {
 .schedule-design-cards .daily-timeline .daily-room.active .daily-room-head:focus-visible {
   box-shadow: inset 0 -3px #ed1639, inset 0 0 0 2px rgb(48 75 120 / 38%);
 }
+
+/* 빨간 예약 버튼 안의 회의실 이름도 시간 문구와 같은 흰색으로 통일한다. */
+.booking-panel .reserve-button:not(:disabled) > span {
+  color: #fff;
+}

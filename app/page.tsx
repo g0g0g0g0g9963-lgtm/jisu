@@ -727,8 +727,6 @@ export default function Home() {
   // 조기 종료 확인 창에 띄울 예약.
   const [earlyEnd, setEarlyEnd] = useState<Booking | null>(null);
   const [earlyEndBusy, setEarlyEndBusy] = useState(false);
-  // 주간 확인 창을 누른 자리에 띄우기 위한 좌표.
-  const [confirmAt, setConfirmAt] = useState<{ x: number; y: number } | null>(null);
   // 표에서 값을 가져온 뒤 아직 예약하기를 누르지 않은 상태. 표의 점선 블록과
   // 패널의 '작성 중' 딱지를 띄우는 근거가 된다. 예약이 끝나면 내린다.
   const [draftActive, setDraftActive] = useState(false);
@@ -746,11 +744,9 @@ export default function Home() {
   // 사용자가 펼친 뒤 입력한 값은 패널을 다시 접어도 그대로 남는다.
   const [bookingPanelOpen, setBookingPanelOpen] = useState(false);
   const [slotDrag, setSlotDrag] = useState<SlotDrag | null>(null);
-  const [slotConfirmation, setSlotConfirmation] = useState<SlotSelection | null>(null);
   const pendingTouchDrag = useRef<PendingTouchDrag | null>(null);
   // 주간 화면 더블클릭은 일간 드래그와 달리 시간을 정한 적이 없다.
   // 회의실·날짜만 고르고, 시간은 빠른 예약 창에서 직접 고르게 한다.
-  const [weeklyPick, setWeeklyPick] = useState<{ roomId: Room["id"]; date: DateKey } | null>(null);
   const [alternativesExpanded, setAlternativesExpanded] = useState(false);
   // 주간 더블클릭으로 넘어온 뒤, 시간을 아직 스스로 고르지 않았다는 표시.
   // 시작·종료 시간 중 하나라도 바꾸면 풀린다.
@@ -862,8 +858,6 @@ export default function Home() {
       if (event.key !== "Escape") return;
       setRoomPickerOpen(false);
       setTimePickerOpen(null);
-      setSlotConfirmation(null);
-      setWeeklyPick(null);
       setSubmitPreviewDates(null);
       setEarlyEnd(null);
       setNotificationsOpen(false);
@@ -1233,7 +1227,6 @@ export default function Home() {
         if (!pending || pending.pointerId !== pointerId) return;
         pendingTouchDrag.current = null;
         target.setPointerCapture(pointerId);
-        setSlotConfirmation(null);
         setSlotDrag({
           roomId: room.id,
           date: reservationDate,
@@ -1248,7 +1241,6 @@ export default function Home() {
     }
 
     event.currentTarget.setPointerCapture(event.pointerId);
-    setSlotConfirmation(null);
     setSlotDrag({
       roomId: room.id,
       date: reservationDate,
@@ -1284,10 +1276,7 @@ export default function Home() {
     if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
     const moved = Math.abs(event.clientY - slotDrag.anchorY) >= 8;
     const selection = { roomId: room.id, date: reservationDate, start: slotDrag.start, end: slotDrag.end };
-    if (moved) {
-      if (slotDrag.pointerType === "touch") applySlotSelection(selection);
-      else setSlotConfirmation(selection);
-    }
+    if (moved) applySlotSelection(selection);
     setSlotDrag(null);
   };
 
@@ -1320,17 +1309,9 @@ export default function Home() {
    * 아닌 경우가 많아 결국 다시 고쳐야 했다. 시간은 빠른 예약 창에서
    * 사람이 직접 고른다 — 겹치는 시간이면 그 자리에서 바로 알려 준다.
    */
-  const askWeekdaySlot = (room: Room, day: DateKey, at?: { x: number; y: number }) => {
-    // 누른 자리에 창을 띄우려고 좌표를 함께 받는다. 표 가운데에 뜨면 어느 칸을 눌렀는지 알기 어렵다.
-    setConfirmAt(at ?? null);
-    setWeeklyPick({ roomId: room.id, date: day });
-  };
-
-  const confirmWeeklyPick = () => {
-    if (!weeklyPick) return;
-    setSelectedId(weeklyPick.roomId);
-    setDate(weeklyPick.date);
-    setWeeklyPick(null);
+  const askWeekdaySlot = (room: Room, day: DateKey) => {
+    setSelectedId(room.id);
+    setDate(day);
     setDraftActive(true);
     setBookingPanelOpen(true);
     // 시간은 아직 안 정했다는 뜻이므로, 채워졌다는 알림 대신
@@ -1362,8 +1343,8 @@ export default function Home() {
     const hide = () => tip.classList.remove("on");
     const move = (event: PointerEvent) => {
       const target = event.target as HTMLElement | null;
-      // 확인 창이 떠 있으면 이미 고른 상태다. 알약이 남아 있으면 창과 겹쳐 어수선하다.
-      if (pressing || document.querySelector(".slot-confirmation")) return hide();
+      // 누르는 동안에는 안내 알약을 감춰 드래그 선택선과 겹치지 않게 한다.
+      if (pressing) return hide();
       const day = target?.closest?.(".daily-timeline .timeline-day-body");
       const week = target?.closest?.(".weekly-room-cell");
       if ((!day && !week) || target?.closest?.(".timeline-event, .weekly-room-event")) return hide();
@@ -1494,7 +1475,6 @@ export default function Home() {
     setDuration(bookingDefaults.durationPresetsMinutes.includes(minutes) ? minutes : 0);
     setSlot({ date: selection.date, start: selection.start, end: selection.end });
     setNotice("");
-    setSlotConfirmation(null);
     setDraftActive(true);
     setBookingPanelOpen(true);
     setTimeNeedsPick(false);
@@ -1502,11 +1482,6 @@ export default function Home() {
       roomById(selection.roomId)?.name ?? "회의실",
       `${formatDateLabel(selection.date)} · ${selection.start}–${selection.end}`,
     );
-  };
-
-  const confirmSlotBooking = () => {
-    if (!slotConfirmation) return;
-    applySlotSelection(slotConfirmation);
   };
 
   const applyAlternative = (alternative: BookingAlternative) => {
@@ -1517,7 +1492,6 @@ export default function Home() {
 
   const handleTimelineKey = (room: Room, reservationDate: DateKey, event: ReactKeyboardEvent<HTMLDivElement>) => {
     if (event.key === "Escape") {
-      setSlotConfirmation(null);
       setDraftActive(false);
       return;
     }
@@ -2032,11 +2006,7 @@ export default function Home() {
                         onKeyDown={(event) => handleTimelineKey(room, date, event)}
                       >
                         {(() => {
-                          const selection = slotDrag?.roomId === room.id && slotDrag.date === date
-                            ? slotDrag
-                            : slotConfirmation?.roomId === room.id && slotConfirmation.date === date
-                              ? slotConfirmation
-                              : null;
+                          const selection = slotDrag?.roomId === room.id && slotDrag.date === date ? slotDrag : null;
                           if (!selection) return null;
                           const top = ((minutesOf(selection.start) - timelineStart) / (timelineEnd - timelineStart)) * 100;
                           const height = ((minutesOf(selection.end) - minutesOf(selection.start)) / (timelineEnd - timelineStart)) * 100;
@@ -2088,22 +2058,6 @@ export default function Home() {
                             </button>
                           );
                         })}
-                        {slotConfirmation?.roomId === room.id && slotConfirmation.date === date && (
-                          <div className="slot-confirmation" role="dialog" aria-label="선택 시간 예약 확인" onPointerDown={(event) => event.stopPropagation()}>
-                            {/* 눌러도 예약이 되는 게 아니라 오른쪽 칸이 채워질 뿐이다.
-                                버튼 이름에 무슨 일이 일어나는지 담는다. */}
-                            <span className="slot-step">1 / 2 단계</span>
-                            {/* 고른 것은 '시간'만이 아니라 회의실·날짜·시간 셋이다.
-                                라벨과 함께 적어 무엇이 정해졌는지 오해가 없게 한다. */}
-                            <dl className="slot-facts">
-                              <div><dt>회의실</dt><dd>{roomById(slotConfirmation.roomId)?.name}</dd></div>
-                              <div><dt>날짜</dt><dd>{formatDateLabel(slotConfirmation.date)}</dd></div>
-                              <div><dt>시간</dt><dd>{slotConfirmation.start} – {slotConfirmation.end}</dd></div>
-                            </dl>
-                            <div><button type="button" onClick={() => setSlotConfirmation(null)}>취소</button><button type="button" onClick={confirmSlotBooking}>다음</button></div>
-                            <em className="slot-confirmation-note">오른쪽 빠른예약 창에서 이어서</em>
-                          </div>
-                        )}
                       </div>
                     </div>
                   );
@@ -2135,11 +2089,11 @@ export default function Home() {
                             className="weekly-cell-add"
                             aria-label={`${room.name} ${formatDateLabel(day)} 빈 시간 예약하기`}
                             // 한 번 클릭으로는 열리지 않게 한다. 표를 훑다가 실수로 열리는 일이 잦았다.
-                            onDoubleClick={(event) => askWeekdaySlot(room, day, { x: event.clientX, y: event.clientY })}
+                            onDoubleClick={() => askWeekdaySlot(room, day)}
                             onPointerUp={(event) => {
                               if (event.pointerType !== "touch") return;
                               event.preventDefault();
-                              askWeekdaySlot(room, day, { x: event.clientX, y: event.clientY });
+                              askWeekdaySlot(room, day);
                             }}
                           >
                             <span aria-hidden="true">＋</span>
@@ -2180,28 +2134,6 @@ export default function Home() {
                     </div>
                   );
                 })}
-                {/* 누른 칸 옆에 띄운다. 가운데에 뜨면 어느 칸을 눌렀는지 알기 어렵다.
-                    더블클릭은 시간을 정한 적이 없으므로 회의실·날짜만 보여 준다.
-                    시간은 다음 화면에서 직접 고른다. */}
-                {weeklyPick && (
-                  <div className="weekly-confirm-layer" role="presentation" onClick={() => setWeeklyPick(null)}>
-                    <div
-                      className={`slot-confirmation${confirmAt ? " at-pointer" : ""}`}
-                      role="dialog"
-                      aria-label="선택 날짜 예약 확인"
-                      style={confirmAt ? { left: confirmAt.x, top: confirmAt.y } : undefined}
-                      onClick={(event) => event.stopPropagation()}
-                    >
-                      <span className="slot-step">1 / 2 단계</span>
-                      <dl className="slot-facts">
-                        <div><dt>회의실</dt><dd>{roomById(weeklyPick.roomId)?.name}</dd></div>
-                        <div><dt>날짜</dt><dd>{formatDateLabel(weeklyPick.date)}</dd></div>
-                      </dl>
-                      <div><button type="button" onClick={() => setWeeklyPick(null)}>취소</button><button type="button" onClick={confirmWeeklyPick}>다음</button></div>
-                            <em className="slot-confirmation-note">오른쪽 빠른예약 창에서 시간을 골라 주세요</em>
-                    </div>
-                  </div>
-                )}
               </div>}
             </section>
           </div>

@@ -2805,8 +2805,8 @@ button {
 .booking-panel:not(.is-collapsed) .booking-section-heading {
   gap: 10px;
   min-height: 24px;
-  padding-left: 9px;
-  border-left: 3px solid #ed1639;
+  padding-left: 0;
+  border-left: 0;
 }
 
 .booking-panel:not(.is-collapsed) .booking-section-heading > span {

@@ -2636,6 +2636,7 @@ button {
    왼쪽은 화면에 스며들 듯 옅고, 오른쪽으로 갈수록 BDO 네이비가 선명해진다. */
 .weekly-board .weekly-heading.schedule-hero {
   position: relative;
+  margin-bottom: 0;
   border-bottom: 0;
   background:
     linear-gradient(
@@ -2645,4 +2646,23 @@ button {
       rgb(53 82 139 / 58%) 70%,
       #17223a 100%
     ) left bottom / 100% 4px no-repeat;
+}
+
+/* 리본과 회의실 표 사이의 장식용 여백을 없애 한 덩어리로 연결한다. */
+.weekly-board .week-timeline,
+.weekly-board .daily-timeline,
+.weekly-board .weekly-room-board {
+  margin-top: 0;
+}
+
+/* 로고 아래에 남아 있던 이전 페이지 표시선은 그라데이션 리본으로 대체한다. */
+.topbar::after {
+  content: none;
+  display: none;
+}
+
+/* 원본 로고 이미지에 포함된 하단 레드 바만 잘라내고 좌측 심벌은 유지한다. */
+.topbar .bdo-logo {
+  clip-path: inset(0 0 14% 0);
+  margin-bottom: -5px;
 }

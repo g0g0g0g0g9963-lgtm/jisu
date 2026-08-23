@@ -53,7 +53,19 @@ type SlotSelection = {
 
 type SlotDrag = SlotSelection & {
   anchorY: number;
+  pointerType: "mouse" | "touch";
 };
+
+type PendingTouchDrag = {
+  pointerId: number;
+  roomId: string;
+  date: DateKey;
+  anchorY: number;
+  timer: number;
+};
+
+const TOUCH_DRAG_HOLD_MS = 360;
+const TOUCH_DRAG_CANCEL_DISTANCE = 10;
 
 /** 예약 양식의 날짜와 시간. 세 값이 함께 움직여서 하나로 묶어 둔다. */
 type SlotForm = {
@@ -688,6 +700,7 @@ export default function Home() {
   const [bookingPanelOpen, setBookingPanelOpen] = useState(true);
   const [slotDrag, setSlotDrag] = useState<SlotDrag | null>(null);
   const [slotConfirmation, setSlotConfirmation] = useState<SlotSelection | null>(null);
+  const pendingTouchDrag = useRef<PendingTouchDrag | null>(null);
   // 주간 화면 더블클릭은 일간 드래그와 달리 시간을 정한 적이 없다.
   // 회의실·날짜만 고르고, 시간은 빠른 예약 창에서 직접 고르게 한다.
   const [weeklyPick, setWeeklyPick] = useState<{ roomId: Room["id"]; date: DateKey } | null>(null);
@@ -1021,9 +1034,42 @@ export default function Home() {
     );
   };
 
+  const cancelPendingTouchDrag = () => {
+    if (!pendingTouchDrag.current) return;
+    window.clearTimeout(pendingTouchDrag.current.timer);
+    pendingTouchDrag.current = null;
+  };
+
+  useEffect(() => () => cancelPendingTouchDrag(), []);
+
   const startSlotDrag = (room: Room, reservationDate: DateKey, event: ReactPointerEvent<HTMLDivElement>) => {
     if (event.button !== 0) return;
     const startMinutes = getSlotMinutes(event);
+
+    if (event.pointerType === "touch") {
+      cancelPendingTouchDrag();
+      const target = event.currentTarget;
+      const pointerId = event.pointerId;
+      const anchorY = event.clientY;
+      const timer = window.setTimeout(() => {
+        const pending = pendingTouchDrag.current;
+        if (!pending || pending.pointerId !== pointerId) return;
+        pendingTouchDrag.current = null;
+        target.setPointerCapture(pointerId);
+        setSlotConfirmation(null);
+        setSlotDrag({
+          roomId: room.id,
+          date: reservationDate,
+          start: formatMinutes(startMinutes),
+          end: formatMinutes(startMinutes + bookingDefaults.slotMinutes),
+          anchorY,
+          pointerType: "touch",
+        });
+      }, TOUCH_DRAG_HOLD_MS);
+      pendingTouchDrag.current = { pointerId, roomId: room.id, date: reservationDate, anchorY, timer };
+      return;
+    }
+
     event.currentTarget.setPointerCapture(event.pointerId);
     setSlotConfirmation(null);
     setSlotDrag({
@@ -1032,11 +1078,18 @@ export default function Home() {
       start: formatMinutes(startMinutes),
       end: formatMinutes(startMinutes + bookingDefaults.slotMinutes),
       anchorY: event.clientY,
+      pointerType: "mouse",
     });
   };
 
   const updateSlotDrag = (room: Room, reservationDate: DateKey, event: ReactPointerEvent<HTMLDivElement>) => {
+    const pending = pendingTouchDrag.current;
+    if (pending?.pointerId === event.pointerId) {
+      if (Math.abs(event.clientY - pending.anchorY) >= TOUCH_DRAG_CANCEL_DISTANCE) cancelPendingTouchDrag();
+      return;
+    }
     if (!slotDrag || slotDrag.roomId !== room.id || slotDrag.date !== reservationDate) return;
+    if (slotDrag.pointerType === "touch") event.preventDefault();
     const anchorMinutes = minutesOf(slotDrag.start);
     const pointerMinutes = getSlotMinutes(event);
     const nextStart = Math.min(anchorMinutes, pointerMinutes);
@@ -1045,10 +1098,24 @@ export default function Home() {
   };
 
   const finishSlotDrag = (room: Room, reservationDate: DateKey, event: ReactPointerEvent<HTMLDivElement>) => {
+    const pending = pendingTouchDrag.current;
+    if (pending?.pointerId === event.pointerId) {
+      cancelPendingTouchDrag();
+      return;
+    }
     if (!slotDrag || slotDrag.roomId !== room.id || slotDrag.date !== reservationDate) return;
     if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
     const moved = Math.abs(event.clientY - slotDrag.anchorY) >= 8;
-    if (moved) setSlotConfirmation({ roomId: room.id, date: reservationDate, start: slotDrag.start, end: slotDrag.end });
+    const selection = { roomId: room.id, date: reservationDate, start: slotDrag.start, end: slotDrag.end };
+    if (moved) {
+      if (slotDrag.pointerType === "touch") applySlotSelection(selection);
+      else setSlotConfirmation(selection);
+    }
+    setSlotDrag(null);
+  };
+
+  const cancelSlotDrag = () => {
+    cancelPendingTouchDrag();
     setSlotDrag(null);
   };
 
@@ -1243,22 +1310,26 @@ export default function Home() {
     if (handOffTimer.current !== null) window.clearTimeout(handOffTimer.current);
   }, []);
 
-  const confirmSlotBooking = () => {
-    if (!slotConfirmation) return;
-    const minutes = minutesOf(slotConfirmation.end) - minutesOf(slotConfirmation.start);
-    setSelectedId(slotConfirmation.roomId);
+  const applySlotSelection = (selection: SlotSelection) => {
+    const minutes = minutesOf(selection.end) - minutesOf(selection.start);
+    setSelectedId(selection.roomId);
     setAllDay(false);
     setDuration(bookingDefaults.durationPresetsMinutes.includes(minutes) ? minutes : 0);
-    setSlot({ date: slotConfirmation.date, start: slotConfirmation.start, end: slotConfirmation.end });
+    setSlot({ date: selection.date, start: selection.start, end: selection.end });
     setNotice("");
     setSlotConfirmation(null);
     setDraftActive(true);
     setBookingPanelOpen(true);
     setTimeNeedsPick(false);
     flashFilled(
-      roomById(slotConfirmation.roomId)?.name ?? "회의실",
-      `${formatDateLabel(slotConfirmation.date)} · ${slotConfirmation.start}–${slotConfirmation.end}`,
+      roomById(selection.roomId)?.name ?? "회의실",
+      `${formatDateLabel(selection.date)} · ${selection.start}–${selection.end}`,
     );
+  };
+
+  const confirmSlotBooking = () => {
+    if (!slotConfirmation) return;
+    applySlotSelection(slotConfirmation);
   };
 
   const changeStart = (nextStart: string) => {
@@ -1704,11 +1775,11 @@ export default function Home() {
                         <span className={`daily-room-meta ${status.status}`}><i className={`room-status-dot ${status.status}`} /><b>{status.statusLabel}</b><em>·</em>{formatCapacity(room.capacity)}</span>
                       </button>
                       <div
-                        className="timeline-day-body"
+                        className={`timeline-day-body${slotDrag?.pointerType === "touch" && slotDrag.roomId === room.id && slotDrag.date === date ? " touch-dragging" : ""}`}
                         onPointerDown={(event) => startSlotDrag(room, date, event)}
                         onPointerMove={(event) => updateSlotDrag(room, date, event)}
                         onPointerUp={(event) => finishSlotDrag(room, date, event)}
-                        onPointerCancel={() => setSlotDrag(null)}
+                        onPointerCancel={cancelSlotDrag}
                       >
                         {(() => {
                           const selection = slotDrag?.roomId === room.id && slotDrag.date === date
@@ -1719,7 +1790,11 @@ export default function Home() {
                           if (!selection) return null;
                           const top = ((minutesOf(selection.start) - timelineStart) / (timelineEnd - timelineStart)) * 100;
                           const height = ((minutesOf(selection.end) - minutesOf(selection.start)) / (timelineEnd - timelineStart)) * 100;
-                          return <span className="timeline-drag-selection" style={{ top: `${top}%`, height: `${height}%` }} aria-hidden="true" />;
+                          return (
+                            <span className="timeline-drag-selection" style={{ top: `${top}%`, height: `${height}%` }} aria-hidden="true">
+                              {slotDrag?.pointerType === "touch" && <b className="timeline-drag-label">{selection.start}–{selection.end}</b>}
+                            </span>
+                          );
                         })()}
                         {/* 표에서 값을 가져왔지만 아직 예약하기를 누르지 않은 상태.
                             '표에 뭔가 생겼으니 됐겠지'라고 믿는 그 자리에 점선으로 남겨 둔다. */}
@@ -1813,9 +1888,14 @@ export default function Home() {
                           <button
                             type="button"
                             className="weekly-cell-add"
-                            aria-label={`${room.name} ${formatDateLabel(day)} 빈 시간 예약하기 (두 번 클릭)`}
+                            aria-label={`${room.name} ${formatDateLabel(day)} 빈 시간 예약하기`}
                             // 한 번 클릭으로는 열리지 않게 한다. 표를 훑다가 실수로 열리는 일이 잦았다.
                             onDoubleClick={(event) => askWeekdaySlot(room, day, { x: event.clientX, y: event.clientY })}
+                            onPointerUp={(event) => {
+                              if (event.pointerType !== "touch") return;
+                              event.preventDefault();
+                              askWeekdaySlot(room, day, { x: event.clientX, y: event.clientY });
+                            }}
                           >
                             <span aria-hidden="true">＋</span>
                           </button>

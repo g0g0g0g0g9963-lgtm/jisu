@@ -1677,3 +1677,5 @@ button {
 .schedule-design-cards .daily-timeline .time-axis-body {
   background-image: none;
 }
+@media (pointer:coarse){.daily-timeline .timeline-day-body{touch-action:pan-y}.daily-timeline .timeline-day-body.touch-dragging{touch-action:none}.weekly-room-cell .weekly-cell-add{touch-action:manipulation}}
+.timeline-drag-selection .timeline-drag-label{z-index:2;color:#fff;white-space:nowrap;pointer-events:none;background:#c21238;border-radius:999px;padding:5px 9px;font-size:11px;font-weight:800;line-height:1;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 4px 12px #8e0f3152}

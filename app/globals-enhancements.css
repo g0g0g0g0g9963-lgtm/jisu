@@ -2689,7 +2689,7 @@ button {
 
 /* 넓은 네이비 헤더에 맞춰 영문 머리표와 한글 제목의 비중을 한 단계 높인다. */
 .booking-panel:not(.is-collapsed) .booking-title .booking-title-copy h2 {
-  font-size: 22px;
+  font-size: 20px;
 }
 
 .booking-panel:not(.is-collapsed) .booking-title .booking-title-copy::before {
@@ -2892,11 +2892,34 @@ button {
 }
 
 /* 달력 완료도 패널 밖 예약하기 버튼과 같은 BDO 레드로 통일한다. */
-.booking-panel .date-panel-done {
-  color: #fff;
+.booking-panel .date-panel .date-panel-done {
+  color: #fff !important;
+  -webkit-text-fill-color: #fff;
   background: #ed1639;
 }
 
-.booking-panel .date-panel-done:hover {
+.booking-panel .date-panel .date-panel-done:hover {
   background: #d91437;
+}
+
+/* 예약현황 A안: 2시간 간격은 긴 앵커 라인, 사이 1시간은 짧은 눈금만 남긴다. */
+.app-shell .schedule-design-cards .daily-timeline .timeline-day-body,
+.app-shell .schedule-design-cards .weekly-room-board .weekly-room-cell,
+.app-shell .schedule-design-cards .weekly-room-board .weekly-room-cell.active,
+.app-shell .schedule-design-cards .weekly-room-board .weekly-room-cell:hover.active {
+  background-color: #fff;
+  background-image:
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0 calc(11.111111% - 1px),
+      #edf0f4 calc(11.111111% - 1px) 11.111111%
+    ),
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0 calc(22.222222% - 1px),
+      #dfe4ec calc(22.222222% - 1px) 22.222222%
+    );
+  background-position: left top, left top;
+  background-repeat: no-repeat;
+  background-size: 18px 100%, 100% 100%;
 }

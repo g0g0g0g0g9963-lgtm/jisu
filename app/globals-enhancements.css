@@ -3464,3 +3464,83 @@ button {
   grid-column: 1;
   grid-row: 2;
 }
+
+/* 단계 번호와 제목은 하나의 라벨처럼 읽히도록 숫자의 예약 폭까지 없앤다. */
+.booking-panel:not(.is-collapsed) .booking-section-heading {
+  gap: 7px;
+}
+
+.booking-panel:not(.is-collapsed) .booking-section-heading > span {
+  width: auto;
+  min-width: 0;
+}
+
+/* 확인·알림·완료 창은 장식선 없이 같은 흰색 표면 규칙으로 통일한다. */
+.booking-confirm-dialog,
+.header-notifications-popover,
+.booking-toast-layer .booking-toast.early-dialog.booking-complete-dialog {
+  background: #fff;
+  border: 1px solid #dce1e9;
+  border-radius: 12px;
+  box-shadow: 0 16px 42px rgb(23 34 58 / 14%);
+}
+
+.header-account .header-notifications-popover {
+  border-radius: 12px;
+  box-shadow: 0 16px 42px rgb(23 34 58 / 14%);
+}
+
+.booking-confirm-dialog::after,
+.header-notifications-popover::after,
+.booking-toast-layer .booking-complete-dialog::after {
+  content: none;
+}
+
+.header-notifications-popover {
+  padding-top: 0;
+}
+
+.header-notifications-head {
+  min-height: 50px;
+  padding: 0 18px;
+}
+
+.header-notifications-head b {
+  font-size: 15px;
+}
+
+.header-notification-list {
+  padding: 0 16px 8px;
+}
+
+.header-notification-item {
+  min-height: 60px;
+  padding-right: 0;
+  padding-left: 0;
+  background: transparent;
+  border-bottom: 1px solid #edf0f4;
+}
+
+.header-notification-item:last-child {
+  border-bottom: 0;
+}
+
+.header-notifications-all {
+  min-height: 44px;
+  border-top: 1px solid #e5e9ef;
+  border-radius: 0 0 12px 12px;
+}
+
+.booking-toast-layer .booking-toast.early-dialog.booking-complete-dialog {
+  min-height: 70px;
+  padding: 13px 44px 13px 18px;
+}
+
+.booking-toast-layer .booking-complete-dialog h2 {
+  margin-bottom: 3px;
+  font-size: 15px;
+}
+
+.booking-toast-layer .booking-complete-dialog .booking-complete-summary {
+  gap: 7px;
+}

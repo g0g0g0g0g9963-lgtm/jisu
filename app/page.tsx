@@ -576,6 +576,7 @@ function DateField({ value, min, onChange, rangeFrom, onRangeChange, variant = "
               // 주말 예약을 막아 둔 설정에서만 토·일을 고를 수 없다.
               const disabled = !allowAnyDate && (key < earliest || (!bookingDefaults.allowWeekends && isWeekend(key)));
               const isToday = key === todayValue;
+              const isPast = key < todayValue;
               // 고를 수 있더라도 주말은 한눈에 구분되도록 색을 달리한다.
               const weekdayIndex = (firstWeekday + index) % 7;
               const weekendClass = weekdayIndex === 0 ? "is-sun" : weekdayIndex === 6 ? "is-sat" : "";
@@ -594,7 +595,7 @@ function DateField({ value, min, onChange, rangeFrom, onRangeChange, variant = "
                   // 고를 수 없는 날도 disabled 대신 표시만 막는다.
                   // disabled면 마우스 이벤트가 오지 않아 그 위를 지나는 순간 끌기가 끊긴다.
                   aria-disabled={disabled}
-                  className={`${isEdge ? "selected" : ""} ${inRange && !skipped ? "in-range" : ""} ${skipped ? "range-skip" : ""} ${disabled ? "disabled" : ""} ${isToday ? "is-today" : ""} ${weekendClass}`}
+                  className={`${isEdge ? "selected" : ""} ${inRange && !skipped ? "in-range" : ""} ${skipped ? "range-skip" : ""} ${disabled ? "disabled" : ""} ${isPast ? "is-past" : ""} ${isToday ? "is-today" : ""} ${weekendClass}`}
                   onClick={(event) => {
                     if (disabled) return;
                     if (rangeFrom) {
@@ -983,6 +984,12 @@ export default function Home() {
   }).sort((a, b) => Number(b.availableForSlot) - Number(a.availableForSlot)
     || Number(b.room.floor === floor) - Number(a.room.floor === floor)
     || a.room.capacity - b.room.capacity), [bookings, date, end, floor, slotIsFree, start]);
+
+  // 선택 팝업은 상태가 바뀌어도 위치가 움직이지 않게 설정 파일의 고정 순서를 쓴다.
+  // 9층은 1–4, 12층은 대회의실 다음 1–3 순서로 rooms.json에 정의돼 있다.
+  const roomPickerChoices = useMemo(() => [...roomChoices].sort((a, b) => (
+    rooms.findIndex((room) => room.id === a.room.id) - rooms.findIndex((room) => room.id === b.room.id)
+  )), [roomChoices]);
 
   const availableStartOptions = useMemo(() => startTimeOptions.filter((candidate) => {
     const candidateEnd = addMinutes(candidate, duration || bookingDefaults.defaultDurationMinutes);
@@ -2277,7 +2284,7 @@ export default function Home() {
               {floors.map((item) => (
                 <div className="room-picker-floor-group" key={item}>
                   <small>{item}F</small>
-                  {roomChoices.filter(({ room }) => room.floor === item).map(({ room }) => {
+                  {roomPickerChoices.filter(({ room }) => room.floor === item).map(({ room }) => {
                     const status = statusOf(room);
                     return <div className="room-picker-row" key={room.id}>
                       <button type="button" className={selected.id === room.id ? "selected" : ""} onClick={() => selectRoom(room)}>

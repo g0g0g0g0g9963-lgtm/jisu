@@ -3284,3 +3284,143 @@ button {
   border: 0;
   box-shadow: none;
 }
+
+/* 세 달력 공통: 지난 날짜는 회색, 토·일은 같은 레드로 표시한다. */
+.date-panel .date-panel-dow span.is-sun,
+.date-panel .date-panel-dow span.is-sat,
+.date-panel-grid button.is-sun:not(.selected):not(.is-past),
+.date-panel-grid button.is-sat:not(.selected):not(.is-past) {
+  color: #c21238;
+}
+
+.date-panel-grid button.is-past:not(.selected),
+.date-panel-grid button.disabled:not(.selected),
+.date-panel-grid button.is-past:not(.selected) em,
+.date-panel-grid button.disabled:not(.selected) em {
+  color: #b3bac6;
+}
+
+.date-panel-grid button.is-past:not(.selected),
+.date-panel-grid button.disabled:not(.selected) {
+  background: transparent;
+  box-shadow: none;
+}
+
+/* 작은 창 A안: 크기는 용도에 맞게 두고 표면 규칙은 하나로 통일한다. */
+.booking-confirm-dialog,
+.header-notifications-popover,
+.booking-complete-dialog {
+  overflow: hidden;
+  color: #17223a;
+  background-color: #fff;
+  border: 1px solid #dce1e9;
+  border-radius: 10px;
+  box-shadow: 0 10px 25px rgb(19 31 54 / 13%);
+}
+
+/* 기존 팝오버의 background 단축 속성에 지워지지 않도록 헤어라인을 별도 층으로 둔다. */
+.booking-confirm-dialog::after,
+.header-notifications-popover::after,
+.booking-complete-dialog::after {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 2px;
+  pointer-events: none;
+  background: linear-gradient(90deg, #8f0e2a 0%, #d52a4d 25%, #f59aab 50%, #c21238 75%, #8f0e2a 100%);
+  border-radius: 10px 10px 0 0;
+}
+
+.booking-confirm-dialog h2,
+.header-notifications-head b,
+.booking-complete-dialog h2 {
+  color: #17223a;
+  font-size: 18px;
+  font-weight: 750;
+  letter-spacing: -.025em;
+}
+
+.booking-confirm-dialog > p,
+.booking-complete-dialog > p {
+  color: #717c8f;
+  font-size: 13px;
+}
+
+.booking-confirm-summary,
+.booking-complete-summary {
+  color: #6f7a8c;
+  background: #f5f6f9;
+  border: 0;
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+.booking-confirm-summary b,
+.booking-complete-summary b {
+  color: #17223a;
+}
+
+.booking-confirm-dialog .early-foot button,
+.header-notifications-all {
+  border-radius: 7px;
+}
+
+.booking-confirm-dialog .early-foot button:first-child {
+  color: #5f697a;
+  background: #fff;
+  border: 1px solid #d7dde7;
+}
+
+.booking-confirm-dialog .early-foot .early-go {
+  color: #fff;
+  background: #17223a;
+  border-color: #17223a;
+  box-shadow: none;
+}
+
+.header-notifications-popover {
+  padding-top: 2px;
+}
+
+.header-notifications-head {
+  min-height: 52px;
+  padding: 0 20px;
+}
+
+.header-notification-item {
+  min-height: 64px;
+  border-bottom-color: #e2e6ed;
+}
+
+.header-notification-icon {
+  color: #304b78;
+  background: #eef2f8;
+  border-radius: 7px;
+}
+
+.header-notifications-all {
+  min-height: 46px;
+  color: #223b68;
+  background: #fff;
+  border-top: 1px solid #e0e4eb;
+}
+
+.booking-complete-dialog {
+  min-height: 78px;
+}
+
+.booking-toast-check {
+  color: #c21238;
+  background: #fff;
+  border: 1px solid currentColor;
+  box-shadow: none;
+}
+
+.booking-toast-close {
+  color: #6c7789;
+  background: transparent;
+  border-radius: 7px;
+}

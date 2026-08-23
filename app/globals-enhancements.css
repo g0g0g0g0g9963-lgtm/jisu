@@ -2863,3 +2863,40 @@ button {
   outline: none;
   box-shadow: inset 0 0 0 2px rgb(48 75 120 / 38%);
 }
+
+/* 빠른예약 달력은 선택 날짜를 어둡게 덮지 않고 밝은 레드 윤곽으로 표시한다. */
+.booking-panel .date-panel-grid button.selected,
+.booking-panel .date-panel-grid button.selected.in-range {
+  color: #bd1235;
+  background: #fff;
+  box-shadow: inset 0 0 0 2px #ed1639;
+}
+
+.booking-panel .date-panel-grid button.selected:hover,
+.booking-panel .date-panel-grid button.selected.in-range:hover {
+  color: #a50f2e;
+  background: #fff4f6;
+}
+
+.booking-panel .date-panel-grid button.selected em {
+  color: #ed1639;
+}
+
+.booking-panel .date-panel-grid button.in-range:not(.selected) {
+  color: #8f1932;
+  background: #fff0f3;
+}
+
+.booking-panel .date-panel-grid.range-enabled {
+  touch-action: none;
+}
+
+/* 달력 완료도 패널 밖 예약하기 버튼과 같은 BDO 레드로 통일한다. */
+.booking-panel .date-panel-done {
+  color: #fff;
+  background: #ed1639;
+}
+
+.booking-panel .date-panel-done:hover {
+  background: #d91437;
+}

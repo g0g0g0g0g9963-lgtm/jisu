@@ -430,6 +430,26 @@ function DateField({ value, min, onChange, rangeFrom, onRangeChange, variant = "
     return () => document.removeEventListener("pointerup", finish);
   }, [dragging, dragFrom, dragTo, onRangeChange]);
 
+  // 터치 환경에서는 pointer가 시작 버튼에 붙잡혀 옆 날짜의 이벤트가 오지 않는다.
+  // 실제 포인터 좌표 아래의 날짜를 찾아 갱신하면 마우스와 터치 모두 같은 방식으로
+  // 시작일에서 종료일까지 끌어서 고를 수 있다.
+  useEffect(() => {
+    if (!dragging || !rangeFrom) return;
+    const followDrag = (event: PointerEvent) => {
+      const target = document
+        .elementFromPoint(event.clientX, event.clientY)
+        ?.closest<HTMLButtonElement>(".date-panel-grid button[data-date-key]");
+      if (!target || target.getAttribute("aria-disabled") === "true") return;
+      const next = target.dataset.dateKey as DateKey | undefined;
+      if (!next || next === dragTo) return;
+      rangeDraggedRef.current = true;
+      setDragTo(next);
+      if (event.cancelable) event.preventDefault();
+    };
+    document.addEventListener("pointermove", followDrag, { passive: false });
+    return () => document.removeEventListener("pointermove", followDrag);
+  }, [dragging, dragTo, rangeFrom]);
+
   const [year, month] = viewMonth.split("-").map(Number);
   const firstWeekday = new Date(Date.UTC(year, month - 1, 1)).getUTCDay();
   const lastDay = new Date(Date.UTC(year, month, 0)).getUTCDate();
@@ -499,7 +519,7 @@ function DateField({ value, min, onChange, rangeFrom, onRangeChange, variant = "
               <span key={label} className={index === 0 ? "is-sun" : index === 6 ? "is-sat" : undefined}>{label}</span>
             ))}
           </div>
-          <div className="date-panel-grid">
+          <div className={`date-panel-grid${rangeFrom ? " range-enabled" : ""}`}>
             {Array.from({ length: firstWeekday }, (_, index) => <span key={`blank-${index}`} />)}
             {Array.from({ length: lastDay }, (_, index) => {
               const day = index + 1;
@@ -521,6 +541,7 @@ function DateField({ value, min, onChange, rangeFrom, onRangeChange, variant = "
                 <button
                   type="button"
                   key={key}
+                  data-date-key={key}
                   // 고를 수 없는 날도 disabled 대신 표시만 막는다.
                   // disabled면 마우스 이벤트가 오지 않아 그 위를 지나는 순간 끌기가 끊긴다.
                   aria-disabled={disabled}

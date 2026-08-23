@@ -2025,13 +2025,19 @@ export default function Home() {
               {scheduleView === "week" && <div className="weekly-room-board" aria-label={`${floor}층 회의실별 주간 예약 현황`}>
                 <div className="weekly-room-head weekly-room-corner">회의실</div>
                 {weekDays.map((day) => (
-                  <button type="button" className={`weekly-room-head ${day === date ? "active" : ""}`} key={day} onClick={() => setDate(day)}><b>{formatWeekday(day)}</b><span>{dayOfMonth(day)}</span></button>
+                  <button type="button" className={`weekly-room-head ${day === date ? "active" : ""}`} key={day} aria-pressed={day === date} onClick={() => setDate(day)}>
+                    <b>{formatWeekday(day)}</b><span>{dayOfMonth(day)}</span>
+                    {day === date && <span className="daily-room-selected-icon"><SelectedRoomIcon /></span>}
+                  </button>
                 ))}
                 {floorRooms.map((room) => {
                   const status = statusOf(room);
                   return (
                     <div className="weekly-room-row" key={room.id}>
-                      <button type="button" className={`weekly-room-name ${selected.id === room.id ? "selected" : ""}`} onClick={() => { setSelectedId(room.id); setMapDetailId(null); }}><span className="weekly-room-title">{room.name}</span><small className={status.status}><i className={`room-status-dot ${status.status}`} /><b>{status.statusLabel}</b><em>·</em>{formatCapacity(room.capacity)}</small></button>
+                      <button type="button" className={`weekly-room-name ${selected.id === room.id ? "selected" : ""}`} aria-pressed={selected.id === room.id} onClick={() => { setSelectedId(room.id); setMapDetailId(null); }}>
+                        <span className="weekly-room-title">{room.name}</span><small className={status.status}><i className={`room-status-dot ${status.status}`} /><b>{status.statusLabel}</b><em>·</em>{formatCapacity(room.capacity)}</small>
+                        {selected.id === room.id && <span className="daily-room-selected-icon"><SelectedRoomIcon /></span>}
+                      </button>
                       {weekDays.map((day) => {
                         const dayBookings = layoutOverlappingBookings(
                           bookings.filter((booking) => booking.roomId === room.id && booking.date === day),
@@ -2505,7 +2511,7 @@ export default function Home() {
               <b>대신 예약할 수 있어요</b>
               {bookingAlternatives.map((alternative) => (
                 <button type="button" key={`${alternative.roomId}-${alternative.start}-${alternative.end}`} onClick={() => applyAlternative(alternative)}>
-                  <span>{alternative.label}</span><em>{alternative.reason}</em>
+                  <span>{alternative.label}<i>{roomById(alternative.roomId)?.floor}층</i></span><em>{alternative.reason}</em>
                 </button>
               ))}
             </section>}

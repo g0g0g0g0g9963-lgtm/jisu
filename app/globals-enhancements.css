@@ -1721,3 +1721,39 @@ button {
 .timeline-day-body:focus-visible{z-index:8;outline:3px solid #22366f;outline-offset:-3px}
 @media (pointer:coarse){.booking-panel button,.booking-panel input,.booking-panel select,.weekly-cell-add,.early-foot button{min-height:44px}.schedule-design-cards .daily-timeline .timeline-event{min-width:44px}.schedule-design-cards .daily-timeline .timeline-event .early-end{min-height:36px;display:flex;align-items:center}.booking-panel .room-picker-popover{width:min(480px,calc(100vw - 24px))}}
 @media (max-width:900px){.booking-panel .room-picker-popover{width:100%;right:0}.time-picker-slots{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
+/* 주간 선택 표시는 일간 회의실 헤더와 같은 언어를 사용한다. */
+.app-shell .schedule-design-cards .weekly-room-board .weekly-room-head.active,
+.app-shell .schedule-design-cards .weekly-room-board .weekly-room-name.selected{
+  position:relative;
+  color:#17223a;
+  background:#fff;
+  outline:0;
+  box-shadow:inset 0 3px var(--premium-red);
+}
+.app-shell .schedule-design-cards .weekly-room-board .weekly-room-head.active b,
+.app-shell .schedule-design-cards .weekly-room-board .weekly-room-head.active>span:not(.daily-room-selected-icon),
+.app-shell .schedule-design-cards .weekly-room-board .weekly-room-name.selected .weekly-room-title{
+  color:#17223a;
+  font-weight:750;
+}
+.app-shell .schedule-design-cards .weekly-room-board .weekly-room-head.active .daily-room-selected-icon,
+.app-shell .schedule-design-cards .weekly-room-board .weekly-room-name.selected .daily-room-selected-icon{
+  opacity:1;
+  transform:scale(1);
+}
+.app-shell .schedule-design-cards .weekly-room-board .weekly-room-head.active:focus-visible,
+.app-shell .schedule-design-cards .weekly-room-board .weekly-room-name.selected:focus-visible{
+  outline:2px solid rgb(48 75 120 / 38%);
+  outline-offset:-2px;
+  box-shadow:inset 0 3px var(--premium-red);
+}
+.app-shell .schedule-design-cards .weekly-room-board .weekly-room-cell.active,
+.app-shell .schedule-design-cards .weekly-room-board .weekly-room-cell:hover.active{
+  background:#fff;
+  box-shadow:none;
+}
+
+/* 예약 대안에서는 회의실 층을 놓치지 않도록 항상 별도 표기한다. */
+.booking-alternatives button>span{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.booking-alternatives button>span i{color:#304b78;white-space:nowrap;background:#f1f4f9;border-radius:999px;padding:2px 7px;font-size:10px;font-style:normal;font-weight:800}

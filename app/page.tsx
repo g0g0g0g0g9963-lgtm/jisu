@@ -299,6 +299,7 @@ function DateField({ value, min, onChange, rangeFrom, onRangeChange, variant = "
   const [dragging, setDragging] = useState(false);
   const [dragFrom, setDragFrom] = useState<DateKey | null>(null);
   const [dragTo, setDragTo] = useState<DateKey | null>(null);
+  const rangeDraggedRef = useRef(false);
   // 기간 고르기에서 지금 무엇을 고르는 중인지. 위의 시작일·종료일 상자로 바꾼다.
   const [pickTarget, setPickTarget] = useState<"start" | "end">("start");
   // 기간을 다 골랐는지. 다 골랐어도 창은 닫지 않고 '완료'를 기다린다.
@@ -389,32 +390,35 @@ function DateField({ value, min, onChange, rangeFrom, onRangeChange, variant = "
     };
   }, [open]);
 
-  // 끌기가 달력 밖에서 끝나도 선택이 확정되도록 창 전체에서 마우스 뗌을 듣는다.
+  const selectRangeDay = useCallback((key: DateKey) => {
+    if (!rangeFrom || !onRangeChange) return;
+    if (pickTarget === "start") {
+      // 한 번 누르면 시작일을 확정하고 곧바로 종료일 선택으로 넘어간다.
+      onRangeChange(key, value >= key ? value : key);
+      setPickTarget("end");
+      setRangeSettled(false);
+      return;
+    }
+
+    // 종료일이 시작일보다 앞이면 두 날짜를 자연스럽게 뒤집는다.
+    const [first, last] = key >= rangeFrom ? [rangeFrom, key] : [key, rangeFrom];
+    onRangeChange(first, last);
+    setPickTarget("end");
+    setRangeSettled(true);
+  }, [onRangeChange, pickTarget, rangeFrom, value]);
+
+  // 실제로 날짜 사이를 끌었을 때만 문서의 pointerup에서 기간을 확정한다.
+  // 단순 클릭은 아래 날짜 버튼의 onClick이 맡아 빠른 클릭도 놓치지 않는다.
   useEffect(() => {
     if (!dragging) return;
     const finish = () => {
-      if (dragFrom && dragTo && onRangeChange) {
-        const moved = dragFrom !== dragTo;
+      if (dragFrom && dragTo && onRangeChange && rangeDraggedRef.current) {
         // 다 골라도 창은 닫지 않는다. 고른 기간이 맞는지 눈으로 확인하고
         // 아래 '완료'로 직접 닫게 한다. 바로 닫히면 제대로 골랐는지 알 수 없다.
-        if (moved) {
-          // 끌었으면 기간을 통째로 정한다.
-          const [first, last] = dragFrom <= dragTo ? [dragFrom, dragTo] : [dragTo, dragFrom];
-          onRangeChange(first, last);
-          setPickTarget("end");
-          setRangeSettled(true);
-        } else if (pickTarget === "start") {
-          // 시작일을 골랐으면 종료일 차례.
-          onRangeChange(dragFrom, value >= dragFrom ? value : dragFrom);
-          setPickTarget("end");
-        } else {
-          // 종료일. 시작일보다 앞을 고르면 둘을 뒤집는다.
-          const from = rangeFrom ?? dragFrom;
-          const [first, last] = dragFrom >= from ? [from, dragFrom] : [dragFrom, from];
-          onRangeChange(first, last);
-          setPickTarget("end");
-          setRangeSettled(true);
-        }
+        const [first, last] = dragFrom <= dragTo ? [dragFrom, dragTo] : [dragTo, dragFrom];
+        onRangeChange(first, last);
+        setPickTarget("end");
+        setRangeSettled(true);
       }
       setDragging(false);
       setDragFrom(null);
@@ -422,7 +426,7 @@ function DateField({ value, min, onChange, rangeFrom, onRangeChange, variant = "
     };
     document.addEventListener("pointerup", finish);
     return () => document.removeEventListener("pointerup", finish);
-  }, [dragging, dragFrom, dragTo, onRangeChange, value, pickTarget, rangeFrom]);
+  }, [dragging, dragFrom, dragTo, onRangeChange]);
 
   const [year, month] = viewMonth.split("-").map(Number);
   const firstWeekday = new Date(Date.UTC(year, month - 1, 1)).getUTCDay();
@@ -521,14 +525,31 @@ function DateField({ value, min, onChange, rangeFrom, onRangeChange, variant = "
                   className={`${isEdge ? "selected" : ""} ${inRange && !skipped ? "in-range" : ""} ${skipped ? "range-skip" : ""} ${disabled ? "disabled" : ""} ${isToday ? "is-today" : ""} ${weekendClass}`}
                   onPointerDown={(event) => {
                     if (!rangeFrom || disabled) return;
-                    // 끌기 도중 글자 선택이나 기본 끌기 동작이 끼어들지 않게 한다.
-                    event.preventDefault();
+                    rangeDraggedRef.current = false;
                     setDragging(true);
                     setDragFrom(key);
                     setDragTo(key);
                   }}
-                  onPointerMove={() => { if (dragging && !disabled && dragTo !== key) setDragTo(key); }}
-                  onClick={() => { if (!disabled && !rangeFrom) { onChange(key); setOpen(false); } }}
+                  onPointerMove={() => {
+                    if (dragging && !disabled && dragTo !== key) {
+                      rangeDraggedRef.current = true;
+                      setDragTo(key);
+                    }
+                  }}
+                  onClick={() => {
+                    if (disabled) return;
+                    if (rangeFrom) {
+                      // 드래그 직후 발생하는 click은 중복 적용하지 않는다.
+                      if (rangeDraggedRef.current) {
+                        rangeDraggedRef.current = false;
+                        return;
+                      }
+                      selectRangeDay(key);
+                      return;
+                    }
+                    onChange(key);
+                    setOpen(false);
+                  }}
                 >
                   {day}
                   {isToday && <em>오늘</em>}
@@ -2563,13 +2584,6 @@ export default function Home() {
                 </button>
               )}
             </section>}
-            <section className="booking-preview-summary" aria-label="예약 전 미리보기">
-              <div><span>회의실</span><b>{selected.name}</b></div>
-              <div><span>날짜와 시간</span><b>{formatDateLabel(date)} · {start}–{end}</b></div>
-              <div><span>총 이용 시간</span><b>{spokenDuration(minutesOf(end) - minutesOf(start))}</b></div>
-              <div><span>반복 횟수</span><b>{reservationDates.length}회</b></div>
-              <p className={selectedTimeConflict ? "warning" : "available"}>{selectedTimeConflict ? `충돌 ${conflictDates.length}건 · 대안을 선택해 주세요` : "예약 가능한 시간입니다"}</p>
-            </section>
             <button id="reserve-button" className="reserve-button" type="submit" disabled={selectedTimeConflict || submitting}>
               <span>{selected.name}</span>
               {/* 반복 예약이면 몇 건이 만들어지는지 버튼이 직접 말해야 한다.

@@ -637,14 +637,8 @@ function RoomDetailPopover({
   );
 }
 
-function ReservationHoverCard({
-  booking,
-}: {
-  booking: Booking;
-}) {
+function ReservationHoverCard() {
   return <span className="reservation-hover-card" role="tooltip">
-    <strong>내 예약</strong>
-    <span className="reservation-hover-main"><b>{booking.start}–{booking.end}</b><em>{booking.purpose || "사내 회의"}</em></span>
     <em className="reservation-detail-hint">눌러서 수정·삭제</em>
   </span>;
 }
@@ -2053,7 +2047,7 @@ export default function Home() {
                               <strong>{booking.owner}</strong>
                               <time>{booking.start}–{booking.end}</time>
                               <small>{teamOf(booking)}</small>
-                              {isMyBooking(booking) && <ReservationHoverCard booking={booking} />}
+                              {isMyBooking(booking) && <ReservationHoverCard />}
                             </button>
                           );
                         })}
@@ -2124,7 +2118,7 @@ export default function Home() {
                                 <b>{booking.owner}</b>
                                 <time>{booking.start}<span className="wk-end">–{booking.end}</span></time>
                                 <small>{teamOf(booking)}</small>
-                                {isMyBooking(booking) && <ReservationHoverCard booking={booking} />}
+                                {isMyBooking(booking) && <ReservationHoverCard />}
                               </button>
                             );
                           })}

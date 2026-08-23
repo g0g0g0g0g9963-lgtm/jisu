@@ -2921,11 +2921,8 @@ button {
   background: #d91437;
 }
 
-/* 예약현황 A안: 2시간 간격은 긴 앵커 라인, 사이 1시간은 짧은 눈금만 남긴다. */
-.app-shell .schedule-design-cards .daily-timeline .timeline-day-body,
-.app-shell .schedule-design-cards .weekly-room-board .weekly-room-cell,
-.app-shell .schedule-design-cards .weekly-room-board .weekly-room-cell.active,
-.app-shell .schedule-design-cards .weekly-room-board .weekly-room-cell:hover.active {
+/* 일간 예약현황 A안: 2시간 간격은 긴 앵커 라인, 사이 1시간은 짧은 눈금만 남긴다. */
+.app-shell .schedule-design-cards .daily-timeline .timeline-day-body {
   background-color: #fff;
   background-image:
     repeating-linear-gradient(
@@ -2941,4 +2938,12 @@ button {
   background-position: left top, left top;
   background-repeat: no-repeat;
   background-size: 18px 100%, 100% 100%;
+}
+
+/* 주간은 시간 보조선을 지우고 날짜 열과 회의실 행 구분만 남긴다. */
+.app-shell .schedule-design-cards .weekly-room-board .weekly-room-cell,
+.app-shell .schedule-design-cards .weekly-room-board .weekly-room-cell.active,
+.app-shell .schedule-design-cards .weekly-room-board .weekly-room-cell:hover.active {
+  background-color: #fff;
+  background-image: none;
 }

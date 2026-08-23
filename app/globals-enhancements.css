@@ -3090,7 +3090,6 @@ button {
 
 /* 2026-08-23 묶음 개선: 상단 날짜 달력은 예약 블록보다 앞에서 완전히 보인다. */
 .app-shell .schedule-hero .schedule-date-switch:has(.date-panel) {
-  position: relative;
   z-index: 100;
 }
 

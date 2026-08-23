@@ -3147,3 +3147,140 @@ button {
 .booking-panel:not(.is-collapsed) .room-picker-card .room-picker-field-copy {
   gap: 2px;
 }
+
+/* 빠른예약 단계 번호는 제목과 한 묶음으로 읽히도록 간격을 좁힌다. */
+.booking-panel:not(.is-collapsed) .booking-section-heading {
+  gap: 6px;
+}
+
+/* 회의실 선택 영역의 오른쪽 끝을 아래 날짜·시간 입력 영역과 맞춘다. */
+.booking-panel:not(.is-collapsed) .booking-room-heading,
+.booking-panel:not(.is-collapsed) .room-picker-card {
+  width: calc(100% - 15px);
+}
+
+/* 충돌 안내 F1: 박스 대신 가는 앵커선과 얇은 행 구분만 사용한다. */
+.booking-panel:not(.is-collapsed) .booking-conflict-notice {
+  display: grid;
+  gap: 3px;
+  margin: 0;
+  padding: 0 0 11px;
+  color: #747f91;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  border-radius: 0;
+  border-image: linear-gradient(90deg, #304b78, rgb(48 75 120 / 12%)) 1;
+  box-shadow: none;
+}
+
+.booking-panel:not(.is-collapsed) .booking-conflict-notice b {
+  color: #b6223f;
+  font-weight: 700;
+}
+
+.booking-panel:not(.is-collapsed) .booking-conflict-notice span {
+  color: #747f91;
+  font-size: 12px;
+}
+
+.booking-panel:not(.is-collapsed) .booking-alternatives {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.booking-panel:not(.is-collapsed) .booking-alternatives > b {
+  display: block;
+  margin: 13px 0 7px;
+  color: #17223a;
+  font-size: 13px;
+}
+
+.booking-panel:not(.is-collapsed) .booking-alternatives > button:not(.booking-alternatives-more) {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  align-items: center;
+  gap: 3px 8px;
+  width: 100%;
+  min-height: 62px;
+  padding: 8px 0;
+  color: #17223a;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid #dce1e9;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.booking-panel:not(.is-collapsed) .booking-alternatives > button:not(.booking-alternatives-more)::before {
+  content: "→";
+  display: grid;
+  grid-row: 1 / span 2;
+  grid-column: 1;
+  place-items: center;
+  width: 25px;
+  height: 25px;
+  color: #304b78;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+}
+
+.booking-panel:not(.is-collapsed) .booking-alternatives > button:not(.booking-alternatives-more) > span {
+  display: flex;
+  grid-row: 1;
+  grid-column: 2;
+  align-items: baseline;
+  min-width: 0;
+}
+
+.booking-panel:not(.is-collapsed) .booking-alternatives > button:not(.booking-alternatives-more) > span strong {
+  overflow: hidden;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.booking-panel:not(.is-collapsed) .booking-alternatives > button:not(.booking-alternatives-more) > span i {
+  flex: none;
+  margin-left: auto;
+  color: #304b78;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.booking-panel:not(.is-collapsed) .booking-alternatives > button:not(.booking-alternatives-more) > em {
+  grid-row: 2;
+  grid-column: 2;
+  color: #687386;
+  font-size: 11.5px;
+  font-style: normal;
+}
+
+.booking-panel:not(.is-collapsed) .booking-alternatives > button:not(.booking-alternatives-more):hover {
+  color: #223b68;
+  background: rgb(48 75 120 / 4%);
+}
+
+.booking-panel:not(.is-collapsed) .booking-alternatives-more {
+  min-height: 40px;
+  margin: 4px 0 10px;
+  color: #304b78;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+.booking-panel:not(.is-collapsed) .booking-submit:has(.booking-alternatives) .reserve-button:disabled {
+  min-height: 56px;
+  margin-top: 0;
+  color: #7c8799;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}

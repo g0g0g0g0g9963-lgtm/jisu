@@ -2611,12 +2611,12 @@ export default function Home() {
 
             <div className="booking-submit">
             {notice && <div className={`notice ${notice.includes("완료") ? "success" : "error"}`}>{notice}</div>}
-            {selectedTimeConflict && !notice && <div className="notice error">이미 예약된 시간입니다. 다른 시간을 선택해 주세요.</div>}
+            {selectedTimeConflict && !notice && <div className="notice error booking-conflict-notice"><b>이미 예약된 시간입니다.</b><span>다른 시간을 선택해 주세요.</span></div>}
             {selectedTimeConflict && bookingAlternatives.length > 0 && <section className="booking-alternatives" aria-label="예약 가능한 대안">
               <b>대신 예약할 수 있어요</b>
               {bookingAlternatives.slice(0, alternativesExpanded ? bookingAlternatives.length : 2).map((alternative) => (
                 <button type="button" key={`${alternative.roomId}-${alternative.start}-${alternative.end}`} onClick={() => applyAlternative(alternative)}>
-                  <span>{alternative.label}<i>{roomById(alternative.roomId)?.floor}층</i></span><em>{alternative.reason}</em>
+                  <span><strong>{roomById(alternative.roomId)?.name}</strong><i>{roomById(alternative.roomId)?.floor}층</i></span><em>{alternative.start}–{alternative.end} · {alternative.reason}</em>
                 </button>
               ))}
               {bookingAlternatives.length > 2 && (

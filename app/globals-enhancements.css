@@ -3087,3 +3087,64 @@ button {
   user-select: none;
   -webkit-user-select: none;
 }
+
+/* 2026-08-23 묶음 개선: 상단 날짜 달력은 예약 블록보다 앞에서 완전히 보인다. */
+.app-shell .schedule-hero .schedule-date-switch:has(.date-panel) {
+  position: relative;
+  z-index: 100;
+}
+
+/* 빠른예약 B안: 레드 테두리 대신 조도가 낮은 블루 스틸 라인을 쓴다. */
+.booking-panel:not(.is-collapsed) .booking-title {
+  position: relative;
+  border-bottom: 0 !important;
+}
+
+.booking-panel:not(.is-collapsed) .booking-title::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    rgb(88 116 157 / 0%) 0%,
+    #6688b7 24%,
+    #d4e4f5 52%,
+    #38577f 82%,
+    rgb(23 34 58 / 0%) 100%
+  );
+}
+
+/* 제목 위계는 유지하되 작은 패널에 맞춰 한 단계만 절제한다. */
+.booking-panel:not(.is-collapsed) .booking-title .booking-title-copy h2 {
+  font-size: 18px;
+}
+
+.booking-panel:not(.is-collapsed) .booking-title .booking-title-copy::before {
+  font-size: 10.5px;
+}
+
+.booking-panel:not(.is-collapsed) .booking-section-heading > span {
+  min-width: 27px;
+  font-size: 16.5px;
+}
+
+.booking-panel:not(.is-collapsed) .booking-section-heading > b {
+  font-size: 14.5px;
+}
+
+/* 첫 회의실 필드만 길어 보이지 않도록 정보 두 줄을 유지한 채 높이를 맞춘다. */
+.booking-panel:not(.is-collapsed) .room-picker-card .room-picker-toggle,
+.booking-panel:not(.is-collapsed) .room-picker-card .room-picker-toggle:hover,
+.booking-panel:not(.is-collapsed) .room-picker-card .room-picker-toggle.open {
+  height: 48px;
+  min-height: 48px;
+  padding: 5px 10px 5px 12px;
+}
+
+.booking-panel:not(.is-collapsed) .room-picker-card .room-picker-field-copy {
+  gap: 2px;
+}

@@ -2746,9 +2746,26 @@ button {
   background: #fff;
 }
 
-.app-shell .map-week-split,
+.app-shell .map-week-split {
+  background-color: #edf1f6;
+  background-image:
+    radial-gradient(
+      ellipse at 22% 0%,
+      rgb(255 255 255 / 90%) 0%,
+      rgb(255 255 255 / 30%) 39%,
+      transparent 70%
+    ),
+    linear-gradient(
+      118deg,
+      #f5f7fa 0%,
+      #e9eef5 48%,
+      #f8fafc 74%,
+      #edf1f6 100%
+    );
+}
+
 .app-shell .weekly-board {
-  background: #eef1f5;
+  background: transparent;
 }
 
 /* 회의실 선택창 A안: 반복되는 카드 외곽을 없애고 얇은 구분선으로

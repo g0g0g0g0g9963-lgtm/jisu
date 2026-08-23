@@ -1826,21 +1826,22 @@ button {
     position: relative;
     grid-template-columns: auto auto minmax(0, 1fr) auto;
     grid-template-areas: "date floors gap actions";
-    align-items: center;
+    align-items: end;
   }
 
   .schedule-hero .schedule-date-switch {
     position: absolute;
-    top: 50%;
+    top: auto;
+    bottom: 16px;
     left: 50%;
     z-index: 2;
     justify-self: auto;
-    transform: translate(-50%, -50%);
+    transform: translateX(-50%);
   }
 }
 
 .schedule-hero .schedule-floor-switch {
-  align-self: center;
+  align-self: end;
   gap: 8px;
   min-width: 126px;
   border-bottom: 1px solid #dfe3ea;

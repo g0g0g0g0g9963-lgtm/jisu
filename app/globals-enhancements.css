@@ -1734,7 +1734,8 @@ button {
 .time-picker-popover-head b{color:#17223a;font-size:13px}.time-picker-popover-head span{color:#7b8495;font-size:10.5px}
 .time-picker-slots{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;max-height:210px;overflow-y:auto}
 .time-picker-slots button{min-height:38px;color:#344057;background:#f5f6f9;border:0;border-radius:7px;font:inherit;font-size:12px;font-weight:700}
-.time-picker-slots button:hover,.time-picker-slots button:focus-visible{color:#17223a;background:#e9edf5;outline:2px solid #ed1639;outline-offset:1px}
+.time-picker-slots button:hover{color:#fff;background:#17223a;outline:0}
+.time-picker-slots button:focus-visible{color:#fff;background:#17223a;outline:2px solid #4d648c;outline-offset:2px;box-shadow:0 0 0 1px #fff}
 .time-picker-slots button.selected{color:#fff;background:#17223a}
 
 /* 충돌 대안과 예약 전 요약 */

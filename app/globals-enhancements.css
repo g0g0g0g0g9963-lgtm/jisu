@@ -3581,6 +3581,7 @@ button {
 /* 기존 블루 그라데이션 리본은 유지하되, 아래 흰 표의 좌우선과
    정확히 맞춰 한 부품처럼 보이게 한다. */
 .app-shell .weekly-board .weekly-heading.schedule-hero {
+  margin-bottom: 0;
   background:
     linear-gradient(
       90deg,
@@ -3591,15 +3592,31 @@ button {
     ) center bottom / calc(100% - 6px) 4px no-repeat;
 }
 
-/* C안: 표를 카드처럼 두껍게 만들지 않고, 3px 숨을 둔 얇은 흰 시트로 띄운다. */
+/* 표 위쪽의 별도 선과 틈은 없애고 블루 리본을 표의 상단 경계로 사용한다. */
 .app-shell .weekly-board .week-timeline,
 .app-shell .weekly-board .daily-timeline,
 .app-shell .weekly-board .weekly-room-board {
-  margin: 3px 3px 3px;
+  margin: 0 3px 3px;
   background-color: #fff;
   border: 1px solid rgb(174 186 203 / 48%);
-  border-radius: 6px;
+  border-top: 0;
+  border-radius: 0 0 6px 6px;
   box-shadow:
     0 1px 1px rgb(23 34 58 / 4%),
     0 12px 28px rgb(48 75 120 / 8%);
+}
+
+/* 날짜는 크기와 가로 위치를 유지하면서 위쪽 호흡을 더 넉넉히,
+   아래쪽은 그보다 작게 늘려 리본과 과하게 붙지 않게 한다. */
+@media (min-width: 1200px) {
+  .app-shell .weekly-board .weekly-heading.schedule-hero,
+  .app-shell .schedule-hero.weekly-heading {
+    padding-top: 14px;
+    padding-bottom: 16px;
+  }
+}
+
+/* 종과 말풍선의 가로 정렬은 유지하고 알림창만 한 단계 아래로 내린다. */
+.header-account .header-notifications-popover {
+  top: calc(100% + 20px);
 }

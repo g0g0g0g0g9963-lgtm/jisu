@@ -1818,3 +1818,127 @@ button {
 .header-notifications-all{width:100%;min-height:42px;color:#22366f;background:#fff;border:0;border-top:1px solid #e1e5ec;border-radius:0 0 10px 10px;font:inherit;font-size:12px;font-weight:800;cursor:pointer}
 .header-notifications-all:hover{background:#f5f7fa}
 .header-notifications-all:focus-visible{outline:2px solid #304b78;outline-offset:-3px}
+
+/* 확정 시안: A 배치 + A2 층 탭 + 아이콘 없는 A3 보기 버튼. */
+@media (min-width: 1200px) {
+  .weekly-board .weekly-heading.schedule-hero,
+  .schedule-hero.weekly-heading {
+    position: relative;
+    grid-template-columns: auto auto minmax(0, 1fr) auto;
+    grid-template-areas: "date floors gap actions";
+    align-items: center;
+  }
+
+  .schedule-hero .schedule-date-switch {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    z-index: 2;
+    justify-self: auto;
+    transform: translate(-50%, -50%);
+  }
+}
+
+.schedule-hero .schedule-floor-switch {
+  align-self: center;
+  gap: 8px;
+  min-width: 126px;
+  border-bottom: 1px solid #dfe3ea;
+}
+
+.schedule-hero .schedule-floor-switch button {
+  min-width: 55px;
+  min-height: 44px;
+  margin-bottom: -1px;
+  padding: 0 12px;
+  color: #8791a2;
+  background: transparent;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.schedule-hero .schedule-floor-switch button:first-child {
+  padding-left: 12px;
+}
+
+.schedule-hero .schedule-floor-switch button:hover:not(.active) {
+  color: #3f4a5d;
+  background: #f7f8fa;
+  border-bottom-color: #c8cfda;
+}
+
+.schedule-hero .schedule-floor-switch button.active {
+  color: #17223a;
+  background: transparent;
+  border-bottom-color: #ed1639 !important;
+  box-shadow: none;
+}
+
+.schedule-hero .schedule-heading-actions {
+  gap: 8px;
+}
+
+.schedule-hero .schedule-view-switch {
+  display: flex;
+  gap: 8px;
+  height: 40px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+.schedule-hero .schedule-view-switch button {
+  min-width: 64px;
+  height: 40px;
+  padding: 0 17px;
+  color: #4f596b;
+  background: #fff;
+  border: 1px solid #cfd6e1;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  box-shadow: 0 1px 2px rgb(21 28 43 / 4%);
+}
+
+.schedule-hero .schedule-view-switch button:hover:not(.active) {
+  color: #17223a;
+  background: #f6f8fb;
+  border-color: #aeb8c8;
+}
+
+.schedule-hero .schedule-view-switch button.active {
+  color: #fff;
+  background: #17223a;
+  border-color: #17223a;
+  box-shadow: none;
+}
+
+.schedule-hero .schedule-heading-actions .map-toggle.icon-only,
+.schedule-heading-actions .map-toggle.icon-only,
+.schedule-heading-actions .map-toggle.icon-only.active {
+  width: 40px;
+  min-width: 40px;
+  height: 40px;
+  padding: 0;
+  color: #304b78;
+  background: #fff;
+  border: 1px solid #cfd6e1;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgb(21 28 43 / 4%);
+}
+
+.schedule-hero .schedule-heading-actions .map-toggle.icon-only:hover {
+  color: #17223a;
+  background: #f6f8fb;
+  border-color: #aeb8c8;
+}
+
+.schedule-hero .schedule-heading-actions .map-toggle.icon-only.active {
+  color: #fff;
+  background: #17223a;
+  border-color: #17223a;
+}

@@ -725,13 +725,9 @@ export default function Home() {
   const [editNotice, setEditNotice] = useState("");
   const [editBusy, setEditBusy] = useState(false);
   const [editConfirmDelete, setEditConfirmDelete] = useState(false);
-  // 빠른 예약은 기본으로 펼쳐 두되, 사용자가 일정표를 넓게 보고 싶을 때
-  // 오른쪽의 얇은 세로 탭으로 접을 수 있다. 폼은 숨기기만 하므로 작성 중인
-  // 회의실·날짜·시간·입력값은 접었다 다시 펴도 그대로 남는다.
-  const [bookingPanelOpen, setBookingPanelOpen] = useState(() => {
-    const params = new URLSearchParams(window.location.search);
-    return params.get("mode") !== "monitor" && params.get("display") !== "monitor";
-  });
+  // 일정표를 최대한 넓게 볼 수 있도록 빠른 예약은 항상 접힌 상태로 시작한다.
+  // 사용자가 펼친 뒤 입력한 값은 패널을 다시 접어도 그대로 남는다.
+  const [bookingPanelOpen, setBookingPanelOpen] = useState(false);
   const [slotDrag, setSlotDrag] = useState<SlotDrag | null>(null);
   const [slotConfirmation, setSlotConfirmation] = useState<SlotSelection | null>(null);
   const pendingTouchDrag = useRef<PendingTouchDrag | null>(null);

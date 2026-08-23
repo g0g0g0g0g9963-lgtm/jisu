@@ -1351,3 +1351,324 @@ button {
     animation-iteration-count: 1 !important;
   }
 }
+
+
+/* 빠른 예약 — Editorial Navy / White
+   기능·문구·필드 순서는 유지하고 펼친 패널의 표면 체계만 시안대로 바꾼다. */
+.app-shell > .booking-panel:not(.is-collapsed) {
+  --editorial-navy: #17223a;
+  --editorial-red: #ed1639;
+  --editorial-ink: #17223a;
+  --editorial-ink-2: #5f697b;
+  --editorial-muted: #778195;
+  --editorial-line: #dfe3e9;
+  --editorial-field: #f7f8fa;
+  color: var(--editorial-ink);
+  background: #fff;
+  border-left-color: var(--editorial-line);
+}
+
+.booking-panel:not(.is-collapsed) .booking-panel-content,
+.booking-panel:not(.is-collapsed) form,
+.booking-panel:not(.is-collapsed) .booking-fields {
+  color: var(--editorial-ink);
+  background: #fff;
+}
+
+.booking-panel:not(.is-collapsed) .booking-title {
+  min-height: 82px;
+  padding: 16px 18px;
+  color: #fff;
+  background: var(--editorial-navy);
+  border-bottom: 3px solid var(--editorial-red);
+  box-shadow: none;
+}
+
+.booking-panel:not(.is-collapsed) .booking-title h2 {
+  color: #fff;
+}
+
+.booking-panel:not(.is-collapsed) .booking-title h2::after {
+  content: none;
+}
+
+.booking-panel:not(.is-collapsed) .booking-title > div::before {
+  color: #aeb8ca;
+  letter-spacing: .1em;
+}
+
+.booking-panel:not(.is-collapsed) .booking-panel-toggle {
+  color: #fff;
+  background: rgb(255 255 255 / 9%);
+  border: 1px solid rgb(255 255 255 / 14%);
+  border-radius: 7px;
+  box-shadow: none;
+}
+
+.booking-panel:not(.is-collapsed) .booking-panel-toggle:hover {
+  color: #fff;
+  background: rgb(255 255 255 / 16%);
+  border-color: rgb(255 255 255 / 22%);
+}
+
+.booking-panel:not(.is-collapsed) .booking-room-heading {
+  margin-top: 16px;
+}
+
+.booking-panel:not(.is-collapsed) .booking-section-heading {
+  color: var(--editorial-ink);
+}
+
+.booking-panel:not(.is-collapsed) .booking-section-heading > span {
+  color: #fff;
+  background: var(--editorial-navy);
+  border: 0;
+  border-radius: 5px;
+}
+
+.booking-panel:not(.is-collapsed) .room-picker-card {
+  background: var(--editorial-field);
+  border-color: #dce1e8;
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+.booking-panel:not(.is-collapsed) .room-picker-card .room-picker-toggle,
+.booking-panel:not(.is-collapsed) .room-picker-card .room-picker-toggle:hover {
+  color: var(--editorial-ink);
+  background: var(--editorial-field);
+  border-radius: 7px;
+}
+
+.booking-panel:not(.is-collapsed) .room-picker-card .room-picker-toggle:hover {
+  background: #fff;
+}
+
+.booking-panel:not(.is-collapsed) .room-picker-card:has(.room-picker-toggle.open) {
+  border-color: #aeb7c5;
+  box-shadow: 0 0 0 3px rgb(23 34 58 / 7%);
+}
+
+.booking-panel:not(.is-collapsed) .room-picker-card .room-picker-toggle.open {
+  border-radius: 7px 7px 0 0;
+  box-shadow: inset 0 -1px var(--editorial-line);
+}
+
+.booking-panel:not(.is-collapsed) .room-picker-field-title > strong {
+  color: var(--editorial-ink);
+}
+
+.booking-panel:not(.is-collapsed) .room-picker-field-specs > em {
+  padding: 0;
+  color: #747e8e;
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.booking-panel:not(.is-collapsed) .room-picker-field-specs > em + em::before {
+  content: "·";
+  margin-right: 4px;
+  color: #b0b7c2;
+}
+
+.booking-panel:not(.is-collapsed) .room-picker-card .room-picker-toggle > i {
+  background-color: transparent;
+  border-radius: 0;
+}
+
+.booking-panel:not(.is-collapsed) .room-picker-options {
+  color: var(--editorial-ink);
+  background: #fff;
+  border-color: var(--editorial-line);
+  border-radius: 0 0 7px 7px;
+  box-shadow: 0 14px 30px rgb(23 34 58 / 14%);
+}
+
+.booking-panel:not(.is-collapsed) .room-picker-options .room-picker-floor-group > small {
+  color: var(--editorial-ink);
+  background: #fff;
+}
+
+.booking-panel:not(.is-collapsed) .room-picker-options .room-picker-row > button {
+  color: var(--editorial-ink);
+  background: transparent;
+}
+
+.booking-panel:not(.is-collapsed) .room-picker-options .room-picker-row > button:hover,
+.booking-panel:not(.is-collapsed) .room-picker-options .room-picker-row > button.selected {
+  background: var(--editorial-field);
+}
+
+.booking-panel:not(.is-collapsed) .room-picker-options .room-picker-row em {
+  color: var(--editorial-muted);
+}
+
+.booking-panel:not(.is-collapsed) .booking-form-section {
+  border-top-color: var(--editorial-line);
+}
+
+.booking-panel:not(.is-collapsed) .booking-fields .field-label,
+.booking-panel:not(.is-collapsed) .booking-fields label > .field-label,
+.booking-panel:not(.is-collapsed) .booking-fields label,
+.booking-panel:not(.is-collapsed) .repeat-option,
+.booking-panel:not(.is-collapsed) .repeat-option em,
+.booking-panel:not(.is-collapsed) .form-row-duration > .field-label {
+  color: #687284;
+}
+
+.booking-panel:not(.is-collapsed) .repeat-option b {
+  color: var(--editorial-ink);
+}
+
+.booking-panel:not(.is-collapsed) .booking-fields input:not([type="checkbox"]),
+.booking-panel:not(.is-collapsed) .booking-fields select,
+.booking-panel:not(.is-collapsed) .booking-fields textarea,
+.booking-panel:not(.is-collapsed) .booking-fields .date-field-value,
+.booking-panel:not(.is-collapsed) .booking-fields .form-row-when .date-field-value,
+.booking-panel:not(.is-collapsed) .booking-fields .form-row-when select {
+  color: var(--editorial-ink);
+  background-color: var(--editorial-field);
+  border-color: #dce1e8;
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+.booking-panel:not(.is-collapsed) .booking-fields .date-field-value > span {
+  color: var(--editorial-ink);
+}
+
+.booking-panel:not(.is-collapsed) .booking-fields input:not([type="checkbox"]):hover,
+.booking-panel:not(.is-collapsed) .booking-fields select:hover,
+.booking-panel:not(.is-collapsed) .booking-fields .date-field-value:hover,
+.booking-panel:not(.is-collapsed) .booking-fields .form-row-when .date-field-value:hover,
+.booking-panel:not(.is-collapsed) .booking-fields .form-row-when select:hover {
+  color: var(--editorial-ink);
+  background-color: #fff;
+  border-color: #aeb7c5;
+}
+
+.booking-panel:not(.is-collapsed) .booking-fields input:not([type="checkbox"]):focus,
+.booking-panel:not(.is-collapsed) .booking-fields select:focus,
+.booking-panel:not(.is-collapsed) .booking-fields textarea:focus,
+.booking-panel:not(.is-collapsed) .booking-fields .date-field-value:focus {
+  color: var(--editorial-ink);
+  background: #fff;
+  border-color: var(--editorial-navy);
+  outline: none;
+  box-shadow: 0 0 0 3px rgb(23 34 58 / 8%);
+}
+
+.booking-panel:not(.is-collapsed) .booking-fields input:disabled {
+  color: var(--editorial-ink);
+  opacity: .72;
+  -webkit-text-fill-color: var(--editorial-ink);
+}
+
+.booking-panel:not(.is-collapsed) .duration-switch button {
+  color: var(--editorial-ink-2);
+  background: #fff;
+  border-radius: 7px;
+  box-shadow: inset 0 0 0 1px #dce1e8;
+}
+
+.booking-panel:not(.is-collapsed) .duration-switch button:hover:not(.active) {
+  color: var(--editorial-ink);
+  background: var(--editorial-field);
+}
+
+.booking-panel:not(.is-collapsed) .duration-switch button.active {
+  color: #fff;
+  background: var(--editorial-navy);
+  box-shadow: none;
+}
+
+.booking-panel:not(.is-collapsed) .repeat-option input {
+  accent-color: var(--editorial-red);
+}
+
+.booking-panel:not(.is-collapsed) .repeat-settings,
+.booking-panel:not(.is-collapsed) .rolled-over-note {
+  color: var(--editorial-ink);
+  background: var(--editorial-field);
+  border-color: var(--editorial-line);
+}
+
+.booking-panel:not(.is-collapsed) .repeat-settings > p,
+.booking-panel:not(.is-collapsed) .repeat-settings .repeat-days span {
+  color: var(--editorial-muted);
+}
+
+.booking-panel:not(.is-collapsed) .repeat-settings .repeat-days span {
+  background: #fff;
+}
+
+.booking-panel:not(.is-collapsed) .attendee-add,
+.booking-panel:not(.is-collapsed) .equipment-add {
+  color: var(--editorial-ink-2);
+  background: #fff;
+  border-color: #cfd5df;
+}
+
+.booking-panel:not(.is-collapsed) .attendee-add:hover,
+.booking-panel:not(.is-collapsed) .equipment-add:hover {
+  color: var(--editorial-ink);
+  background: var(--editorial-field);
+  border-color: #aeb7c5;
+}
+
+.booking-panel:not(.is-collapsed) .date-panel,
+.booking-panel:not(.is-collapsed) .team-suggestions {
+  color: var(--editorial-ink);
+  background: #fff;
+  border-color: var(--editorial-line);
+  box-shadow: 0 14px 30px rgb(23 34 58 / 14%);
+}
+
+.booking-panel:not(.is-collapsed) .date-panel button,
+.booking-panel:not(.is-collapsed) .team-suggestions button {
+  color: var(--editorial-ink);
+}
+
+.booking-panel:not(.is-collapsed) .date-panel button:hover,
+.booking-panel:not(.is-collapsed) .team-suggestions button:hover,
+.booking-panel:not(.is-collapsed) .team-suggestions button.active {
+  background: var(--editorial-field);
+}
+
+.booking-panel:not(.is-collapsed) .team-field,
+.booking-panel:not(.is-collapsed) .team-field.open {
+  background: transparent;
+}
+
+.booking-panel:not(.is-collapsed) .booking-fields {
+  scrollbar-color: #c1c7d1 transparent;
+}
+
+.booking-panel:not(.is-collapsed) .booking-fields::-webkit-scrollbar-thumb,
+.booking-panel:not(.is-collapsed) .room-picker-options::-webkit-scrollbar-thumb {
+  background-color: #c1c7d1;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+
+.booking-panel:not(.is-collapsed) .booking-submit {
+  margin: 12px -22px 0;
+  padding: 14px 22px 18px;
+  color: var(--editorial-ink);
+  background: var(--editorial-field);
+  border-top: 1px solid var(--editorial-line);
+}
+
+.booking-panel:not(.is-collapsed) .booking-submit .reserve-button {
+  color: #fff;
+  background: var(--editorial-red);
+  border-radius: 8px;
+  box-shadow: 0 8px 17px rgb(237 22 57 / 17%);
+}
+
+.booking-panel:not(.is-collapsed) .booking-submit .reserve-button:hover:not(:disabled) {
+  background: #d91437;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 21px rgb(237 22 57 / 23%);
+}

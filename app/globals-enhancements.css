@@ -3636,7 +3636,7 @@ button {
 .schedule-design-cards .daily-timeline .timeline-day {
   background: transparent;
   border: 0;
-  border-right: 1px solid rgb(178 188 202 / 30%);
+  border-right: 1px solid rgb(178 188 202 / 24%);
   border-radius: 0;
   box-shadow: none;
 }

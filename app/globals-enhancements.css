@@ -3523,7 +3523,7 @@ button {
 
 .header-notifications-head {
   min-height: 50px;
-  padding: 0 18px;
+  padding: 8px 18px 0;
 }
 
 .header-notifications-head b {

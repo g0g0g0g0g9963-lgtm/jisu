@@ -3296,6 +3296,24 @@ button {
   color: #3d66ad;
 }
 
+.date-panel-grid button.is-holiday:not(.selected):not(.is-past):not(.disabled):not(.range-skip) {
+  color: #c21238;
+}
+
+.date-panel-grid button.is-holiday {
+  height: 34px;
+}
+
+.date-panel-grid button.is-holiday:not(.selected) em {
+  max-width: 100%;
+  overflow: hidden;
+  color: #c21238;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  letter-spacing: -.06em;
+  font-size: 7px;
+}
+
 .date-panel-grid button.is-past:not(.selected),
 .date-panel-grid button.disabled:not(.selected),
 .date-panel-grid button.is-past:not(.selected) em,
@@ -3681,4 +3699,31 @@ button {
     rgb(173 184 198 / 34%) 0 1px,
     transparent 1px 11.111111%
   );
+}
+
+/* 대표 날짜의 숫자는 유지하고 요일 옆에만 공휴일 정보를 더한다. */
+.schedule-hero .hero-kicker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.schedule-hero .hero-kicker.is-sat > span {
+  color: #3d66ad;
+}
+
+.schedule-hero .hero-kicker.has-holiday > i {
+  width: 1px;
+  height: 12px;
+  background: rgb(174 184 198 / 56%);
+}
+
+.schedule-hero .hero-kicker.has-holiday > em {
+  color: #c21238;
+  letter-spacing: -.02em;
+  font-family: Pretendard, "Malgun Gothic", sans-serif;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 700;
 }

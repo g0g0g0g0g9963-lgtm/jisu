@@ -31,8 +31,10 @@ import {
   moveDate,
   officeMinutesOfDay,
   todayKey,
+  weekdayOf,
 } from "./lib/datetime";
 import { useNow, useStoredText } from "./lib/hooks";
+import { publicHolidayOf } from "./lib/holidays";
 import {
   describeRoomStatus,
   equipmentIcon,
@@ -580,6 +582,7 @@ function DateField({ value, min, onChange, rangeFrom, onRangeChange, variant = "
               const disabled = !allowAnyDate && (key < earliest || (!bookingDefaults.allowWeekends && isWeekend(key)));
               const isToday = key === todayValue;
               const isPast = key < todayValue;
+              const holiday = publicHolidayOf(key);
               // 고를 수 있더라도 주말은 한눈에 구분되도록 색을 달리한다.
               const weekdayIndex = (firstWeekday + index) % 7;
               const weekendClass = weekdayIndex === 0 ? "is-sun" : weekdayIndex === 6 ? "is-sat" : "";
@@ -598,7 +601,9 @@ function DateField({ value, min, onChange, rangeFrom, onRangeChange, variant = "
                   // 고를 수 없는 날도 disabled 대신 표시만 막는다.
                   // disabled면 마우스 이벤트가 오지 않아 그 위를 지나는 순간 끌기가 끊긴다.
                   aria-disabled={disabled}
-                  className={`${isEdge ? "selected" : ""} ${inRange && !skipped ? "in-range" : ""} ${skipped ? "range-skip" : ""} ${disabled ? "disabled" : ""} ${isPast ? "is-past" : ""} ${isToday ? "is-today" : ""} ${weekendClass}`}
+                  aria-label={`${formatDateLabel(key)}${holiday ? `, ${holiday.name}` : ""}${isToday ? ", 오늘" : ""}`}
+                  title={holiday?.name}
+                  className={`${isEdge ? "selected" : ""} ${inRange && !skipped ? "in-range" : ""} ${skipped ? "range-skip" : ""} ${disabled ? "disabled" : ""} ${isPast ? "is-past" : ""} ${isToday ? "is-today" : ""} ${holiday ? "is-holiday" : ""} ${weekendClass}`}
                   onClick={(event) => {
                     if (disabled) return;
                     if (rangeFrom) {
@@ -618,7 +623,7 @@ function DateField({ value, min, onChange, rangeFrom, onRangeChange, variant = "
                   }}
                 >
                   {day}
-                  {isToday && <em>오늘</em>}
+                  {(holiday || isToday) && <em>{holiday?.calendarLabel ?? "오늘"}</em>}
                 </button>
               );
             })}
@@ -1048,6 +1053,8 @@ export default function Home() {
   const weekDays = useMemo(() => getWorkWeek(date), [date]);
   // 주간 화면에서는 날짜 칸이 한 주를 통째로 가리키고 화살표도 일주일씩 움직인다.
   const weekView = scheduleView === "week";
+  const selectedDateHoliday = weekView ? undefined : publicHolidayOf(date);
+  const selectedDateWeekday = weekView ? undefined : weekdayOf(date);
   // 같은 주인지는 월요일끼리 비교한다. 오늘이 토·일이면 월~금 목록에 없어서
   // 목록 포함 여부로 보면 '이번 주'가 표시되지 않는다.
   const thisWeek = weekDays[0] === getWorkWeek(today)[0];
@@ -1958,9 +1965,10 @@ export default function Home() {
                   {/* 머리표는 영문 대문자로 짧게 얹는다. 일간은 요일(WEDNESDAY),
                       주간은 몇 번째 주(WEEK 3). 두 화면이 같은 자리에 같은 모양의
                       두 줄을 쓰므로 보기를 바꿔도 같은 덩어리로 읽힌다. */}
-                  <p className="hero-kicker">{weekView
-                    ? weekNumberLabel(weekDays[0])
-                    : formatWeekdayEnglish(date)}</p>
+                  <p className={`hero-kicker${selectedDateWeekday === 6 ? " is-sat" : ""}${selectedDateHoliday ? " has-holiday" : ""}`}>
+                    <span>{weekView ? weekNumberLabel(weekDays[0]) : formatWeekdayEnglish(date)}</span>
+                    {selectedDateHoliday && <><i aria-hidden="true" /><em>{selectedDateHoliday.name}</em></>}
+                  </p>
                   {/* 숫자만 남겨 크게 쓴다. 머리표에 요일·주차가 이미 있으니
                       '월·일' 글자가 없어도 무슨 날인지 읽힌다 — 글자를 덜어낸
                       만큼 숫자를 키울 수 있어 이 영역의 제목이 날짜가 된다.

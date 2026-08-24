@@ -3285,12 +3285,15 @@ button {
   box-shadow: none;
 }
 
-/* 세 달력 공통: 지난 날짜는 회색, 토·일은 같은 레드로 표시한다. */
+/* 모든 달력 공통: 일요일은 레드, 토요일은 차분한 블루로 구분한다. */
 .date-panel .date-panel-dow span.is-sun,
-.date-panel .date-panel-dow span.is-sat,
-.date-panel-grid button.is-sun:not(.selected):not(.is-past),
-.date-panel-grid button.is-sat:not(.selected):not(.is-past) {
+.date-panel-grid button.is-sun:not(.selected):not(.is-past) {
   color: #c21238;
+}
+
+.date-panel .date-panel-dow span.is-sat,
+.date-panel-grid button.is-sat:not(.selected):not(.is-past) {
+  color: #3d66ad;
 }
 
 .date-panel-grid button.is-past:not(.selected),

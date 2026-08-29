@@ -1756,7 +1756,7 @@ export default function Home() {
           {/* 시계와 날짜는 뺐다. 보고 있는 날짜가 왼쪽에 크게 있고,
               현재 시각은 일정표의 빨간 선이 알려 준다. */}
           <nav className="header-nav" aria-label="사용자 메뉴">
-            <a className="header-nav-item" href="/회의실예약_매뉴얼.pdf" target="_blank" rel="noopener noreferrer">매뉴얼</a>
+            <a className="header-nav-item" href="/회의실예약_매뉴얼.pdf" target="_blank" rel="noopener noreferrer">이용가이드</a>
             <span className="header-bookings-wrap">
               <button
                 type="button"

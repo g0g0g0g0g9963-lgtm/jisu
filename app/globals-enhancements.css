@@ -3787,6 +3787,24 @@ button {
   background-image: none;
 }
 
+/* 예약표의 좌우 끝선은 배경에 거의 스며들게 하고 내부 구분선은 유지한다. */
+.app-shell .weekly-board .daily-timeline,
+.app-shell .weekly-board .weekly-room-board {
+  border-left: 1px solid rgb(174 186 203 / 6%);
+  border-right: 1px solid rgb(174 186 203 / 6%);
+}
+
+.schedule-design-cards .daily-timeline .timeline-day:last-child,
+.app-shell .schedule-design-cards .weekly-room-board > .weekly-room-head:last-of-type,
+.app-shell .schedule-design-cards .weekly-room-board .weekly-room-row > .weekly-room-cell:last-child {
+  border-right-color: transparent;
+}
+
+.app-shell .schedule-design-cards .weekly-room-board > .weekly-room-corner,
+.app-shell .schedule-design-cards .weekly-room-board .weekly-room-row > .weekly-room-name {
+  border-left-color: transparent;
+}
+
 /* 일간·주간 공통 예약 블록: 밀키한 색 면 위에 얕은 새틴 층감만 남긴다. */
 .app-shell .schedule-design-cards .daily-timeline .timeline-event,
 .app-shell .schedule-design-cards .daily-timeline .timeline-event.tone-1,

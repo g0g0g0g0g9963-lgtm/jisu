@@ -1746,7 +1746,7 @@ export default function Home() {
           </div>
           <div className="product-name">
             <p className="eyebrow">SEOUL OFFICE</p>
-            <h1>회의실 예약</h1>
+            <h1>MEETING ROOMS</h1>
           </div>
         </div>
         {/* 메뉴는 글자만 두고, 사람은 오른쪽 끝에 이니셜 원 하나로 묶는다.

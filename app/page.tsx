@@ -2008,12 +2008,6 @@ export default function Home() {
                     <button type="button" className={scheduleView === "day" ? "active" : ""} onClick={() => setScheduleView("day")}>일간</button>
                     <button type="button" className={scheduleView === "week" ? "active" : ""} onClick={() => setScheduleView("week")}>주간</button>
                   </div>
-                  {/* 배치도는 일정표 바로 옆에 둔다. 같이 보는 것이라 상단 바로 빼면 멀다.
-                      글자 없이 핀 하나로 둔다 — 옆의 '일간/주간'과 성격이 달라
-                      같은 글자 버튼으로 보이면 세 번째 보기 방식으로 읽힌다. */}
-                  <button type="button" className={`map-toggle icon-only ${showMap ? "active" : ""}`} title={showMap ? "일정표 보기" : "회의실 위치 보기"} aria-label={showMap ? "일정표 보기" : "회의실 위치 보기"} onClick={() => { setTeamOpen(false); setMapDetailId(null); setShowMap((current) => !current); }}>
-                    {showMap ? <CloseIcon /> : <PinIcon />}
-                  </button>
                 </div>
 
                 {/* 드래그 안내는 빈 칸에 마우스를 올리면 그 자리에 뜨는 알약이

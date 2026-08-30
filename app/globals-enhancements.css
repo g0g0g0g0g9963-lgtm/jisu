@@ -3132,7 +3132,8 @@ button {
 }
 
 .booking-panel:not(.is-collapsed) .booking-section-heading > b {
-  font-size: 14.5px;
+  font-size: 16.5px;
+  line-height: 1;
 }
 
 /* 첫 회의실 필드만 길어 보이지 않도록 정보 두 줄을 유지한 채 높이를 맞춘다. */

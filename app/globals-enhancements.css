@@ -3996,3 +3996,47 @@ button {
     bottom: 16px;
   }
 }
+
+/* 3개 수정 묶음 — 빠른예약 머리글의 상태와 접기 조작을 서로 바꾼다.
+   가운데 제목은 같은 폭의 좌우 칸 사이에서 계속 정중앙을 유지한다. */
+.booking-panel:not(.is-collapsed) .booking-title .booking-title-state {
+  grid-column: 1;
+  justify-self: start;
+  justify-content: flex-start;
+}
+
+.booking-panel:not(.is-collapsed) .booking-title .booking-panel-toggle {
+  grid-column: 3;
+  justify-self: end;
+}
+
+/* 큰 날짜의 위쪽 호흡만 늘린다. 아래 여백과 각 조작부의 아래끝 기준선은
+   그대로 두어 표·그라데이션 리본과의 기존 정렬을 바꾸지 않는다. */
+@media (min-width: 1200px) {
+  .app-shell .weekly-board .weekly-heading.schedule-hero,
+  .app-shell .schedule-hero.weekly-heading {
+    flex-shrink: 0;
+    min-height: 119px;
+    padding-top: 24px;
+    padding-bottom: 16px;
+  }
+}
+
+/* 예약현황표의 좌우 끝은 선을 그리지 않는다. 내부 방 구분선과 시간 눈금은
+   유지하되 바깥 경계만 Moonlight Pearl 배경에 완전히 스며들게 한다. */
+.app-shell .weekly-board .daily-timeline,
+.app-shell .weekly-board .weekly-room-board {
+  border-left: 0 !important;
+  border-right: 0 !important;
+}
+
+.schedule-design-cards .daily-timeline .timeline-day:last-child,
+.app-shell .schedule-design-cards .weekly-room-board > .weekly-room-head:last-of-type,
+.app-shell .schedule-design-cards .weekly-room-board .weekly-room-row > .weekly-room-cell:last-child {
+  border-right-color: transparent !important;
+}
+
+.app-shell .schedule-design-cards .weekly-room-board > .weekly-room-corner,
+.app-shell .schedule-design-cards .weekly-room-board .weekly-room-row > .weekly-room-name {
+  border-left-color: transparent !important;
+}

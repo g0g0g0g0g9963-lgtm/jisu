@@ -4207,6 +4207,23 @@ button {
   color: inherit;
 }
 
+/* 사용자가 표시한 빨간 영역에 맞춰 하단 CTA가 가로·세로를 넉넉히 채운다.
+   폼 높이가 빠듯해도 버튼이 줄어들지 않도록 flex 축소를 막는다. */
+.booking-panel:not(.is-collapsed) .booking-submit {
+  flex: none;
+  padding: 20px 8px 10px;
+}
+
+.booking-panel:not(.is-collapsed) .booking-submit .reserve-button {
+  flex: 0 0 112px;
+  width: 100%;
+  height: 112px;
+  min-height: 112px;
+  margin-top: 0;
+  padding: 14px 16px;
+  overflow: hidden;
+}
+
 /* 달력 가독성 보강 — 세 곳의 달력 아이콘을 함께 키우고,
    달력 안의 월·요일·날짜는 기존 비례를 유지하며 한 단계 확대한다. */
 .app-shell .date-field-icon > .date-field-value svg {

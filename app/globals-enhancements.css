@@ -4166,3 +4166,42 @@ button {
   background: rgb(255 255 255 / 34%);
   border: 0;
 }
+
+/* 하단 예약 버튼 — 회의실·시간·행동을 각각 한 줄로 분리한다.
+   회의실과 시간은 같은 크기로 읽히고, 실제 행동만 마지막 줄에서 강조한다. */
+.booking-panel .booking-submit .reserve-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  height: 76px;
+  min-height: 76px;
+  padding: 8px 16px;
+  line-height: 1.12;
+}
+
+.booking-panel:not(.is-collapsed) .booking-submit .reserve-button > .reserve-button-room,
+.booking-panel:not(.is-collapsed) .booking-submit .reserve-button > .reserve-button-time {
+  color: #fff;
+  opacity: .94;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.booking-panel:not(.is-collapsed) .booking-submit .reserve-button > .reserve-button-time {
+  font-variant-numeric: tabular-nums;
+}
+
+.booking-panel:not(.is-collapsed) .booking-submit .reserve-button > .reserve-button-action {
+  margin-top: 2px;
+  color: #fff;
+  font-size: 19px;
+  font-weight: 800;
+}
+
+.booking-panel:not(.is-collapsed) .booking-submit .reserve-button:disabled > .reserve-button-room,
+.booking-panel:not(.is-collapsed) .booking-submit .reserve-button:disabled > .reserve-button-time,
+.booking-panel:not(.is-collapsed) .booking-submit .reserve-button:disabled > .reserve-button-action {
+  color: inherit;
+}

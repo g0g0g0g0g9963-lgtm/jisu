@@ -2638,12 +2638,15 @@ export default function Home() {
               )}
             </section>}
             <button id="reserve-button" className="reserve-button" type="submit" disabled={selectedTimeConflict || submitting}>
-              <span>{selected.name}</span>
+              <span className="reserve-button-room">{selected.name}</span>
               {/* 반복 예약이면 몇 건이 만들어지는지 버튼이 직접 말해야 한다.
-                  '예약하기'만 있으면 한 건인 줄 알고 누른다. */}
-              <strong>{submitting ? "저장 중…" : selectedTimeConflict ? "이미 예약된 시간입니다"
-                : reservationDates.length > 1 ? `${start}–${end} · ${reservationDates.length}건 예약하기`
-                : `${start}–${end} 예약하기`}</strong>
+                  건수는 시간 줄에 함께 두고, 마지막 줄은 행동만 크게 보여 준다. */}
+              <span className="reserve-button-time">
+                {start}–{end}{reservationDates.length > 1 ? ` · ${reservationDates.length}건` : ""}
+              </span>
+              <strong className="reserve-button-action">
+                {submitting ? "저장 중…" : selectedTimeConflict ? "이미 예약된 시간입니다" : "예약하기"}
+              </strong>
             </button>
             </div>
           </form>

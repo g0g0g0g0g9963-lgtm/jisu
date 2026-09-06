@@ -4169,7 +4169,10 @@ button {
 
 /* 하단 예약 버튼 — 회의실·시간·행동을 각각 한 줄로 분리한다.
    회의실과 시간은 같은 크기로 읽히고, 실제 행동만 마지막 줄에서 강조한다. */
-.booking-panel:not(.is-collapsed) .booking-submit .reserve-button {
+.booking-panel:not(.is-collapsed) .booking-submit .reserve-button,
+.booking-panel:not(.is-collapsed) .booking-submit .reserve-button:not(:disabled),
+.booking-panel:not(.is-collapsed) .booking-submit .reserve-button:hover:not(:disabled),
+.booking-panel:not(.is-collapsed) .booking-submit .reserve-button:active:not(:disabled) {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -4215,10 +4218,10 @@ button {
 }
 
 .booking-panel:not(.is-collapsed) .booking-submit .reserve-button {
-  flex: 0 0 112px;
+  flex: 0 0 128px;
   width: 100%;
-  height: 112px;
-  min-height: 112px;
+  height: 128px;
+  min-height: 128px;
   margin-top: 0;
   padding: 14px 16px;
   overflow: hidden;

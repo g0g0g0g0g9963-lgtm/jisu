@@ -124,6 +124,15 @@ const lastSelectableTime = timeOptions[timeOptions.length - 1];
 /** 반복 예약은 평일만 지원한다. 매주 반복은 실제로 쓰이지 않아 없앴다. */
 const REPEAT_CYCLE: RepeatCycle = "weekdays";
 
+/** 오늘과 같은 일자를 기준으로 한 달 전 날짜를 구한다. 월말은 해당 달의 마지막 날로 맞춘다. */
+const oneCalendarMonthAgo = (key: DateKey): DateKey => {
+  const current = new Date(`${key}T00:00:00Z`);
+  const target = new Date(Date.UTC(current.getUTCFullYear(), current.getUTCMonth() - 1, 1));
+  const lastDay = new Date(Date.UTC(target.getUTCFullYear(), target.getUTCMonth() + 1, 0)).getUTCDate();
+  target.setUTCDate(Math.min(current.getUTCDate(), lastDay));
+  return target.toISOString().slice(0, 10);
+};
+
 /**
  * 날짜 앞뒤 이동 꺾쇠.
  * 글꼴 문자(‹ ›)는 기준선 때문에 버튼 안에서 세로 중앙이 맞지 않아 도형으로 그린다.
@@ -1109,7 +1118,10 @@ export default function Home() {
     .filter((booking) => myBookingOwner.trim() && booking.owner === myBookingOwner.trim())
     .sort((a, b) => `${a.date}${a.start}`.localeCompare(`${b.date}${b.start}`)), [bookings, myBookingOwner]);
   const upcomingMyBookings = myBookings.filter((booking) => booking.date >= today);
-  const pastMyBookings = myBookings.filter((booking) => booking.date < today).reverse();
+  const pastBookingCutoff = oneCalendarMonthAgo(today);
+  const pastMyBookings = myBookings
+    .filter((booking) => booking.date < today && booking.date >= pastBookingCutoff)
+    .reverse();
   /** 예정 예약을 위, 지난 예약을 아래에 둔 한 벌의 표 데이터. */
   const myBookingRows = [
     ...upcomingMyBookings.map((booking) => ({ booking, upcoming: true })),

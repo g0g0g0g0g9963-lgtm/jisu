@@ -4205,3 +4205,54 @@ button {
 .booking-panel:not(.is-collapsed) .booking-submit .reserve-button:disabled > .reserve-button-action {
   color: inherit;
 }
+
+/* 달력 가독성 보강 — 세 곳의 달력 아이콘을 함께 키우고,
+   달력 안의 월·요일·날짜는 기존 비례를 유지하며 한 단계 확대한다. */
+.app-shell .date-field-icon > .date-field-value svg {
+  width: 18px;
+  height: 18px;
+}
+
+.app-shell .schedule-hero .schedule-date-switch .date-field-icon > .date-field-value {
+  width: 40px;
+}
+
+.app-shell .schedule-hero .date-panel {
+  width: 282px;
+  padding: 14px;
+}
+
+.app-shell .date-panel-head {
+  margin-bottom: 10px;
+}
+
+.app-shell .date-panel-head b {
+  font-size: 15.5px;
+}
+
+.app-shell .date-panel-dow {
+  margin-bottom: 5px;
+}
+
+.app-shell .date-panel-dow span {
+  height: 24px;
+  font-size: 11px;
+}
+
+.app-shell .date-panel-grid {
+  gap: 2px 1px;
+}
+
+.app-shell .date-panel-grid button {
+  height: 32px;
+  font-size: 13.5px;
+}
+
+.app-shell .date-panel-grid button.is-holiday {
+  height: 36px;
+}
+
+.app-shell .date-panel-grid button em,
+.app-shell .date-panel-grid button.is-holiday:not(.selected) em {
+  font-size: 7.5px;
+}

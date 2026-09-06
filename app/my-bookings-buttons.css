@@ -68,3 +68,24 @@
   color: #b98491;
   background: #f6ecef;
 }
+
+/* 예약이 많아도 선택·취소 도구는 내 예약창 하단에 계속 보이게 한다. */
+.my-bookings-dialog {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.my-bookings-dialog .my-bookings-table-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.my-bookings-dialog .my-bookings-cancelbar {
+  z-index: 8;
+  flex: none;
+  margin-bottom: 0;
+  box-shadow: 0 -10px 24px rgb(23 34 58 / 8%);
+}

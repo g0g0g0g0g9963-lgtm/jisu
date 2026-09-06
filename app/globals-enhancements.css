@@ -4042,64 +4042,56 @@ button {
   border-left-color: transparent !important;
 }
 
-/* Aurora Pearl — 예약 블록 B안.
-   기존 블루·핑크 구분은 유지하고, 넓은 모서리 펄과 낮은 명암차로
-   밝은 띠 없이 차분한 깊이만 남긴다. */
+/* Matte Wash — 예약 블록 A안.
+   펄·그라데이션·유리 효과·그림자를 모두 걷고, 연한 단색 면만으로
+   일반 예약과 내 예약을 구분한다. */
 .app-shell .schedule-design-cards .daily-timeline .timeline-event:not(.is-mine),
 .app-shell .schedule-design-cards .weekly-room-board .weekly-room-event:not(.is-mine) {
-  background-color: #e8eef8;
-  background-image:
-    radial-gradient(circle at 13% 8%, rgb(255 255 255 / 78%), transparent 42%),
-    linear-gradient(126deg, #e8eef8 0%, #dce7f5 60%, #e6edf8 100%);
-  border: 1px solid rgb(255 255 255 / 72%);
-  border-radius: 14px;
-  backdrop-filter: blur(10px) saturate(112%);
-  -webkit-backdrop-filter: blur(10px) saturate(112%);
-  box-shadow: 0 7px 18px rgb(31 50 80 / 7%);
+  background-color: #e9eff7;
+  background-image: none;
+  border: 0;
+  border-radius: 8px;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: none;
 }
 
 .app-shell .schedule-design-cards .daily-timeline .timeline-event.is-mine:not(.x),
 .app-shell .schedule-design-cards .weekly-room-board .weekly-room-event.is-mine:not(.x) {
-  background-color: #f9edf2;
-  background-image:
-    radial-gradient(circle at 13% 8%, rgb(255 255 255 / 76%), transparent 42%),
-    linear-gradient(126deg, #f9edf2 0%, #f4dfe7 62%, #f8e9ee 100%);
-  border: 1px solid rgb(255 255 255 / 72%);
-  border-radius: 14px;
-  backdrop-filter: blur(10px) saturate(112%);
-  -webkit-backdrop-filter: blur(10px) saturate(112%);
-  box-shadow: 0 7px 18px rgb(92 36 56 / 7%);
+  background-color: #faedf1;
+  background-image: none;
+  border: 0;
+  border-radius: 8px;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: none;
 }
 
-/* 주간의 낮은 블록은 같은 재질을 유지하되 모서리만 한 단계 줄인다. */
+/* 일간과 주간 모두 같은 무광 모서리 비율을 사용한다. */
 .app-shell .schedule-design-cards .weekly-room-board .weekly-room-event {
-  border-radius: 10px;
+  border-radius: 8px;
 }
 
 .app-shell .schedule-design-cards .daily-timeline .timeline-event:not(.is-mine):hover,
 .app-shell .schedule-design-cards .daily-timeline .timeline-event:not(.is-mine):focus-visible,
 .app-shell .schedule-design-cards .weekly-room-board .weekly-room-event:not(.is-mine):hover,
 .app-shell .schedule-design-cards .weekly-room-board .weekly-room-event:not(.is-mine):focus-visible {
-  background-color: #e8eef8;
-  background-image:
-    radial-gradient(circle at 13% 8%, rgb(255 255 255 / 84%), transparent 42%),
-    linear-gradient(126deg, #ebf1f9 0%, #d8e4f3 60%, #e8eef8 100%);
-  border: 1px solid rgb(255 255 255 / 82%);
+  background-color: #e5ecf5;
+  background-image: none;
+  border: 0;
   transform: none;
-  box-shadow: 0 8px 20px rgb(31 50 80 / 10%);
+  box-shadow: none;
 }
 
 .app-shell .schedule-design-cards .daily-timeline .timeline-event.is-mine:hover,
 .app-shell .schedule-design-cards .daily-timeline .timeline-event.is-mine:focus-visible,
 .app-shell .schedule-design-cards .weekly-room-board .weekly-room-event.is-mine:hover,
 .app-shell .schedule-design-cards .weekly-room-board .weekly-room-event.is-mine:focus-visible {
-  background-color: #f9edf2;
-  background-image:
-    radial-gradient(circle at 13% 8%, rgb(255 255 255 / 82%), transparent 42%),
-    linear-gradient(126deg, #fbf0f4 0%, #f2dbe4 62%, #f9ebf0 100%);
-  border: 1px solid rgb(255 255 255 / 82%);
+  background-color: #f7e8ed;
+  background-image: none;
+  border: 0;
   transform: none;
-  box-shadow: 0 8px 20px rgb(92 36 56 / 10%);
+  box-shadow: none;
 }
 
 /* 층·보기 전환 D안 — 하나의 레일 안에서 선택 버튼만 가볍게 뜬다. */

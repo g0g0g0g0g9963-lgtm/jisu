@@ -2647,7 +2647,7 @@ export default function Home() {
             {purpose.trim() && <span>{purpose.trim()}</span>}
           </div>
           <div className="early-foot">
-            <button type="button" onClick={() => setSubmitPreviewDates(null)}>다시 확인</button>
+            <button type="button" onClick={() => setSubmitPreviewDates(null)}>수정하기</button>
             <button type="button" className="early-go" disabled={submitting} onClick={() => sendBooking(submitPreviewDates)}>{submitting ? "예약하는 중…" : "예약하기"}</button>
           </div>
         </section>

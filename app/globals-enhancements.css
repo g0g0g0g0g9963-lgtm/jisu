@@ -4167,8 +4167,8 @@ button {
   border: 0;
 }
 
-/* 하단 예약 버튼 — 회의실·시간·행동을 각각 한 줄로 분리한다.
-   회의실과 시간은 같은 크기로 읽히고, 실제 행동만 마지막 줄에서 강조한다. */
+/* 하단 예약 버튼 — D 시안처럼 회의실·시간을 한 줄에 묶고,
+   실제 행동만 아래 줄에서 크게 강조한다. */
 .booking-panel:not(.is-collapsed) .booking-submit .reserve-button,
 .booking-panel:not(.is-collapsed) .booking-submit .reserve-button:not(:disabled),
 .booking-panel:not(.is-collapsed) .booking-submit .reserve-button:hover:not(:disabled),
@@ -4177,23 +4177,40 @@ button {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: 5px;
   height: 84px;
   min-height: 84px;
   padding: 8px 16px;
   line-height: 1.12;
 }
 
-.booking-panel:not(.is-collapsed) .booking-submit .reserve-button > .reserve-button-room,
-.booking-panel:not(.is-collapsed) .booking-submit .reserve-button > .reserve-button-time {
+.booking-panel:not(.is-collapsed) .booking-submit .reserve-button > .reserve-button-meta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
   color: #fff;
   opacity: .94;
+}
+
+.booking-panel:not(.is-collapsed) .booking-submit .reserve-button .reserve-button-room,
+.booking-panel:not(.is-collapsed) .booking-submit .reserve-button .reserve-button-time {
+  color: inherit;
   font-size: 14.5px;
   font-weight: 700;
 }
 
-.booking-panel:not(.is-collapsed) .booking-submit .reserve-button > .reserve-button-time {
+.booking-panel:not(.is-collapsed) .booking-submit .reserve-button .reserve-button-time {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-variant-numeric: tabular-nums;
+}
+
+.booking-panel:not(.is-collapsed) .booking-submit .reserve-button .reserve-button-time::before {
+  content: "·";
+  opacity: .72;
 }
 
 .booking-panel:not(.is-collapsed) .booking-submit .reserve-button > .reserve-button-action {
@@ -4204,8 +4221,7 @@ button {
   letter-spacing: 0;
 }
 
-.booking-panel:not(.is-collapsed) .booking-submit .reserve-button:disabled > .reserve-button-room,
-.booking-panel:not(.is-collapsed) .booking-submit .reserve-button:disabled > .reserve-button-time,
+.booking-panel:not(.is-collapsed) .booking-submit .reserve-button:disabled > .reserve-button-meta,
 .booking-panel:not(.is-collapsed) .booking-submit .reserve-button:disabled > .reserve-button-action {
   color: inherit;
 }

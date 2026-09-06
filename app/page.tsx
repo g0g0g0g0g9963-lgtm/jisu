@@ -775,7 +775,6 @@ export default function Home() {
     moveDate(todayKey(clock ?? undefined), bookingDefaults.defaultRepeatSpanDays),
   );
   const [myBookingsOpen, setMyBookingsOpen] = useState(false);
-  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [myBookingOwner, setMyBookingOwner] = useStoredText(OWNER_STORAGE_KEY);
   // '내 예약'도 시험용 이름으로 바로 채워 둔다. 예전에 다른 이름으로 예약한
   // 기록이 남아 있으면 그것을 그대로 쓴다.
@@ -921,10 +920,8 @@ export default function Home() {
       const target = event.target as Node | null;
       const insideRoomPicker = Boolean(target && document.querySelector(".room-picker-card")?.contains(target));
       const insideTimePicker = Boolean(target && document.querySelector(".booking-time-section")?.contains(target));
-      const insideNotifications = Boolean(target && document.querySelector(".header-bookings-wrap")?.contains(target));
       if (!insideRoomPicker) setRoomPickerOpen(false);
       if (!insideTimePicker) setTimePickerOpen(null);
-      if (!insideNotifications) setNotificationsOpen(false);
     };
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
@@ -932,7 +929,6 @@ export default function Home() {
       setTimePickerOpen(null);
       setSubmitPreviewDates(null);
       setEarlyEnd(null);
-      setNotificationsOpen(false);
     };
     document.addEventListener("click", closePickers);
     document.addEventListener("keydown", closeOnEscape);
@@ -1778,45 +1774,14 @@ export default function Home() {
               <button
                 type="button"
                 className={`header-nav-item header-bookings-bell${bellArrival ? " booking-arrival" : ""}`}
-                aria-label={`내 알림${upcomingMyBookings.length > 0 ? `, 예정 예약 ${upcomingMyBookings.length}건` : ""}`}
-                aria-expanded={notificationsOpen}
-                aria-controls="header-notifications-popover"
-                title="내 알림"
-                onClick={() => setNotificationsOpen((current) => !current)}
+                aria-label={`내 예약 열기${upcomingMyBookings.length > 0 ? `, 예정 예약 ${upcomingMyBookings.length}건` : ""}`}
+                aria-haspopup="dialog"
+                title="내 예약"
+                onClick={() => { setCancelSelection(null); setMyBookingsOpen(true); }}
               >
                 <BellIcon />
                 {upcomingMyBookings.length > 0 && <span className="header-bookings-dot" aria-hidden="true" />}
               </button>
-              {notificationsOpen && <section
-                id="header-notifications-popover"
-                className="header-notifications-popover"
-                role="dialog"
-                aria-label="내 알림"
-              >
-                <div className="header-notifications-head"><b>내 알림</b></div>
-                <div className="header-notification-list">
-                  {upcomingMyBookings.length > 0 ? upcomingMyBookings.slice(0, 3).map((booking) => {
-                    const dayLabel = booking.date === today
-                      ? "오늘"
-                      : booking.date === moveDate(today, 1)
-                        ? "내일"
-                        : formatDateLabel(booking.date);
-                    return <div className="header-notification-item" key={booking.id}>
-                      <span className="header-notification-icon" aria-hidden="true"><CalendarIcon /></span>
-                      <span>
-                        <b>{dayLabel} {booking.start} · {roomById(booking.roomId)?.name}</b>
-                        <small>{booking.purpose || "예정된 예약"}</small>
-                      </span>
-                    </div>;
-                  }) : <p className="header-notification-empty">새로운 예약 알림이 없습니다</p>}
-                  {upcomingMyBookings.length > 3 && <p className="header-notification-more">그 외 {upcomingMyBookings.length - 3}건</p>}
-                </div>
-                <button
-                  type="button"
-                  className="header-notifications-all"
-                  onClick={() => { setNotificationsOpen(false); setMyBookingsOpen(true); }}
-                >내 예약 전체 보기</button>
-              </section>}
             </span>
           </nav>
           {/* 이니셜은 이름에서 뽑는다. 원은 장식이라 낭독기에서는 건너뛰고
@@ -2978,7 +2943,7 @@ export default function Home() {
           } as CSSProperties : undefined}
         >
           <h2>{toast.text}</h2>
-          {toast.kind === "booking" && <p>내 알림에 저장됩니다.</p>}
+          {toast.kind === "booking" && <p>내 예약에 저장됩니다.</p>}
           <div className="early-summary booking-complete-summary">
             <b>{toast.detail}</b>
             <span>{toast.time}</span>

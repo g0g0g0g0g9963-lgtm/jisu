@@ -1,0 +1,39 @@
+/* 내 예약 표의 선택·취소 동작: B안의 부드러운 색면 스타일. */
+.my-bookings-table th .pick-many {
+  color: #27344f;
+  background: #eef2f8;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.my-bookings-table th .pick-many:hover {
+  color: #17223a;
+  background: #e4eaf4;
+  border-color: transparent;
+}
+
+.my-bookings-table .my-booking-actions button:not(.end-now):not(.cancel-confirm) {
+  color: #a51034;
+  background: #fcecf0;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.my-bookings-table .my-booking-actions button:not(.end-now):not(.cancel-confirm):hover {
+  color: #8e0f31;
+  background: #f8dce4;
+  border-color: transparent;
+}
+
+.my-bookings-table .my-booking-pick:not(.my-booking-pick-all) {
+  min-height: 32px;
+  padding: 0 10px;
+  color: #27344f;
+  background: #eef2f8;
+  border-radius: 6px;
+}
+
+.my-bookings-table .my-booking-pick:not(.my-booking-pick-all):hover {
+  background: #e4eaf4;
+}
+

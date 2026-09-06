@@ -37,3 +37,34 @@
   background: #e4eaf4;
 }
 
+/* 예약 마지막 확인창도 같은 소프트 배경 체계로 통일한다. */
+.booking-confirm-dialog .early-foot button:first-child {
+  color: #27344f;
+  background: #eef2f8;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.booking-confirm-dialog .early-foot button:first-child:hover {
+  color: #17223a;
+  background: #e4eaf4;
+  border-color: transparent;
+}
+
+.booking-confirm-dialog .early-foot .early-go {
+  color: #a51034;
+  background: #fcecf0;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.booking-confirm-dialog .early-foot .early-go:hover {
+  color: #8e0f31;
+  background: #f8dce4;
+  border-color: transparent;
+}
+
+.booking-confirm-dialog .early-foot .early-go:disabled {
+  color: #b98491;
+  background: #f6ecef;
+}

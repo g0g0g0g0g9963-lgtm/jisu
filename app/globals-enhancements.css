@@ -4174,10 +4174,10 @@ button {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  height: 108px;
-  min-height: 108px;
-  padding: 14px 16px;
+  gap: 5px;
+  height: 128px;
+  min-height: 128px;
+  padding: 20px 16px;
   line-height: 1.18;
 }
 
@@ -4195,11 +4195,10 @@ button {
 
 .booking-panel:not(.is-collapsed) .booking-submit .reserve-button > .reserve-button-action {
   margin-top: 4px;
-  padding-left: .25em;
   color: #fff;
   font-size: 23px;
   font-weight: 800;
-  letter-spacing: .25em;
+  letter-spacing: 0;
 }
 
 .booking-panel:not(.is-collapsed) .booking-submit .reserve-button:disabled > .reserve-button-room,

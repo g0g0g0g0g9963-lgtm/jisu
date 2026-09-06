@@ -89,3 +89,90 @@
   margin-bottom: 0;
   box-shadow: 0 -10px 24px rgb(23 34 58 / 8%);
 }
+
+/* 예약 수정창도 확인창과 같은 부드러운 색면으로 맞춘다. */
+.edit-backdrop {
+  background: rgb(23 34 58 / 40%);
+  backdrop-filter: blur(6px);
+}
+
+.edit-dialog {
+  background: linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
+  border: 1px solid #dfe5ef;
+  border-top: 1px solid #dfe5ef;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 95%),
+    0 2px 6px rgb(23 34 58 / 8%),
+    0 24px 64px rgb(23 34 58 / 20%);
+}
+
+.edit-dialog .edit-dialog-head {
+  background: transparent;
+  border-bottom-color: #e7ebf2;
+}
+
+.edit-dialog .edit-dialog-body input,
+.edit-dialog .edit-dialog-body select,
+.edit-dialog .edit-dialog-body .date-field-value {
+  background-color: #f4f7fb;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding-inline: 12px;
+  box-shadow: none;
+}
+
+.edit-dialog .edit-dialog-body input:hover,
+.edit-dialog .edit-dialog-body select:hover,
+.edit-dialog .edit-dialog-body .date-field-value:hover {
+  background-color: #edf2f8;
+}
+
+.edit-dialog .edit-dialog-body input:focus,
+.edit-dialog .edit-dialog-body select:focus,
+.edit-dialog .edit-dialog-body .date-field-value:focus-visible {
+  background-color: #ffffff;
+  border-color: #c8d3e3;
+  box-shadow: 0 0 0 3px rgb(39 52 79 / 8%);
+  outline: none;
+}
+
+.edit-dialog-foot .edit-delete {
+  color: #a51034;
+  background: #fcecf0;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.edit-dialog-foot .edit-delete:hover {
+  color: #8e0f31;
+  background: #f8dce4;
+}
+
+.edit-dialog-foot button:not(.edit-delete):not(.edit-save) {
+  color: #27344f;
+  background: #eef2f8;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.edit-dialog-foot button:not(.edit-delete):not(.edit-save):hover {
+  color: #17223a;
+  background: #e4eaf4;
+}
+
+.edit-dialog-foot .edit-save {
+  color: #a51034;
+  background: #fcecf0;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.edit-dialog-foot .edit-save:hover {
+  color: #8e0f31;
+  background: #f8dce4;
+}
+
+.edit-dialog-foot .edit-save:disabled {
+  color: #b98491;
+  background: #f6ecef;
+}

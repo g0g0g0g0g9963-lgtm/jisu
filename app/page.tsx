@@ -1162,6 +1162,11 @@ export default function Home() {
     // 적용한다. 서버도 같은 검사를 하지만(past 응답) 열어놓고 저장 시점에
     // 막는 것보다, 열리지 않는 쪽이 헷갈리지 않는다.
     if (booking.date < today) return;
+    // 예약 수정창과 새 예약용 빠른예약 패널이 동시에 열리면 서로 다른
+    // 날짜·시간이 한 화면에 겹쳐 보여 오류처럼 보인다. 수정할 때는 패널만
+    // 접고 입력값은 유지해, 닫은 뒤 다시 펼치면 작성 내용을 이어갈 수 있게 한다.
+    setBookingPanelOpen(false);
+    setRoomPickerOpen(false);
     setEditDraft({
       id: booking.id,
       roomId: booking.roomId,

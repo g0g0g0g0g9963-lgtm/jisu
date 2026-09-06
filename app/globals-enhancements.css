@@ -4169,7 +4169,7 @@ button {
 
 /* 하단 예약 버튼 — 회의실·시간·행동을 각각 한 줄로 분리한다.
    회의실과 시간은 같은 크기로 읽히고, 실제 행동만 마지막 줄에서 강조한다. */
-.booking-panel .booking-submit .reserve-button {
+.booking-panel:not(.is-collapsed) .booking-submit .reserve-button {
   display: flex;
   flex-direction: column;
   align-items: center;

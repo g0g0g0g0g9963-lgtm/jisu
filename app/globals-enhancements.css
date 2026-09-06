@@ -4177,10 +4177,10 @@ button {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 3px;
-  height: 96px;
-  min-height: 96px;
-  padding: 10px 16px;
+  gap: 2px;
+  height: 84px;
+  min-height: 84px;
+  padding: 8px 16px;
   line-height: 1.12;
 }
 
@@ -4197,7 +4197,7 @@ button {
 }
 
 .booking-panel:not(.is-collapsed) .booking-submit .reserve-button > .reserve-button-action {
-  margin-top: 2px;
+  margin-top: 1px;
   color: #fff;
   font-size: 23px;
   font-weight: 800;
@@ -4214,16 +4214,16 @@ button {
    폼 높이가 빠듯해도 버튼이 줄어들지 않도록 flex 축소를 막는다. */
 .booking-panel:not(.is-collapsed) .booking-submit {
   flex: none;
-  padding: 14px 8px 10px;
+  padding: 10px 8px 8px;
 }
 
 .booking-panel:not(.is-collapsed) .booking-submit .reserve-button {
-  flex: 0 0 96px;
+  flex: 0 0 84px;
   width: 100%;
-  height: 96px;
-  min-height: 96px;
+  height: 84px;
+  min-height: 84px;
   margin-top: 0;
-  padding: 10px 16px;
+  padding: 8px 16px;
   overflow: hidden;
 }
 

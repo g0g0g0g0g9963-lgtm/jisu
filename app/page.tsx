@@ -1118,7 +1118,11 @@ export default function Home() {
 
   const selectFloor = (nextFloor: number) => {
     setFloor(nextFloor);
-    setSelectedId(rooms.find((room) => room.floor === nextFloor)?.id ?? selectedId);
+    // 이미 그 층 회의실을 고른 상태라면 그대로 둔다. 안 그러면 같은 층 탭을
+    // 다시 누르기만 해도 고른 회의실이 그 층 첫 번째로 조용히 바뀐다.
+    if (roomById(selectedId)?.floor !== nextFloor) {
+      setSelectedId(rooms.find((room) => room.floor === nextFloor)?.id ?? selectedId);
+    }
     setMapDetailId(null);
     setNotice("");
   };

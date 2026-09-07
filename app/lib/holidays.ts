@@ -1,3 +1,4 @@
+import publicHolidaysByYear from "../config/public-holidays.json";
 import { type DateKey } from "./datetime";
 
 export type PublicHoliday = {
@@ -5,32 +6,24 @@ export type PublicHoliday = {
   calendarLabel: string;
 };
 
-/**
- * 2026년 대한민국 관공서 공휴일.
- * 한국천문연구원 「2026년 월력요항」을 기준으로 관리한다.
- */
-const PUBLIC_HOLIDAYS_2026: Record<DateKey, PublicHoliday> = {
-  "2026-01-01": { name: "신정", calendarLabel: "신정" },
-  "2026-02-16": { name: "설날 연휴", calendarLabel: "설연휴" },
-  "2026-02-17": { name: "설날", calendarLabel: "설날" },
-  "2026-02-18": { name: "설날 연휴", calendarLabel: "설연휴" },
-  "2026-03-01": { name: "3·1절", calendarLabel: "3·1절" },
-  "2026-03-02": { name: "3·1절 대체공휴일", calendarLabel: "대체휴일" },
-  "2026-05-05": { name: "어린이날", calendarLabel: "어린이날" },
-  "2026-05-24": { name: "부처님오신날", calendarLabel: "부처님날" },
-  "2026-05-25": { name: "부처님오신날 대체공휴일", calendarLabel: "대체휴일" },
-  "2026-06-03": { name: "전국동시지방선거", calendarLabel: "지방선거" },
-  "2026-06-06": { name: "현충일", calendarLabel: "현충일" },
-  "2026-08-15": { name: "광복절", calendarLabel: "광복절" },
-  "2026-08-17": { name: "광복절 대체공휴일", calendarLabel: "대체휴일" },
-  "2026-09-24": { name: "추석 연휴", calendarLabel: "추석연휴" },
-  "2026-09-25": { name: "추석", calendarLabel: "추석" },
-  "2026-09-26": { name: "추석 연휴", calendarLabel: "추석연휴" },
-  "2026-10-03": { name: "개천절", calendarLabel: "개천절" },
-  "2026-10-05": { name: "개천절 대체공휴일", calendarLabel: "대체휴일" },
-  "2026-10-09": { name: "한글날", calendarLabel: "한글날" },
-  "2026-12-25": { name: "기독탄신일", calendarLabel: "성탄절" },
-};
+type YearlyHolidays = Record<DateKey, PublicHoliday>;
 
-export const publicHolidayOf = (date: DateKey): PublicHoliday | undefined =>
-  PUBLIC_HOLIDAYS_2026[date];
+const HOLIDAYS_BY_YEAR = publicHolidaysByYear as Record<string, YearlyHolidays>;
+
+// 데이터가 없는 연도를 조용히 "공휴일 없음"으로 넘기면, 새해가 와도 아무도 모르고
+// 지나간다. 개발자 콘솔에 한 번만 경고해 새 연도 데이터를 넣어야 한다는 걸 알린다.
+const warnedYears = new Set<string>();
+
+export const publicHolidayOf = (date: DateKey): PublicHoliday | undefined => {
+  const year = date.slice(0, 4);
+  const yearData = HOLIDAYS_BY_YEAR[year];
+  if (!yearData) {
+    if (!warnedYears.has(year)) {
+      warnedYears.add(year);
+      // eslint-disable-next-line no-console
+      console.warn(`[holidays] ${year}년 공휴일 데이터가 없습니다. app/config/public-holidays.json에 추가해 주세요.`);
+    }
+    return undefined;
+  }
+  return yearData[date];
+};

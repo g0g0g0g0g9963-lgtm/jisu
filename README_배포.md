@@ -1,5 +1,7 @@
 ﻿# BDO 서울오피스 회의실 예약 — NAS 배포판 v2
 
+> 현재 배포 패키지 버전: v2.1 (2026-09-07)
+
 원본은 `bdomeetingroom.zip`(2026-08-12 최종본)이다. 원본은 ChatGPT Sites(Cloudflare Workers)용
 프로젝트라 NAS에서 그대로 돌 수 없고, 예약 데이터도 **브라우저 메모리에만** 있어서
 새로고침하면 사라지고 사용자끼리 공유되지 않았다. 이 배포판은 원본의 화면·로직·폴더
@@ -54,7 +56,7 @@ ssh jinkyu.kim@192.168.100.25 -p 3907 'docker ps --format "{{.Names}}\t{{.Ports}
 /volume1/sh-pf/docker/meeting-room/
 ```
 
-- **DSM File Station으로 할 때**: `BDO_회의실예약_NAS배포v2_20260812.zip` 업로드 후 우클릭 → 압축 풀기
+- **DSM File Station으로 할 때**: `회의실예약_최종배포본_2026-09-07.zip` 업로드 후 우클릭 → 압축 풀기
 - **SSH로 할 때**: `BDO_회의실예약_NAS배포v2_20260812.tar.gz`를 올린 뒤
 
   ```bash
@@ -62,7 +64,7 @@ ssh jinkyu.kim@192.168.100.25 -p 3907 'docker ps --format "{{.Names}}\t{{.Ports}
   tar -xzf BDO_회의실예약_NAS배포v2_20260812.tar.gz -C /volume1/sh-pf/docker/meeting-room
   ```
 
-  (zip은 Windows에서 만든 것이라 리눅스 `unzip`으로는 풀지 말 것)
+  ZIP 파일은 DSM File Station 또는 리눅스 `unzip`으로 풀 수 있다.
 
 ### 1-3. 실행
 
@@ -172,7 +174,8 @@ sudo docker compose logs --tail 5    # "[auth] Microsoft SSO 사용" 확인
 
 주의: `.env`에 비밀키가 들어가므로 파일 권한을 조여둔다: `chmod 600 .env`
 
-## 5. 아직 남은 것
+## 5. 운영 전 확인
 
-1. **예약 수정 기능이 없다.** 취소 후 다시 잡는 방식만 가능하다.
+1. 배포용 ZIP에는 로컬 시험 예약 DB와 `.env`가 포함되지 않는다. 기존 NAS의 `data/`와 `.env`는 덮어쓰지 말고 유지한다.
 2. SSO 이전에 만들어진 예약(시드 포함)은 등록 이메일이 없어서, 취소 시 이름 일치로만 확인한다.
+3. 예약 수정, 반복 예약, 내 예약 조회·취소 기능은 현재 배포판에 포함되어 있다.

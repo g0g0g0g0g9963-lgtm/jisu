@@ -32,8 +32,17 @@ const TIME = /^([01]\d|2[0-3]):([0-5]\d)$/;
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const {
   openingTime, closingTime, maxAttendees, maxAttendeeNameLength, allowWeekends, defaultPurpose,
-  maxRepeatCount: MAX_REPEAT,
+  maxRepeatCount: MAX_REPEAT, slotMinutes,
 } = siteConfig.booking;
+
+/** "HH:MM"을 자정 기준 분으로. */
+const minutesOf = (value) => {
+  const [hours, mins] = value.split(":").map(Number);
+  return hours * 60 + mins;
+};
+
+/** 화면이 제공하는 시작 시간 선택지(운영 시작 시각부터 slotMinutes 간격)에 맞는지. */
+const isSlotAligned = (value) => (minutesOf(value) - minutesOf(openingTime)) % slotMinutes === 0;
 
 const isRealDate = (value) => {
   if (!DATE.test(value)) return false;
@@ -73,6 +82,9 @@ function validateCommon(body) {
   if (end <= start) return { error: "종료 시간은 시작 시간보다 늦어야 합니다." };
   if (start < openingTime || end > closingTime) {
     return { error: `예약은 ${openingTime}–${closingTime} 사이만 가능합니다.` };
+  }
+  if (!isSlotAligned(start) || !isSlotAligned(end)) {
+    return { error: `시간은 ${slotMinutes}분 단위로만 선택할 수 있습니다.` };
   }
 
   const team = trimmed(body?.team).slice(0, 60);

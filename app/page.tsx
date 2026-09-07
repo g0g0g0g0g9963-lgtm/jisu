@@ -992,12 +992,18 @@ export default function Home() {
     rooms.findIndex((room) => room.id === a.room.id) - rooms.findIndex((room) => room.id === b.room.id)
   )), [roomChoices]);
 
-  const availableStartOptions = useMemo(() => startTimeOptions.filter((candidate) => {
-    if (date === today && nowMinutes !== null && minutesOf(candidate) < nowMinutes) return false;
-    const candidateEnd = addMinutes(candidate, duration || bookingDefaults.defaultDurationMinutes);
-    return minutesOf(candidateEnd) <= minutesOf(lastSelectableTime)
-      && slotIsFree(selected.id, date, candidate, candidateEnd);
-  }), [date, duration, nowMinutes, selected.id, slotIsFree, today]);
+  const availableStartOptions = useMemo(() => {
+    // 프리셋(1/2/4시간)에 없는 길이(드래그로 잡은 30분·90분 등)도 실제 길이 그대로 써야 한다.
+    // duration은 프리셋 버튼 강조 표시용이라, 프리셋이 아니면 0이 되어 실제 길이와 다르다.
+    const currentDuration = minutesOf(end) - minutesOf(start);
+    const length = currentDuration > 0 ? currentDuration : bookingDefaults.defaultDurationMinutes;
+    return startTimeOptions.filter((candidate) => {
+      if (date === today && nowMinutes !== null && minutesOf(candidate) < nowMinutes) return false;
+      const candidateEnd = addMinutes(candidate, length);
+      return minutesOf(candidateEnd) <= minutesOf(lastSelectableTime)
+        && slotIsFree(selected.id, date, candidate, candidateEnd);
+    });
+  }, [date, end, nowMinutes, selected.id, slotIsFree, start, today]);
 
   const availableEndOptions = useMemo(() => timeOptions.filter((candidate) => (
     minutesOf(candidate) > minutesOf(start) && slotIsFree(selected.id, date, start, candidate)
@@ -1573,11 +1579,13 @@ export default function Home() {
 
   const changeStart = (nextStart: string) => {
     setAllDay(false);
-    setSlot((current) => ({
-      ...current,
-      start: nextStart,
-      end: addMinutes(nextStart, duration || bookingDefaults.defaultDurationMinutes),
-    }));
+    setSlot((current) => {
+      // 지금 보이는 실제 길이를 그대로 옮긴다. duration(프리셋 강조용)은 30분·90분처럼
+      // 프리셋에 없는 길이일 때 0이 되어 있어, 그걸 쓰면 기본값(1시간)으로 되돌아간다.
+      const currentDuration = minutesOf(current.end) - minutesOf(current.start);
+      const length = currentDuration > 0 ? currentDuration : bookingDefaults.defaultDurationMinutes;
+      return { ...current, start: nextStart, end: addMinutes(nextStart, length) };
+    });
     setNotice("");
     setTimeNeedsPick(false);
   };

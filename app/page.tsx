@@ -861,11 +861,16 @@ export default function Home() {
 
   // 예약의 진실의 원천은 서버 DB다. 30초 주기 + 창 포커스 시 다시 읽어
   // 다른 사람이 잡은 예약을 화면에 반영한다.
+  const refreshSeq = useRef(0);
   const refreshBookings = useCallback(async () => {
+    const seq = ++refreshSeq.current;
     try {
-      setBookings(await fetchBookings());
+      const data = await fetchBookings();
+      if (seq !== refreshSeq.current) return; // 그 사이 더 최신 요청이 있었다면 늦게 도착한 이 응답은 버린다
+      setBookings(data);
       setSyncError("");
     } catch (error) {
+      if (seq !== refreshSeq.current) return;
       setSyncError(error instanceof Error ? error.message : "서버와 통신할 수 없습니다.");
     }
   }, []);

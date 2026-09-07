@@ -72,6 +72,8 @@ ssh jinkyu.kim@192.168.100.25 -p 3907 'docker ps --format "{{.Names}}\t{{.Ports}
 ssh jinkyu.kim@192.168.100.25 -p 3907
 cd /volume1/sh-pf/docker/meeting-room
 cp .env.example .env        # HOST_PORT 확인, 첫 화면 확인용이면 SEED_DEMO=1
+mkdir -p data
+sudo chown 1000:1000 data   # SQLite를 쓰는 컨테이너 node 계정 권한
 docker compose up -d --build
 docker compose logs -f      # "회의실 예약 서버 실행 중" 확인 후 Ctrl+C
 ```

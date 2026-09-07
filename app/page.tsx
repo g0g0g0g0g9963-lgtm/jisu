@@ -1212,14 +1212,15 @@ export default function Home() {
   };
 
   /**
-   * 조기 종료. 지금 시각을 10분 단위로 올림해 종료 시간으로 삼는다.
-   * 13:47에 누르면 13:50으로 끝나 어중간한 끝시각이 생기지 않는다.
+   * 조기 종료. 지금 시각을 예약 슬롯 단위(30분)로 올림해 종료 시간으로 삼는다.
+   * 그래야 비워진 시간이 다른 사람의 시작 시간 선택지에 그대로 나타난다.
    */
   const earlyEndTime = (booking: Booking): string => {
     if (nowMinutes === null) return booking.end;
-    const rounded = Math.ceil(nowMinutes / 10) * 10;
-    // 시작 직후에 눌러도 최소 10분은 남기고, 원래 종료 시간을 넘지는 않는다.
-    const floor = minutesOf(booking.start) + 10;
+    const { slotMinutes } = bookingDefaults;
+    const rounded = Math.ceil(nowMinutes / slotMinutes) * slotMinutes;
+    // 시작 직후에 눌러도 최소 한 슬롯은 남기고, 원래 종료 시간을 넘지는 않는다.
+    const floor = minutesOf(booking.start) + slotMinutes;
     return formatMinutes(Math.min(Math.max(rounded, floor), minutesOf(booking.end)));
   };
 
@@ -2752,7 +2753,10 @@ export default function Home() {
                               </label>
                             ) : isRunningNow(booking) ? (
                               // 진행 중인 회의는 취소가 아니라 '지금 끝내기'가 필요한 동작이다.
-                              <button type="button" className="end-now" onClick={() => setEarlyEnd(booking)}>지금 끝내기</button>
+                              // 단, 남은 시간이 30분 미만이면 끝내봤자 풀리는 시간이 없어 버튼을 두지 않는다.
+                              minutesOf(earlyEndTime(booking)) < minutesOf(booking.end) && (
+                                <button type="button" className="end-now" onClick={() => setEarlyEnd(booking)}>지금 끝내기</button>
+                              )
                             ) : (
                               // '예약 취소'는 곧바로 확인창을 연다. 예전에는 고르기 모드로
                               // 들어가 아무 일도 안 일어난 것처럼 보였고, 같은 글자가
@@ -2836,7 +2840,8 @@ export default function Home() {
               <span className="field-label">본부</span>
               <input value={editDraft.team} onChange={(event) => setEditDraft({ ...editDraft, team: event.target.value })} placeholder="본부를 입력하세요" />
             </label>
-            {editingBooking && isRunningNow(editingBooking) && (
+            {editingBooking && isRunningNow(editingBooking)
+              && minutesOf(earlyEndTime(editingBooking)) < minutesOf(editingBooking.end) && (
               <div className="edit-running-action">
                 <span><b>현재 진행 중인 회의</b><em>일찍 끝내면 남은 시간이 바로 예약 가능해집니다.</em></span>
                 <button type="button" onClick={() => setEarlyEnd(editingBooking)}>회의 일찍 끝내기</button>

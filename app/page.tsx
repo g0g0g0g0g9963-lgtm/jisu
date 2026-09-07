@@ -32,7 +32,7 @@ import {
   todayKey,
   weekdayOf,
 } from "./lib/datetime";
-import { useNow, useStoredText } from "./lib/hooks";
+import { useDialogFocus, useNow, useStoredText } from "./lib/hooks";
 import { publicHolidayOf } from "./lib/holidays";
 import {
   describeRoomStatus,
@@ -803,6 +803,32 @@ export default function Home() {
   // 시작·종료 시간 중 하나라도 바꾸면 풀린다.
   const [timeNeedsPick, setTimeNeedsPick] = useState(false);
   const [submitPreviewDates, setSubmitPreviewDates] = useState<string[] | null>(null);
+
+  // 모달 여러 개가 겹칠 수 있어(예: 예약 수정 위에 조기 종료), 가장 위에 뜬
+  // 것 하나만 Escape·Tab을 갖도록 우선순위를 매긴다. 겹칠 수 있는 목록이
+  // 위에, 늘 단독으로 뜨는 것들이 아래에 온다.
+  const topmostDialog = cancelAsk ? "cancelAsk"
+    : earlyEnd ? "earlyEnd"
+    : repeatAsk ? "repeatAsk"
+    : submitPreviewDates ? "submitPreviewDates"
+    : editDraft ? "editDraft"
+    : myBookingsOpen ? "myBookingsOpen"
+    : null;
+
+  const cancelAskDialogRef = useRef<HTMLElement | null>(null);
+  const earlyEndDialogRef = useRef<HTMLElement | null>(null);
+  const repeatAskDialogRef = useRef<HTMLElement | null>(null);
+  const submitPreviewDialogRef = useRef<HTMLElement | null>(null);
+  const editDraftDialogRef = useRef<HTMLElement | null>(null);
+  const myBookingsDialogRef = useRef<HTMLElement | null>(null);
+
+  useDialogFocus(cancelAskDialogRef, Boolean(cancelAsk), topmostDialog === "cancelAsk", () => setCancelAsk(null));
+  useDialogFocus(earlyEndDialogRef, Boolean(earlyEnd), topmostDialog === "earlyEnd", () => setEarlyEnd(null));
+  useDialogFocus(repeatAskDialogRef, Boolean(repeatAsk), topmostDialog === "repeatAsk", () => setRepeatAsk(null));
+  useDialogFocus(submitPreviewDialogRef, Boolean(submitPreviewDates), topmostDialog === "submitPreviewDates", () => setSubmitPreviewDates(null));
+  useDialogFocus(editDraftDialogRef, Boolean(editDraft), topmostDialog === "editDraft", () => setEditDraft(null));
+  useDialogFocus(myBookingsDialogRef, myBookingsOpen, topmostDialog === "myBookingsOpen", () => { setMyBookingsOpen(false); setCancelSelection(null); });
+
   const [monitorMode] = useState(() => {
     const params = new URLSearchParams(window.location.search);
     return params.get("mode") === "monitor" || params.get("display") === "monitor";
@@ -914,10 +940,11 @@ export default function Home() {
     };
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
+      // submitPreviewDates·earlyEnd 등 다이얼로그는 useDialogFocus가 각자
+      // Escape를 처리한다(겹쳤을 때 가장 위의 것 하나만 닫히게 하기 위함).
+      // 여기서는 다이얼로그가 아닌 가벼운 팝오버만 정리한다.
       setRoomPickerOpen(false);
       setTimePickerOpen(null);
-      setSubmitPreviewDates(null);
-      setEarlyEnd(null);
       setNotificationsOpen(false);
     };
     document.addEventListener("click", closePickers);
@@ -2177,9 +2204,15 @@ export default function Home() {
                             className="weekly-cell-add"
                             aria-label={`${room.name} ${formatDateLabel(day)} 빈 시간 예약하기`}
                             // 한 번 클릭으로는 열리지 않게 한다. 표를 훑다가 실수로 열리는 일이 잦았다.
+                            // (키보드로 Tab해 와서 누르는 것은 실수로 볼 이유가 없어 Enter/Space는 바로 연다)
                             onDoubleClick={() => askWeekdaySlot(room, day)}
                             onPointerUp={(event) => {
                               if (event.pointerType !== "touch") return;
+                              event.preventDefault();
+                              askWeekdaySlot(room, day);
+                            }}
+                            onKeyDown={(event) => {
+                              if (event.key !== "Enter" && event.key !== " ") return;
                               event.preventDefault();
                               askWeekdaySlot(room, day);
                             }}
@@ -2679,7 +2712,7 @@ export default function Home() {
         </div>
       </aside>
       {submitPreviewDates && <div className="edit-backdrop booking-confirm-backdrop" role="presentation" onMouseDown={() => setSubmitPreviewDates(null)}>
-        <section className="early-dialog booking-confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="booking-confirm-title" onMouseDown={(event) => event.stopPropagation()}>
+        <section ref={submitPreviewDialogRef} className="early-dialog booking-confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="booking-confirm-title" onMouseDown={(event) => event.stopPropagation()}>
           <h2 id="booking-confirm-title">예약 내용을 확인해 주세요</h2>
           <p>아래 내용으로 예약을 진행합니다.</p>
           <div className="early-summary booking-confirm-summary">
@@ -2695,7 +2728,7 @@ export default function Home() {
         </section>
       </div>}
       {myBookingsOpen && <div className="my-bookings-backdrop" role="presentation" onMouseDown={() => { setMyBookingsOpen(false); setCancelSelection(null); }}>
-        <section className="my-bookings-dialog" role="dialog" aria-modal="true" aria-labelledby="my-bookings-title" onMouseDown={(event) => event.stopPropagation()}>
+        <section ref={myBookingsDialogRef} className="my-bookings-dialog" role="dialog" aria-modal="true" aria-labelledby="my-bookings-title" onMouseDown={(event) => event.stopPropagation()}>
           <div className="my-bookings-dialog-head"><div><h2 id="my-bookings-title">내 예약</h2></div><button type="button" onClick={() => { setMyBookingsOpen(false); setCancelSelection(null); }} aria-label="내 예약 닫기"><CloseIcon /></button></div>
           {!currentUser && <label className="my-bookings-search"><span>예약자 이름</span><input value={myBookingOwner} onChange={(event) => setMyBookingOwner(event.target.value)} placeholder="예약자 이름을 입력하세요" /></label>}
           <p className="my-bookings-summary">
@@ -2812,7 +2845,7 @@ export default function Home() {
         </section>
       </div>}
       {editDraft && <div className="edit-backdrop" role="presentation" onMouseDown={() => setEditDraft(null)}>
-        <section className="edit-dialog" role="dialog" aria-modal="true" aria-labelledby="edit-dialog-title" onMouseDown={(event) => event.stopPropagation()}>
+        <section ref={editDraftDialogRef} className="edit-dialog" role="dialog" aria-modal="true" aria-labelledby="edit-dialog-title" onMouseDown={(event) => event.stopPropagation()}>
           <div className="edit-dialog-head">
             <div><h2 id="edit-dialog-title">예약 수정</h2></div>
             <button type="button" onClick={() => setEditDraft(null)} aria-label="예약 수정 닫기"><CloseIcon /></button>
@@ -2877,7 +2910,7 @@ export default function Home() {
         </section>
       </div>}
       {earlyEnd && <div className="edit-backdrop" role="presentation" onMouseDown={() => setEarlyEnd(null)}>
-        <section className="early-dialog" role="dialog" aria-modal="true" aria-labelledby="early-end-title" onMouseDown={(event) => event.stopPropagation()}>
+        <section ref={earlyEndDialogRef} className="early-dialog" role="dialog" aria-modal="true" aria-labelledby="early-end-title" onMouseDown={(event) => event.stopPropagation()}>
           <h2 id="early-end-title">지금 끝낼까요?</h2>
           <p>남은 시간이 바로 풀려서 다른 사람이 예약할 수 있게 됩니다.</p>
           <div className="early-summary">
@@ -2894,7 +2927,7 @@ export default function Home() {
         </section>
       </div>}
       {repeatAsk && <div className="edit-backdrop" role="presentation" onMouseDown={() => setRepeatAsk(null)}>
-        <section className="early-dialog" role="dialog" aria-modal="true" aria-labelledby="repeat-ask-title" onMouseDown={(event) => event.stopPropagation()}>
+        <section ref={repeatAskDialogRef} className="early-dialog" role="dialog" aria-modal="true" aria-labelledby="repeat-ask-title" onMouseDown={(event) => event.stopPropagation()}>
           <h2 id="repeat-ask-title">{repeatAsk.conflicts.length}일은 이미 차 있어요</h2>
           <p>그 날만 빼고 나머지를 예약할 수 있습니다.</p>
           <div className="early-summary">
@@ -2935,7 +2968,7 @@ export default function Home() {
         const wholeSeries = partOfSeries && series.every((id) => cancelAsk.includes(id));
         return (
           <div className="edit-backdrop cancel-backdrop" role="presentation" onMouseDown={() => setCancelAsk(null)}>
-            <section className="early-dialog cancel-dialog" role="dialog" aria-modal="true" aria-labelledby="cancel-ask-title" onMouseDown={(event) => event.stopPropagation()}>
+            <section ref={cancelAskDialogRef} className="early-dialog cancel-dialog" role="dialog" aria-modal="true" aria-labelledby="cancel-ask-title" onMouseDown={(event) => event.stopPropagation()}>
               <h2 id="cancel-ask-title">예약 {picked.length}건을 취소할까요?</h2>
               <p>취소한 예약은 되돌릴 수 없습니다.</p>
               <div className="early-summary">

@@ -7,7 +7,7 @@
  * 값이 어긋나기도 한다. React가 이런 용도로 제공하는 useSyncExternalStore를
  * 써서 서버에서는 "아직 모름", 브라우저에서는 실제 값이 나오게 한다.
  */
-import { useCallback, useMemo, useSyncExternalStore } from "react";
+import { type RefObject, useCallback, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
 
 function createTicker(intervalMs: number) {
   const listeners = new Set<() => void>();
@@ -90,4 +90,63 @@ export function useStoredText(key: string): [string, (value: string) => void] {
   const setValue = useCallback((next: string) => store.write(next), [store]);
 
   return [value, setValue];
+}
+
+const FOCUSABLE_SELECTOR = [
+  "button:not([disabled])", "a[href]", "input:not([disabled])",
+  "select:not([disabled])", "textarea:not([disabled])", '[tabindex]:not([tabindex="-1"])',
+].join(", ");
+
+/**
+ * 모달(다이얼로그) 하나의 포커스 관리.
+ * - 열리면 안의 첫 포커스 가능한 요소로 포커스를 옮기고, 닫히면 열기 전
+ *   포커스였던 요소로 되돌린다.
+ * - active(다른 모달에 가려지지 않은, 가장 위에 뜬 모달)일 때만 Tab을
+ *   안에 가두고 Escape로 닫는다 — 위에 다른 모달이 겹쳐 있어도 Escape
+ *   한 번에 그 모달만 닫히게 하기 위함이다.
+ */
+export function useDialogFocus(
+  containerRef: RefObject<HTMLElement | null>,
+  isOpen: boolean,
+  active: boolean,
+  onClose: () => void,
+) {
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+    const firstFocusable = containerRef.current?.querySelector<HTMLElement>(FOCUSABLE_SELECTOR);
+    firstFocusable?.focus();
+    return () => previouslyFocused?.focus?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen || !active) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.stopPropagation();
+        onCloseRef.current();
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const items = containerRef.current
+        ? Array.from(containerRef.current.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR))
+        : [];
+      if (items.length === 0) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, active, containerRef]);
 }

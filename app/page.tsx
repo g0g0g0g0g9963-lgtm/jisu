@@ -125,6 +125,15 @@ const lastSelectableTime = timeOptions[timeOptions.length - 1];
 /** 반복 예약은 평일만 지원한다. 매주 반복은 실제로 쓰이지 않아 없앴다. */
 const REPEAT_CYCLE: RepeatCycle = "weekdays";
 
+/** 오늘과 같은 일자를 기준으로 한 달 전 날짜를 구한다. 월말은 해당 달의 마지막 날로 맞춘다. */
+const oneCalendarMonthAgo = (key: DateKey): DateKey => {
+  const current = new Date(`${key}T00:00:00Z`);
+  const target = new Date(Date.UTC(current.getUTCFullYear(), current.getUTCMonth() - 1, 1));
+  const lastDay = new Date(Date.UTC(target.getUTCFullYear(), target.getUTCMonth() + 1, 0)).getUTCDate();
+  target.setUTCDate(Math.min(current.getUTCDate(), lastDay));
+  return target.toISOString().slice(0, 10);
+};
+
 /**
  * 날짜 앞뒤 이동 꺾쇠.
  * 글꼴 문자(‹ ›)는 기준선 때문에 버튼 안에서 세로 중앙이 맞지 않아 도형으로 그린다.
@@ -750,7 +759,6 @@ export default function Home() {
     moveDate(todayKey(clock ?? undefined), bookingDefaults.defaultRepeatSpanDays),
   );
   const [myBookingsOpen, setMyBookingsOpen] = useState(false);
-  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [myBookingOwner, setMyBookingOwner] = useStoredText(OWNER_STORAGE_KEY);
   // '내 예약'도 시험용 이름으로 바로 채워 둔다. 예전에 다른 이름으로 예약한
   // 기록이 남아 있으면 그것을 그대로 쓴다.
@@ -918,10 +926,8 @@ export default function Home() {
       const target = event.target as Node | null;
       const insideRoomPicker = Boolean(target && document.querySelector(".room-picker-card")?.contains(target));
       const insideTimePicker = Boolean(target && document.querySelector(".booking-time-section")?.contains(target));
-      const insideNotifications = Boolean(target && document.querySelector(".header-bookings-wrap")?.contains(target));
       if (!insideRoomPicker) setRoomPickerOpen(false);
       if (!insideTimePicker) setTimePickerOpen(null);
-      if (!insideNotifications) setNotificationsOpen(false);
     };
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
@@ -930,7 +936,6 @@ export default function Home() {
       // 여기서는 다이얼로그가 아닌 가벼운 팝오버만 정리한다.
       setRoomPickerOpen(false);
       setTimePickerOpen(null);
-      setNotificationsOpen(false);
     };
     document.addEventListener("click", closePickers);
     document.addEventListener("keydown", closeOnEscape);
@@ -1119,7 +1124,10 @@ export default function Home() {
     .filter((booking) => myBookingOwner.trim() && booking.owner === myBookingOwner.trim())
     .sort((a, b) => `${a.date}${a.start}`.localeCompare(`${b.date}${b.start}`)), [bookings, myBookingOwner]);
   const upcomingMyBookings = myBookings.filter((booking) => booking.date >= today);
-  const pastMyBookings = myBookings.filter((booking) => booking.date < today).reverse();
+  const pastBookingCutoff = oneCalendarMonthAgo(today);
+  const pastMyBookings = myBookings
+    .filter((booking) => booking.date < today && booking.date >= pastBookingCutoff)
+    .reverse();
   /** 예정 예약을 위, 지난 예약을 아래에 둔 한 벌의 표 데이터. */
   const myBookingRows = [
     ...upcomingMyBookings.map((booking) => ({ booking, upcoming: true })),
@@ -1174,6 +1182,11 @@ export default function Home() {
     // 적용한다. 서버도 같은 검사를 하지만(past 응답) 열어놓고 저장 시점에
     // 막는 것보다, 열리지 않는 쪽이 헷갈리지 않는다.
     if (booking.date < today) return;
+    // 예약 수정창과 새 예약용 빠른예약 패널이 동시에 열리면 서로 다른
+    // 날짜·시간이 한 화면에 겹쳐 보여 오류처럼 보인다. 수정할 때는 패널만
+    // 접고 입력값은 유지해, 닫은 뒤 다시 펼치면 작성 내용을 이어갈 수 있게 한다.
+    setBookingPanelOpen(false);
+    setRoomPickerOpen(false);
     setEditDraft({
       id: booking.id,
       roomId: booking.roomId,
@@ -1768,7 +1781,7 @@ export default function Home() {
           </div>
           <div className="product-name">
             <p className="eyebrow">SEOUL OFFICE</p>
-            <h1>회의실 예약</h1>
+            <h1>MEETING ROOMS</h1>
           </div>
         </div>
         {/* 메뉴는 글자만 두고, 사람은 오른쪽 끝에 이니셜 원 하나로 묶는다.
@@ -1778,50 +1791,19 @@ export default function Home() {
           {/* 시계와 날짜는 뺐다. 보고 있는 날짜가 왼쪽에 크게 있고,
               현재 시각은 일정표의 빨간 선이 알려 준다. */}
           <nav className="header-nav" aria-label="사용자 메뉴">
-            <a className="header-nav-item" href="/회의실예약_매뉴얼.pdf" target="_blank" rel="noopener noreferrer">매뉴얼</a>
+            <a className="header-nav-item" href="/회의실예약_매뉴얼.pdf" target="_blank" rel="noopener noreferrer">이용가이드</a>
             <span className="header-bookings-wrap">
               <button
                 type="button"
                 className={`header-nav-item header-bookings-bell${bellArrival ? " booking-arrival" : ""}`}
-                aria-label={`내 알림${upcomingMyBookings.length > 0 ? `, 예정 예약 ${upcomingMyBookings.length}건` : ""}`}
-                aria-expanded={notificationsOpen}
-                aria-controls="header-notifications-popover"
-                title="내 알림"
-                onClick={() => setNotificationsOpen((current) => !current)}
+                aria-label={`내 예약 열기${upcomingMyBookings.length > 0 ? `, 예정 예약 ${upcomingMyBookings.length}건` : ""}`}
+                aria-haspopup="dialog"
+                title="내 예약"
+                onClick={() => { setCancelSelection(null); setMyBookingsOpen(true); }}
               >
                 <BellIcon />
                 {upcomingMyBookings.length > 0 && <span className="header-bookings-dot" aria-hidden="true" />}
               </button>
-              {notificationsOpen && <section
-                id="header-notifications-popover"
-                className="header-notifications-popover"
-                role="dialog"
-                aria-label="내 알림"
-              >
-                <div className="header-notifications-head"><b>내 알림</b></div>
-                <div className="header-notification-list">
-                  {upcomingMyBookings.length > 0 ? upcomingMyBookings.slice(0, 3).map((booking) => {
-                    const dayLabel = booking.date === today
-                      ? "오늘"
-                      : booking.date === moveDate(today, 1)
-                        ? "내일"
-                        : formatDateLabel(booking.date);
-                    return <div className="header-notification-item" key={booking.id}>
-                      <span className="header-notification-icon" aria-hidden="true"><CalendarIcon /></span>
-                      <span>
-                        <b>{dayLabel} {booking.start} · {roomById(booking.roomId)?.name}</b>
-                        <small>{booking.purpose || "예정된 예약"}</small>
-                      </span>
-                    </div>;
-                  }) : <p className="header-notification-empty">새로운 예약 알림이 없습니다</p>}
-                  {upcomingMyBookings.length > 3 && <p className="header-notification-more">그 외 {upcomingMyBookings.length - 3}건</p>}
-                </div>
-                <button
-                  type="button"
-                  className="header-notifications-all"
-                  onClick={() => { setNotificationsOpen(false); setMyBookingsOpen(true); }}
-                >내 예약 전체 보기</button>
-              </section>}
             </span>
           </nav>
           {/* 이니셜은 이름에서 뽑는다. 원은 장식이라 낭독기에서는 건너뛰고
@@ -2029,12 +2011,6 @@ export default function Home() {
                     <button type="button" className={scheduleView === "day" ? "active" : ""} onClick={() => setScheduleView("day")}>일간</button>
                     <button type="button" className={scheduleView === "week" ? "active" : ""} onClick={() => setScheduleView("week")}>주간</button>
                   </div>
-                  {/* 배치도는 일정표 바로 옆에 둔다. 같이 보는 것이라 상단 바로 빼면 멀다.
-                      글자 없이 핀 하나로 둔다 — 옆의 '일간/주간'과 성격이 달라
-                      같은 글자 버튼으로 보이면 세 번째 보기 방식으로 읽힌다. */}
-                  <button type="button" className={`map-toggle icon-only ${showMap ? "active" : ""}`} title={showMap ? "일정표 보기" : "회의실 위치 보기"} aria-label={showMap ? "일정표 보기" : "회의실 위치 보기"} onClick={() => { setTeamOpen(false); setShowMap((current) => !current); }}>
-                    {showMap ? <CloseIcon /> : <PinIcon />}
-                  </button>
                 </div>
 
                 {/* 드래그 안내는 빈 칸에 마우스를 올리면 그 자리에 뜨는 알약이
@@ -2473,7 +2449,11 @@ export default function Home() {
               {/* 반복은 평일만 펼치므로, 고른 기간에 주말·공휴일이 끼면 그 사실을 알려 준다. */}
               <p>
                 {formatDateLabel(date)}부터 총 <b>{reservationDates.length}</b>회 예약됩니다.
-                {REPEAT_CYCLE === "weekdays" && repeatEnd > date && <em className="repeat-note">주말·공휴일 제외</em>}
+                {REPEAT_CYCLE === "weekdays" && repeatEnd > date && (
+                  <em className="repeat-note">
+                    {repeatWeekends ? "주말 포함 · 공휴일 제외" : "주말·공휴일 제외"}
+                  </em>
+                )}
               </p>
               {/* 서버는 한 번에 maxRepeatCount건까지만 받는다. 제출 전에 미리 알려야
                   "88회 예약됩니다"라고 보여 준 뒤 전량 실패하는 일이 없다. */}
@@ -2679,12 +2659,17 @@ export default function Home() {
               )}
             </section>}
             <button id="reserve-button" className="reserve-button" type="submit" disabled={selectedTimeConflict || submitting}>
-              <span>{selected.name}</span>
-              {/* 반복 예약이면 몇 건이 만들어지는지 버튼이 직접 말해야 한다.
-                  '예약하기'만 있으면 한 건인 줄 알고 누른다. */}
-              <strong>{submitting ? "저장 중…" : selectedTimeConflict ? "이미 예약된 시간입니다"
-                : reservationDates.length > 1 ? `${start}–${end} · ${reservationDates.length}건 예약하기`
-                : `${start}–${end} 예약하기`}</strong>
+              <span className="reserve-button-meta">
+                <span className="reserve-button-room">{selected.name}</span>
+                {/* 반복 예약이면 몇 건이 만들어지는지 버튼이 직접 말해야 한다.
+                    회의실과 시간을 한 줄에 묶고, 행동은 아래에서 크게 강조한다. */}
+                <span className="reserve-button-time">
+                  {start}–{end}{reservationDates.length > 1 ? ` · ${reservationDates.length}건` : ""}
+                </span>
+              </span>
+              <strong className="reserve-button-action">
+                {submitting ? "저장 중…" : selectedTimeConflict ? "이미 예약된 시간입니다" : "예약하기"}
+              </strong>
             </button>
             </div>
           </form>
@@ -2701,7 +2686,7 @@ export default function Home() {
             {purpose.trim() && <span>{purpose.trim()}</span>}
           </div>
           <div className="early-foot">
-            <button type="button" onClick={() => setSubmitPreviewDates(null)}>다시 확인</button>
+            <button type="button" onClick={() => setSubmitPreviewDates(null)}>수정하기</button>
             <button type="button" className="early-go" disabled={submitting} onClick={() => sendBooking(submitPreviewDates)}>{submitting ? "예약하는 중…" : "예약하기"}</button>
           </div>
         </section>
@@ -2995,7 +2980,7 @@ export default function Home() {
           } as CSSProperties : undefined}
         >
           <h2>{toast.text}</h2>
-          {toast.kind === "booking" && <p>내 알림에 저장됩니다.</p>}
+          {toast.kind === "booking" && <p>내 예약에 저장됩니다.</p>}
           <div className="early-summary booking-complete-summary">
             <b>{toast.detail}</b>
             <span>{toast.time}</span>

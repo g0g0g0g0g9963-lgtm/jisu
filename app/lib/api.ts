@@ -35,7 +35,12 @@ export async function fetchMe(): Promise<CurrentUser | null> {
 }
 
 export async function fetchBookings(): Promise<Booking[]> {
-  const response = await fetch("/api/bookings", { headers: { accept: "application/json" } });
+  let response: Response;
+  try {
+    response = await fetch("/api/bookings", { headers: { accept: "application/json" } });
+  } catch {
+    throw new Error("예약 내역을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.");
+  }
   if (response.status === 401) redirectToLogin();
   if (!response.ok) throw new Error(`예약 목록을 불러오지 못했습니다. (${response.status})`);
   const payload = (await response.json()) as { bookings?: Booking[] };

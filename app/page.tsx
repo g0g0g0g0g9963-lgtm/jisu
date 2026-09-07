@@ -2316,7 +2316,7 @@ export default function Home() {
                         className="room-picker-row-map"
                         title={`${room.name} 배치도에서 위치 보기`}
                         aria-label={`${room.name} 배치도에서 위치 보기`}
-                        onClick={() => { setTeamOpen(false); setMapDetailId(null); setMapPurpose("pick"); selectFloor(room.floor); setShowMap(true); }}
+                        onClick={() => { setTeamOpen(false); setMapDetailId(null); setMapPurpose("pick"); selectRoom(room); setShowMap(true); }}
                       >
                         <PinIcon />
                       </button>

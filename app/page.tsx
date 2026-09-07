@@ -54,6 +54,8 @@ type SlotSelection = {
 
 type SlotDrag = SlotSelection & {
   anchorY: number;
+  /** 처음 누른 지점(분). 방향을 바꿔 끌어도 이 값은 그대로 고정된다. */
+  anchorMinutes: number;
   pointerType: "mouse" | "touch";
 };
 
@@ -1225,7 +1227,7 @@ export default function Home() {
   /** 지금 진행 중인 내 예약인가. 조기 종료 버튼은 이때만 뜬다. */
   const isRunningNow = (booking: Booking): boolean =>
     isMyBooking(booking) && booking.date === today && nowMinutes !== null
-    && minutesOf(booking.start) <= nowMinutes && nowMinutes < minutesOf(booking.end) - 10;
+    && minutesOf(booking.start) <= nowMinutes && nowMinutes < minutesOf(booking.end);
 
   const editingBooking = editDraft ? bookings.find((booking) => booking.id === editDraft.id) ?? null : null;
 
@@ -1309,6 +1311,7 @@ export default function Home() {
           start: formatMinutes(startMinutes),
           end: formatMinutes(startMinutes + bookingDefaults.slotMinutes),
           anchorY,
+          anchorMinutes: startMinutes,
           pointerType: "touch",
         });
       }, TOUCH_DRAG_HOLD_MS);
@@ -1323,6 +1326,7 @@ export default function Home() {
       start: formatMinutes(startMinutes),
       end: formatMinutes(startMinutes + bookingDefaults.slotMinutes),
       anchorY: event.clientY,
+      anchorMinutes: startMinutes,
       pointerType: "mouse",
     });
   };
@@ -1335,10 +1339,11 @@ export default function Home() {
     }
     if (!slotDrag || slotDrag.roomId !== room.id || slotDrag.date !== reservationDate) return;
     if (slotDrag.pointerType === "touch") event.preventDefault();
-    const anchorMinutes = minutesOf(slotDrag.start);
+    // 처음 누른 지점(anchorMinutes)은 고정값이라, 방향을 바꿔 끌어도 그 지점이 사라지지 않는다.
+    // (여기서 매번 slotDrag.start를 다시 읽으면, start 자체가 이전 갱신으로 바뀐 값이라 어긋난다)
     const pointerMinutes = getSlotMinutes(event);
-    const nextStart = Math.min(anchorMinutes, pointerMinutes);
-    const nextEnd = Math.max(anchorMinutes, pointerMinutes) + bookingDefaults.slotMinutes;
+    const nextStart = Math.min(slotDrag.anchorMinutes, pointerMinutes);
+    const nextEnd = Math.max(slotDrag.anchorMinutes, pointerMinutes) + bookingDefaults.slotMinutes;
     setSlotDrag({ ...slotDrag, start: formatMinutes(nextStart), end: formatMinutes(nextEnd) });
   };
 
@@ -1653,6 +1658,10 @@ export default function Home() {
     }
     if (reservationDates.some((day) => day < today)) {
       setNotice("지난 날짜에는 예약할 수 없습니다.");
+      return;
+    }
+    if (reservationDates.length > bookingDefaults.maxRepeatCount) {
+      setNotice(`반복 예약은 한 번에 ${bookingDefaults.maxRepeatCount}건까지 가능합니다. 종료일을 앞당겨 주세요.`);
       return;
     }
     if (conflictDates.length) {
@@ -2454,6 +2463,13 @@ export default function Home() {
                 {formatDateLabel(date)}부터 총 <b>{reservationDates.length}</b>회 예약됩니다.
                 {REPEAT_CYCLE === "weekdays" && repeatEnd > date && <em className="repeat-note">주말·공휴일 제외</em>}
               </p>
+              {/* 서버는 한 번에 maxRepeatCount건까지만 받는다. 제출 전에 미리 알려야
+                  "88회 예약됩니다"라고 보여 준 뒤 전량 실패하는 일이 없다. */}
+              {reservationDates.length > bookingDefaults.maxRepeatCount && (
+                <div className="notice error">
+                  한 번에 반복 예약할 수 있는 건수({bookingDefaults.maxRepeatCount}건)를 넘었어요. 종료일을 앞당겨 주세요.
+                </div>
+              )}
               {/* 어느 날이 잡히는지 날짜로 보여 준다. 숫자만으로는 주말·공휴일이 어떻게
                   빠졌는지 확인할 방법이 없다. 많으면 앞 8개만 두고 나머지는 센다. */}
               <p className="repeat-days">

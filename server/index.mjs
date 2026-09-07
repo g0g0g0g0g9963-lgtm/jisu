@@ -131,11 +131,13 @@ function validatePatch(body) {
   if (!isRealDate(date)) return { error: "날짜 형식이 올바르지 않습니다. (YYYY-MM-DD)" };
   if (!allowWeekends && isWeekend(date)) return { error: "주말에는 예약할 수 없습니다." };
 
-  // 참석자·비품을 아예 보내지 않았으면 기존 값을 유지하도록 undefined로 넘긴다.
-  // (그냥 두면 validateCommon이 만든 빈 값이 기존 요청을 지워 버린다)
+  // 본부·목적·참석자·비품을 아예 보내지 않았으면 기존 값을 유지하도록 undefined로 넘긴다.
+  // (그냥 두면 validateCommon이 만든 빈 값·기본값이 기존 값을 지워 버린다)
+  const team = typeof body?.team === "string" ? value.team : undefined;
+  const purpose = typeof body?.purpose === "string" ? value.purpose : undefined;
   const attendees = Array.isArray(body?.attendees) ? value.attendees : undefined;
   const equipment = body?.equipment && typeof body.equipment === "object" ? value.equipment : undefined;
-  return { value: { ...value, date, attendees, equipment } };
+  return { value: { ...value, date, team, purpose, attendees, equipment } };
 }
 
 // ── API ────────────────────────────────────────────────────

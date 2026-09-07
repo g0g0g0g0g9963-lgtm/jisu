@@ -237,6 +237,8 @@ export function updateBooking(id, identity = {}, patch, { equipmentStock = new M
   if (today && row.date < today) return { ok: false, reason: "past" };
   if (today && patch.date < today) return { ok: false, reason: "past" };
 
+  const team = patch.team ?? row.team;
+  const purpose = patch.purpose ?? row.purpose;
   const attendees = patch.attendees ?? parseAttendees(row.attendees);
   const equipment = patch.equipment ?? parseEquipment(row.equipment);
 
@@ -262,7 +264,7 @@ export function updateBooking(id, identity = {}, patch, { equipmentStock = new M
 
     updateById.run(
       patch.roomId, patch.date, patch.start, patch.end,
-      patch.team, patch.purpose, JSON.stringify(attendees), JSON.stringify(equipment), id,
+      team, purpose, JSON.stringify(attendees), JSON.stringify(equipment), id,
     );
     db.exec("COMMIT");
   } catch (error) {
@@ -273,7 +275,7 @@ export function updateBooking(id, identity = {}, patch, { equipmentStock = new M
   return {
     ok: true,
     booking: toBooking({
-      ...row, ...patch, room_id: patch.roomId,
+      ...row, ...patch, room_id: patch.roomId, team, purpose,
       attendees: JSON.stringify(attendees), equipment: JSON.stringify(equipment),
     }),
   };

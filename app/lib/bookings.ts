@@ -1,11 +1,9 @@
 /** 예약 데이터의 규칙: 겹침 판정, 반복 일정 전개, 겹친 예약의 배치. */
 import siteConfig from "../config/site.json";
-import seedBookings from "../config/seed-bookings.json";
 import {
   addMinutes,
   type DateKey,
   formatMinutes,
-  getWorkWeek,
   isWeekend,
   minutesOf,
   moveDate,
@@ -122,34 +120,6 @@ export function layoutOverlappingBookings(items: Booking[]): PlacedBooking[] {
       laneCount: laneEnds.length,
     }));
   });
-}
-
-/* --- 시연용 예약 ------------------------------------------------------- */
-
-type SeedWhen = { type: "today" } | { type: "weekday"; index: number };
-type SeedBooking = Omit<Booking, "id" | "date"> & { when: SeedWhen };
-
-/**
- * config/seed-bookings.json을 오늘 기준의 실제 날짜로 옮긴다.
- * 백엔드가 붙기 전까지 화면을 채우는 예시 데이터이며, 서버가 생기면 이 함수
- * 대신 서버에서 받아온 예약을 쓰면 된다.
- */
-export function createSeedBookings(today: DateKey = todayKey()): Booking[] {
-  const workWeek = getWorkWeek(today);
-
-  return (seedBookings as SeedBooking[]).map((seed, index) => {
-    const { when, ...rest } = seed;
-    const date =
-      when.type === "today" ? today : workWeek[when.index] ?? today;
-    return { ...rest, id: `seed-${index + 1}`, date };
-  });
-}
-
-/** 겹치지 않는 예약 식별자. 같은 밀리초에 여러 건을 만들어도 안전하다. */
-export function createBookingId(): string {
-  const globalCrypto = globalThis.crypto;
-  if (globalCrypto?.randomUUID) return `bk-${globalCrypto.randomUUID()}`;
-  return `bk-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
 export const bookingDefaults = siteConfig.booking;

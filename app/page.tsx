@@ -734,13 +734,7 @@ export default function Home() {
   const [submitting, setSubmitting] = useState(false);
   // SSO 모드에서는 로그인 계정이 예약자다. null이면 익명 모드(이름 직접 입력).
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
-  const [mapDetailId, setMapDetailId] = useState<string | null>(null);
   const [showMap, setShowMap] = useState(false);
-  // 배치도를 어느 버튼으로 열었는지는 더 이상 크기를 가르지 않는다.
-  // 상단 배치도 버튼으로 연 것이 화면을 거의 다 덮을 만큼 커서, 회의실
-  // 고를 때 쓰는 작은 크기로 통일했다. 값 자체는 다른 동작에 안 쓰여
-  // 상태만 남겨 둔다.
-  const [mapPurpose, setMapPurpose] = useState<"browse" | "pick">("browse");
   const [allDay, setAllDay] = useState(false);
   const [roomPickerOpen, setRoomPickerOpen] = useState(false);
   const [timePickerOpen, setTimePickerOpen] = useState<"start" | "end" | null>(null);
@@ -920,15 +914,6 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (!mapDetailId) return;
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setMapDetailId(null);
-    };
-    window.addEventListener("keydown", closeOnEscape);
-    return () => window.removeEventListener("keydown", closeOnEscape);
-  }, [mapDetailId]);
-
-  useEffect(() => {
     const closePickers = (event: MouseEvent) => {
       const target = event.target as Node | null;
       const insideRoomPicker = Boolean(target && document.querySelector(".room-picker-card")?.contains(target));
@@ -1087,13 +1072,9 @@ export default function Home() {
   // 같은 주인지는 월요일끼리 비교한다. 오늘이 토·일이면 월~금 목록에 없어서
   // 목록 포함 여부로 보면 '이번 주'가 표시되지 않는다.
   const thisWeek = weekDays[0] === getWorkWeek(today)[0];
-  const mapDetail = mapDetailId ? roomById(mapDetailId) ?? null : null;
   const filteredTeams = officeTeams
     .filter((item) => item.name.toLowerCase().includes(team.trim().toLowerCase()))
     .slice(0, 8);
-  const mapDetailBookings = mapDetail
-    ? bookings.filter((booking) => booking.roomId === mapDetail.id && booking.date === date).sort((a, b) => a.start.localeCompare(b.start))
-    : [];
   const currentTimePercent = nowMinutes !== null && nowMinutes >= timelineStart && nowMinutes <= timelineEnd
     ? ((nowMinutes - timelineStart) / (timelineEnd - timelineStart)) * 100
     : null;
@@ -1152,16 +1133,14 @@ export default function Home() {
     if (roomById(selectedId)?.floor !== nextFloor) {
       setSelectedId(rooms.find((room) => room.floor === nextFloor)?.id ?? selectedId);
     }
-    setMapDetailId(null);
     setNotice("");
   };
 
-  const selectRoom = (room: Room, showMapDetail = false) => {
+  const selectRoom = (room: Room) => {
     setSelectedId(room.id);
     // 다른 층 회의실을 고르면 일정표도 그 층으로 따라간다.
     setRoomPickerOpen(false);
     setFloor(room.floor);
-    setMapDetailId(showMapDetail ? room.id : null);
     setNotice("");
   };
 
@@ -1941,7 +1920,6 @@ export default function Home() {
                   className="room-location-button"
                   onClick={() => {
                     selectRoom(room);
-                    setMapDetailId(null);
                     setShowMap(true);
                   }}
                   aria-label={`${room.name} location`}
@@ -2054,7 +2032,7 @@ export default function Home() {
                   {/* 배치도는 일정표 바로 옆에 둔다. 같이 보는 것이라 상단 바로 빼면 멀다.
                       글자 없이 핀 하나로 둔다 — 옆의 '일간/주간'과 성격이 달라
                       같은 글자 버튼으로 보이면 세 번째 보기 방식으로 읽힌다. */}
-                  <button type="button" className={`map-toggle icon-only ${showMap ? "active" : ""}`} title={showMap ? "일정표 보기" : "회의실 위치 보기"} aria-label={showMap ? "일정표 보기" : "회의실 위치 보기"} onClick={() => { setTeamOpen(false); setMapDetailId(null); setShowMap((current) => !current); }}>
+                  <button type="button" className={`map-toggle icon-only ${showMap ? "active" : ""}`} title={showMap ? "일정표 보기" : "회의실 위치 보기"} aria-label={showMap ? "일정표 보기" : "회의실 위치 보기"} onClick={() => { setTeamOpen(false); setShowMap((current) => !current); }}>
                     {showMap ? <CloseIcon /> : <PinIcon />}
                   </button>
                 </div>
@@ -2097,7 +2075,7 @@ export default function Home() {
                         type="button"
                         className="timeline-day-head daily-room-head"
                         aria-pressed={selected.id === room.id}
-                        onClick={() => { setSelectedId(room.id); setMapDetailId(null); }}
+                        onClick={() => setSelectedId(room.id)}
                       >
                         <span className="daily-room-title">
                           <strong>{room.name}</strong>
@@ -2190,7 +2168,7 @@ export default function Home() {
                   const status = statusOf(room);
                   return (
                     <div className="weekly-room-row" key={room.id}>
-                      <button type="button" className={`weekly-room-name ${selected.id === room.id ? "selected" : ""}`} aria-pressed={selected.id === room.id} onClick={() => { setSelectedId(room.id); setMapDetailId(null); }}>
+                      <button type="button" className={`weekly-room-name ${selected.id === room.id ? "selected" : ""}`} aria-pressed={selected.id === room.id} onClick={() => setSelectedId(room.id)}>
                         <span className="weekly-room-title">{room.name}</span><small className={status.status}><i className={`room-status-dot ${status.status}`} /><b>{status.statusLabel}</b><em>·</em>{formatCapacity(room.capacity)}</small>
                         {selected.id === room.id && <span className="daily-room-selected-icon"><SelectedRoomIcon /></span>}
                       </button>
@@ -2358,7 +2336,7 @@ export default function Home() {
                         className="room-picker-row-map"
                         title={`${room.name} 배치도에서 위치 보기`}
                         aria-label={`${room.name} 배치도에서 위치 보기`}
-                        onClick={() => { setTeamOpen(false); setMapDetailId(null); setMapPurpose("pick"); selectRoom(room); setShowMap(true); }}
+                        onClick={() => { setTeamOpen(false); selectRoom(room); setShowMap(true); }}
                       >
                         <PinIcon />
                       </button>

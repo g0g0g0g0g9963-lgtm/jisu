@@ -32,7 +32,7 @@ const TIME = /^([01]\d|2[0-3]):([0-5]\d)$/;
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const {
   openingTime, closingTime, maxAttendees, maxAttendeeNameLength, allowWeekends, defaultPurpose,
-  maxRepeatCount: MAX_REPEAT, slotMinutes,
+  maxRepeatCount: MAX_REPEAT, slotMinutes, maxAdvanceMonths,
 } = siteConfig.booking;
 
 /** "HH:MM"을 자정 기준 분으로. */
@@ -63,6 +63,13 @@ const todayKey = () => {
 const nowTimeKey = () => {
   const now = new Date();
   return `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+};
+
+/** 오늘부터 maxAdvanceMonths 뒤까지 예약 가능한 가장 늦은 날짜(YYYY-MM-DD). */
+const maxBookableDateKey = () => {
+  const now = new Date();
+  const future = new Date(now.getFullYear(), now.getMonth() + maxAdvanceMonths, now.getDate());
+  return `${future.getFullYear()}-${String(future.getMonth() + 1).padStart(2, "0")}-${String(future.getDate()).padStart(2, "0")}`;
 };
 
 /** 토·일 여부. 화면에서 막더라도 최종 판정은 서버가 한다. */
@@ -113,6 +120,9 @@ function validateCreate(body) {
   if (!allowWeekends && dates.some(isWeekend)) return { error: "주말에는 예약할 수 없습니다." };
   if (dates.some((date) => date < todayKey())) return { error: "지난 날짜에는 예약할 수 없습니다." };
   if (dates.includes(todayKey()) && value.start < nowTimeKey()) return { error: "이미 지난 시간에는 예약할 수 없습니다." };
+  if (dates.some((date) => date > maxBookableDateKey())) {
+    return { error: `예약은 오늘부터 ${maxAdvanceMonths}개월 뒤까지만 가능합니다.` };
+  }
 
   const owner = trimmed(body?.owner);
   if (owner.length === 0 || owner.length > 40) return { error: "예약자 이름을 확인해 주세요." };
@@ -150,7 +160,10 @@ app.get("/api/me", (req, res) => {
 app.get("/api/bookings", (req, res) => {
   const from = trimmed(req.query.from);
   const to = trimmed(req.query.to);
-  if (from && to) {
+  // 하나만 와도(둘 다 안 온 경우가 아니면) 검사한다. from만 오면 to가 빈
+  // 문자열이라 isRealDate가 걸러 준다. 그냥 두면 깨진 값이 조용히
+  // "필터 없음"으로 취급돼 예약 전체가 나간다.
+  if (from || to) {
     if (!isRealDate(from) || !isRealDate(to)) {
       res.status(400).json({ error: "from/to 날짜 형식이 올바르지 않습니다." });
       return;

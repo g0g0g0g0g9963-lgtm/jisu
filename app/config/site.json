@@ -15,6 +15,7 @@
     "soonThresholdMinutes": 30,
     "defaultRepeatSpanDays": 2,
     "maxRepeatCount": 60,
+    "maxAdvanceMonths": 12,
     "allowWeekends": true,
     "defaultPurpose": "회의",
     "maxAttendees": 30,

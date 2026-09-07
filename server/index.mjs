@@ -3,8 +3,8 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import express from "express";
 import { registerAuthRoutes, ssoEnabled } from "./auth.mjs";
-import { EQUIPMENT_STOCK, equipmentConfig, ROOM_IDS, siteConfig } from "./config.mjs";
-import { countBookings, createBookings, deleteBooking, equipmentUsedInSlot, listBookings, updateBooking } from "./db.mjs";
+import { ROOM_IDS, siteConfig } from "./config.mjs";
+import { countBookings, createBookings, deleteBooking, listBookings, updateBooking } from "./db.mjs";
 import { seedDemoBookings } from "./seed.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -84,24 +84,8 @@ function validateCommon(body) {
     .filter(Boolean)
     .slice(0, maxAttendees);
 
-  // 비품 요청은 { id: 수량 } 형태. 없는 품목·0 이하·보유 수량 초과는 여기서 걸러 낸다.
-  const rawEquipment = body?.equipment && typeof body.equipment === "object" && !Array.isArray(body.equipment)
-    ? body.equipment
-    : {};
-  const equipment = {};
-  for (const [id, count] of Object.entries(rawEquipment)) {
-    if (!EQUIPMENT_STOCK.has(id)) return { error: "알 수 없는 비품입니다." };
-    const amount = Number(count);
-    if (!Number.isInteger(amount) || amount < 0) return { error: "비품 수량을 확인해 주세요." };
-    if (amount > EQUIPMENT_STOCK.get(id)) return { error: "보유 수량보다 많이 요청했습니다." };
-    if (amount > 0) equipment[id] = amount;
-  }
-
-  return { value: { roomId, start, end, team, purpose, attendees, equipment } };
+  return { value: { roomId, start, end, team, purpose, attendees } };
 }
-
-/** 비품 이름을 오류 문구에 쓰기 위한 표. */
-const EQUIPMENT_NAME = new Map(equipmentConfig.items.map((item) => [item.id, item.name]));
 
 function validateCreate(body) {
   const { error, value } = validateCommon(body);
@@ -131,13 +115,12 @@ function validatePatch(body) {
   if (!isRealDate(date)) return { error: "날짜 형식이 올바르지 않습니다. (YYYY-MM-DD)" };
   if (!allowWeekends && isWeekend(date)) return { error: "주말에는 예약할 수 없습니다." };
 
-  // 본부·목적·참석자·비품을 아예 보내지 않았으면 기존 값을 유지하도록 undefined로 넘긴다.
+  // 본부·목적·참석자를 아예 보내지 않았으면 기존 값을 유지하도록 undefined로 넘긴다.
   // (그냥 두면 validateCommon이 만든 빈 값·기본값이 기존 값을 지워 버린다)
   const team = typeof body?.team === "string" ? value.team : undefined;
   const purpose = typeof body?.purpose === "string" ? value.purpose : undefined;
   const attendees = Array.isArray(body?.attendees) ? value.attendees : undefined;
-  const equipment = body?.equipment && typeof body.equipment === "object" ? value.equipment : undefined;
-  return { value: { ...value, date, team, purpose, attendees, equipment } };
+  return { value: { ...value, date, team, purpose, attendees } };
 }
 
 // ── API ────────────────────────────────────────────────────
@@ -174,54 +157,25 @@ app.post("/api/bookings", (req, res) => {
   }
   if (ssoEnabled) value.ownerEmail = req.user.email;
 
-  const result = createBookings({ ...value, equipmentStock: EQUIPMENT_STOCK });
+  const result = createBookings(value);
   if (!result.ok) {
     // 반복 예약이면 안 되는 날이 여러 개일 수 있다. 전부 돌려주어 화면이
     // "이 날들만 빼고 예약할까요?"를 물어볼 수 있게 한다.
     const { blocked } = result;
     const first = blocked[0];
-    const shortage = blocked.find((item) => item.kind === "shortage")?.shortage;
     const many = value.dates.length > 1;
 
-    let error;
-    if (first.kind === "shortage") {
-      const { id, wanted, left } = first.shortage;
-      error = `${EQUIPMENT_NAME.get(id) ?? id}는 이 시간에 ${left}개만 남았습니다. (${wanted}개 요청)`;
-    } else {
-      error = "선택한 시간에 이미 예약이 있습니다.";
-    }
+    let error = "선택한 시간에 이미 예약이 있습니다.";
     if (many) error = `${value.dates.length}일 중 ${blocked.length}일은 예약할 수 없습니다. (${error})`;
 
     res.status(409).json({
       error,
       conflict: first.conflict,
-      shortage,
       blocked: blocked.map(({ date, kind }) => ({ date, kind })),
     });
     return;
   }
   res.status(201).json({ created: result.created });
-});
-
-/**
- * 그 시간대에 남은 비품 수. 예약 창에서 "화상카메라 1개 남음"을 띄우는 데 쓴다.
- * exclude에 예약 id를 주면 그 예약이 쓰는 수량은 빼고 센다(수정할 때).
- */
-app.get("/api/equipment", (req, res) => {
-  const date = trimmed(req.query.date);
-  const start = trimmed(req.query.start);
-  const end = trimmed(req.query.end);
-  if (!isRealDate(date) || !TIME.test(start) || !TIME.test(end) || end <= start) {
-    res.status(400).json({ error: "날짜와 시간을 확인해 주세요." });
-    return;
-  }
-  const used = equipmentUsedInSlot({ date, start, end, exceptId: trimmed(req.query.exclude) || null });
-  res.json({
-    items: equipmentConfig.items.map((item) => ({
-      ...item,
-      left: Math.max(0, item.stock - (used[item.id] ?? 0)),
-    })),
-  });
 });
 
 app.patch("/api/bookings/:id", (req, res) => {
@@ -239,7 +193,7 @@ app.patch("/api/bookings/:id", (req, res) => {
     req.params.id,
     ssoEnabled ? { owner: req.user.name, ownerEmail: req.user.email } : { owner },
     value,
-    { equipmentStock: EQUIPMENT_STOCK, today: todayKey() },
+    { today: todayKey() },
   );
   if (result.ok) {
     res.json({ booking: result.booking });
@@ -251,14 +205,6 @@ app.patch("/api/bookings/:id", (req, res) => {
   }
   if (result.reason === "past") {
     res.status(400).json({ error: "지난 예약은 수정할 수 없습니다." });
-    return;
-  }
-  if (result.reason === "shortage") {
-    const { id, wanted, left } = result.shortage;
-    res.status(409).json({
-      error: `${EQUIPMENT_NAME.get(id) ?? id}는 이 시간에 ${left}개만 남았습니다. (${wanted}개 요청)`,
-      shortage: result.shortage,
-    });
     return;
   }
   if (result.reason === "conflict") {

@@ -2,7 +2,6 @@
 
 import { CSSProperties, FocusEvent as ReactFocusEvent, FormEvent, KeyboardEvent as ReactKeyboardEvent, PointerEvent as ReactPointerEvent, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import siteConfig from "./config/site.json";
-import equipmentCatalog from "./config/equipment.json";
 import officeTeams from "./config/teams.json";
 import { type CurrentUser, deleteBookingRequest, fetchBookings, fetchMe, patchBookingRequest, postBookings } from "./lib/api";
 import {
@@ -205,17 +204,6 @@ function BellIcon() {
 }
 
 const WEEKDAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
-
-/** 비품 id → 이름. 예약에는 id만 남아 있어, 「내 예약」처럼 나중에 다시 보여줄 때 필요하다. */
-const equipmentNameById = new Map(equipmentCatalog.items.map((item) => [item.id, item.name]));
-const equipmentLabel = (id: string) => equipmentNameById.get(id) ?? id;
-
-/** 예약에 딸린 비품을 "화상카메라 1 · 노트북 2"처럼 한 줄로. 없으면 빈 문자열. */
-const equipmentSummary = (booking: Booking): string =>
-  Object.entries(booking.equipment ?? {})
-    .filter(([, count]) => count > 0)
-    .map(([id, count]) => `${equipmentLabel(id)} ${count}`)
-    .join(" · ");
 
 /** "8/19". 일간 제목은 숫자만 크게 쓰므로 '월·일' 글자를 덜어낸다. */
 const slashDate = (key: DateKey): string => `${Number(key.slice(5, 7))}/${dayOfMonth(key)}`;
@@ -2731,12 +2719,6 @@ export default function Home() {
                       <td className="my-booking-room">{roomById(booking.roomId)?.name}</td>
                       <td className="my-booking-team">
                         {booking.purpose} · {teamOf(booking)}
-                        {/* 비품을 요청한 예약에만 붙는다. 대부분은 요청이 없어
-                            자리를 늘 차지하게 두면 빈 줄만 늘어난다.
-                            딱지로 만들어 목적·본부 글자와 섞이지 않게 한다. */}
-                        {equipmentSummary(booking) && (
-                          <><br /><span className="my-booking-equipment"><b>비품</b>{equipmentSummary(booking)}</span></>
-                        )}
                       </td>
                       <td><span className={`my-booking-badge ${isRunningNow(booking) ? "running" : ""}`}>
                         {isRunningNow(booking) ? "진행 중" : upcoming ? "예정" : "지난 예약"}

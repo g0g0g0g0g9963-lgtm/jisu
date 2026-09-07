@@ -24,8 +24,6 @@ export type Booking = {
   purpose: string;
   /** 예약자 외 참석자. 옛 예약에는 없을 수 있다. */
   attendees?: string[];
-  /** 비품 요청 { id: 수량 }. 옛 예약에는 없을 수 있다. */
-  equipment?: Record<string, number>;
 };
 
 /** "everyday"는 토·일까지 포함해 하루도 빠짐없이 잡는다. */

@@ -17,22 +17,6 @@ export type CreateBookingRequest = {
 
 export type ApiResult = { ok: true } | { ok: false; message: string };
 
-/** 비품 한 종류의 보유 수량과, 고른 시간대에 남은 수량. */
-export type EquipmentSlot = { id: string; name: string; stock: number; left: number };
-
-/** 그 시간대에 남은 비품 수를 서버에서 받아온다. 재고는 사무실 전체가 함께 쓴다. */
-export async function fetchEquipment(
-  date: string, start: string, end: string, excludeBookingId?: string,
-): Promise<EquipmentSlot[]> {
-  const query = new URLSearchParams({ date, start, end });
-  if (excludeBookingId) query.set("exclude", excludeBookingId);
-  const response = await fetch(`/api/equipment?${query}`, { headers: { accept: "application/json" } });
-  if (response.status === 401) redirectToLogin();
-  if (!response.ok) return [];
-  const payload = (await response.json()) as { items?: EquipmentSlot[] };
-  return payload.items ?? [];
-}
-
 export type CurrentUser = { name: string; email: string };
 
 /** 세션이 만료됐으면 Microsoft 로그인으로 보낸다. (SSO 모드에서만 401이 온다) */

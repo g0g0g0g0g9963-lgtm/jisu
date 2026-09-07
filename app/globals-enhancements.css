@@ -3891,3 +3891,12 @@ button {
   transform: none;
   box-shadow: 0 6px 18px var(--mine-glow);
 }
+
+/* body 전역의 한글 줄바꿈 기본값(word-break:keep-all; overflow-wrap:anywhere)이
+   상속돼, 배치도의 좁은 회의실 칸에서 "Conference"처럼 긴 영문 단어가
+   "Conferenc"+"e"로 단어 중간이 잘렸다. 이 칸만 원래대로(단어 단위로만
+   줄바꿈, 안 되면 넘침) 되돌린다. */
+.map-room strong {
+  word-break: normal;
+  overflow-wrap: normal;
+}

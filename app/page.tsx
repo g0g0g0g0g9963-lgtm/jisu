@@ -2075,6 +2075,7 @@ export default function Home() {
                         type="button"
                         className="timeline-day-head daily-room-head"
                         aria-pressed={selected.id === room.id}
+                        title={room.name}
                         onClick={() => setSelectedId(room.id)}
                       >
                         <span className="daily-room-title">
@@ -2168,7 +2169,7 @@ export default function Home() {
                   const status = statusOf(room);
                   return (
                     <div className="weekly-room-row" key={room.id}>
-                      <button type="button" className={`weekly-room-name ${selected.id === room.id ? "selected" : ""}`} aria-pressed={selected.id === room.id} onClick={() => setSelectedId(room.id)}>
+                      <button type="button" className={`weekly-room-name ${selected.id === room.id ? "selected" : ""}`} aria-pressed={selected.id === room.id} title={room.name} onClick={() => setSelectedId(room.id)}>
                         <span className="weekly-room-title">{room.name}</span><small className={status.status}><i className={`room-status-dot ${status.status}`} /><b>{status.statusLabel}</b><em>·</em>{formatCapacity(room.capacity)}</small>
                         {selected.id === room.id && <span className="daily-room-selected-icon"><SelectedRoomIcon /></span>}
                       </button>

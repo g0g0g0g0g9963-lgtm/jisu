@@ -12,6 +12,7 @@ import {
   officeMinutesOfDay,
   todayKey,
 } from "./datetime";
+import { publicHolidayOf } from "./holidays";
 
 export type Booking = {
   id: string;
@@ -41,8 +42,8 @@ export const overlaps = (
 
 /**
  * 반복 예약이 실제로 만들 날짜들.
- * "weekdays"는 이름 그대로 주말을 건너뛴다. 규칙에 맞는 날짜가 하나도 없으면
- * 사용자가 직접 고른 시작일만 남긴다.
+ * "weekdays"는 이름 그대로 주말과 공휴일을 건너뛴다. 규칙에 맞는 날짜가
+ * 하나도 없으면 사용자가 직접 고른 시작일만 남긴다.
  */
 export function expandRepeatDates(
   startDate: DateKey,
@@ -54,7 +55,7 @@ export function expandRepeatDates(
   const dates: DateKey[] = [];
   const step = cycle === "weekly" ? 7 : 1;
   for (let date = startDate; date <= endDate; date = moveDate(date, step)) {
-    if (cycle === "weekdays" && isWeekend(date)) continue;
+    if (cycle === "weekdays" && (isWeekend(date) || publicHolidayOf(date))) continue;
     dates.push(date);
   }
   return dates.length ? dates : [startDate];

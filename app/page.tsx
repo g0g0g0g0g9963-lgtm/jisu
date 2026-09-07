@@ -2437,12 +2437,12 @@ export default function Home() {
                   onDone={handOffToPurpose}
                 />
               </div>
-              {/* 반복은 평일만 펼치므로, 고른 기간에 주말이 끼면 그 사실을 알려 준다. */}
+              {/* 반복은 평일만 펼치므로, 고른 기간에 주말·공휴일이 끼면 그 사실을 알려 준다. */}
               <p>
                 {formatDateLabel(date)}부터 총 <b>{reservationDates.length}</b>회 예약됩니다.
-                {REPEAT_CYCLE === "weekdays" && repeatEnd > date && <em className="repeat-note">주말 제외</em>}
+                {REPEAT_CYCLE === "weekdays" && repeatEnd > date && <em className="repeat-note">주말·공휴일 제외</em>}
               </p>
-              {/* 어느 날이 잡히는지 날짜로 보여 준다. 숫자만으로는 주말이 어떻게
+              {/* 어느 날이 잡히는지 날짜로 보여 준다. 숫자만으로는 주말·공휴일이 어떻게
                   빠졌는지 확인할 방법이 없다. 많으면 앞 8개만 두고 나머지는 센다. */}
               <p className="repeat-days">
                 {reservationDates.slice(0, 8).map((day) => <span key={day}>{formatDateLabel(day)}</span>)}

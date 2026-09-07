@@ -48,6 +48,12 @@ const todayKey = () => {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
 };
 
+/** 서버가 있는 곳의 지금 시각(HH:MM). 오늘 예약이 지난 시간대인지 막는 기준. */
+const nowTimeKey = () => {
+  const now = new Date();
+  return `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+};
+
 /** 토·일 여부. 화면에서 막더라도 최종 판정은 서버가 한다. */
 const isWeekend = (value) => {
   const weekday = new Date(`${value}T00:00:00Z`).getUTCDay();
@@ -108,6 +114,7 @@ function validateCreate(body) {
   if (!dates.every(isRealDate)) return { error: "날짜 형식이 올바르지 않습니다. (YYYY-MM-DD)" };
   if (!allowWeekends && dates.some(isWeekend)) return { error: "주말에는 예약할 수 없습니다." };
   if (dates.some((date) => date < todayKey())) return { error: "지난 날짜에는 예약할 수 없습니다." };
+  if (dates.includes(todayKey()) && value.start < nowTimeKey()) return { error: "이미 지난 시간에는 예약할 수 없습니다." };
 
   const owner = trimmed(body?.owner);
   if (owner.length === 0 || owner.length > 40) return { error: "예약자 이름을 확인해 주세요." };

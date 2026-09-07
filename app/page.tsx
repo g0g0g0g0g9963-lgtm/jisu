@@ -1005,10 +1005,11 @@ export default function Home() {
   )), [roomChoices]);
 
   const availableStartOptions = useMemo(() => startTimeOptions.filter((candidate) => {
+    if (date === today && nowMinutes !== null && minutesOf(candidate) < nowMinutes) return false;
     const candidateEnd = addMinutes(candidate, duration || bookingDefaults.defaultDurationMinutes);
     return minutesOf(candidateEnd) <= minutesOf(lastSelectableTime)
       && slotIsFree(selected.id, date, candidate, candidateEnd);
-  }), [date, duration, selected.id, slotIsFree]);
+  }), [date, duration, nowMinutes, selected.id, slotIsFree, today]);
 
   const availableEndOptions = useMemo(() => timeOptions.filter((candidate) => (
     minutesOf(candidate) > minutesOf(start) && slotIsFree(selected.id, date, start, candidate)

@@ -3900,3 +3900,23 @@ button {
   word-break: normal;
   overflow-wrap: normal;
 }
+
+/* 예약 단계 번호를 원형 배지로. 숫자가 제목과 크기·서체를 다투지 않게 한다. */
+.booking-panel:not(.is-collapsed) .booking-section-heading {
+  gap: 9px;
+}
+
+.booking-panel:not(.is-collapsed) .booking-section-heading > span {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
+  flex: 0 0 22px;
+  border-radius: 999px;
+  background: #17223a;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}

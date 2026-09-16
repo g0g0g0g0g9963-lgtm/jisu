@@ -880,6 +880,12 @@ export default function Home() {
   // 예약의 진실의 원천은 서버 DB다. 30초 주기 + 창 포커스 시 다시 읽어
   // 다른 사람이 잡은 예약을 화면에 반영한다.
   const refreshSeq = useRef(0);
+  // 서버가 아직 안 켜졌거나 잠깐 끊긴 경우, 30초 주기를 그냥 기다리게 두면
+  // 화면이 한참 동안 오류만 보여 준다. 실패하면 곧 다시 시도하고, 시도할수록
+  // 간격을 늘려(최대 8초) 서버에 부담을 주지 않는다. 성공하면 원래 30초
+  // 주기로 돌아간다.
+  const retryTimer = useRef<number | null>(null);
+  const retryDelay = useRef(1000);
   const refreshBookings = useCallback(async () => {
     const seq = ++refreshSeq.current;
     try {
@@ -887,9 +893,17 @@ export default function Home() {
       if (seq !== refreshSeq.current) return; // 그 사이 더 최신 요청이 있었다면 늦게 도착한 이 응답은 버린다
       setBookings(data);
       setSyncError("");
+      retryDelay.current = 1000;
+      if (retryTimer.current !== null) {
+        window.clearTimeout(retryTimer.current);
+        retryTimer.current = null;
+      }
     } catch (error) {
       if (seq !== refreshSeq.current) return;
       setSyncError(error instanceof Error ? error.message : "서버와 통신할 수 없습니다.");
+      if (retryTimer.current !== null) window.clearTimeout(retryTimer.current);
+      retryTimer.current = window.setTimeout(() => { void refreshBookings(); }, retryDelay.current);
+      retryDelay.current = Math.min(retryDelay.current * 2, 8000);
     }
   }, []);
 
@@ -901,6 +915,7 @@ export default function Home() {
     return () => {
       window.clearInterval(timer);
       window.removeEventListener("focus", refreshOnFocus);
+      if (retryTimer.current !== null) window.clearTimeout(retryTimer.current);
     };
   }, [refreshBookings]);
 

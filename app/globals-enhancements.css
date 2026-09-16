@@ -3920,6 +3920,7 @@ button {
   overflow-wrap: normal;
 }
 
+
 /* 3개 수정 묶음 — 현황표는 Moonlight Pearl 위에 얇은 새틴 막만 남긴다.
    흰 판을 얹는 대신 아래 펄 색이 비치게 해 배경과 표가 자연스럽게 이어진다. */
 .app-shell .map-panel {
@@ -4323,4 +4324,21 @@ button {
     0 8px 20px rgba(28, 42, 68, 0.035);
   backdrop-filter: blur(16px) saturate(120%);
   -webkit-backdrop-filter: blur(16px) saturate(120%);
+}
+
+}
+
+.booking-panel:not(.is-collapsed) .booking-section-heading > span {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
+  flex: 0 0 22px;
+  border-radius: 999px;
+  background: #17223a;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }

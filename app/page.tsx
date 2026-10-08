@@ -1145,12 +1145,13 @@ export default function Home() {
     : null;
   const showCurrentTime = currentTimePercent !== null && (scheduleView === "week" ? weekDays.includes(today) : date === today);
 
-  // 일간 보기의 현재 시각 선. 시간축부터 마지막 회의실까지 실제 픽셀 크기를
-  // 재서 하나의 선으로 그린다. 선은 예약 카드보다 아래 레이어에 있으므로
-  // 시간표 전체를 잇되 예약 내용은 가리지 않는다.
+  // 선과 중앙 플로팅 시각은 같은 시간 좌표를 사용한다. 스크롤한 상태에서도
+  // 재측정 값이 흔들리지 않도록 뷰포트 좌표를 스크롤 콘텐츠 좌표로 바꾼다.
   const dailyGridRef = useRef<HTMLDivElement | null>(null);
+  const dailyInitialScrollKey = useRef<string | null>(null);
+  const [dailyVisibleRange, setDailyVisibleRange] = useState("");
   const [dailyGridMetrics, setDailyGridMetrics] = useState<{
-    left: number; width: number; bodyTop: number; bodyHeight: number;
+    left: number; width: number; bodyTop: number; bodyHeight: number; headerHeight: number;
   } | null>(null);
 
   useLayoutEffect(() => {
@@ -1159,26 +1160,81 @@ export default function Home() {
 
     const measure = () => {
       const bodies = grid.querySelectorAll<HTMLElement>(".timeline-day-body");
-      const timeAxisBody = grid.querySelector<HTMLElement>(".time-axis-body");
-      if (!bodies.length || !timeAxisBody) { setDailyGridMetrics(null); return; }
+      const heading = grid.querySelector<HTMLElement>(".daily-room-head");
+      if (!bodies.length || !heading) { setDailyGridMetrics(null); return; }
       const gridRect = grid.getBoundingClientRect();
       const first = bodies[0].getBoundingClientRect();
       const last = bodies[bodies.length - 1].getBoundingClientRect();
-      const axis = timeAxisBody.getBoundingClientRect();
-      const lineStart = axis.left + axis.width / 2;
-      setDailyGridMetrics({
-        left: lineStart - gridRect.left,
-        width: last.right - lineStart,
-        bodyTop: first.top - gridRect.top,
+      const nextMetrics = {
+        left: first.left - gridRect.left + grid.scrollLeft - grid.clientLeft,
+        width: last.right - first.left,
+        bodyTop: first.top - gridRect.top + grid.scrollTop - grid.clientTop,
         bodyHeight: first.height,
-      });
+        headerHeight: heading.offsetHeight,
+      };
+      setDailyGridMetrics((previous) => previous &&
+        Object.entries(nextMetrics).every(([key, value]) => Math.abs(previous[key as keyof typeof nextMetrics] - value) < 0.5)
+        ? previous : nextMetrics);
     };
 
     measure();
     const observer = new ResizeObserver(measure);
     observer.observe(grid);
+    const body = grid.querySelector<HTMLElement>(".timeline-day-body");
+    if (body) observer.observe(body);
     return () => observer.disconnect();
   }, [scheduleView, floor, floorRooms.length]);
+
+  const scrollDailyToMinute = useCallback((minute: number, behavior: ScrollBehavior = "auto") => {
+    const grid = dailyGridRef.current;
+    if (!grid || !dailyGridMetrics) return;
+    const { bodyTop, bodyHeight, headerHeight } = dailyGridMetrics;
+    const position = bodyTop + ((minute - timelineStart) / (timelineEnd - timelineStart)) * bodyHeight;
+    const target = position - headerHeight - Math.max(0, grid.clientHeight - headerHeight) * siteConfig.timeline.initialViewportRatio;
+    const motion = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : behavior;
+    grid.scrollTo({ top: Math.max(0, Math.min(grid.scrollHeight - grid.clientHeight, target)), behavior: motion });
+  }, [dailyGridMetrics]);
+
+  // 첫 진입·날짜/층/보기 전환에만 이동한다. 시계 갱신이나 폭 변경은 수동 스크롤을 유지한다.
+  useLayoutEffect(() => {
+    if (scheduleView !== "day") { dailyInitialScrollKey.current = null; return; }
+    if (!dailyGridMetrics || nowMinutes === null) return;
+    const key = `${date}:${floor}`;
+    if (dailyInitialScrollKey.current === key) return;
+    scrollDailyToMinute(date === today ? nowMinutes : siteConfig.timeline.defaultFocusHour * 60);
+    dailyInitialScrollKey.current = key;
+  }, [date, floor, scheduleView, today, nowMinutes, dailyGridMetrics, scrollDailyToMinute]);
+
+  const jumpToCurrentTime = () => {
+    if (date !== today) setDate(today);
+    else if (nowMinutes !== null) scrollDailyToMinute(nowMinutes, "smooth");
+  };
+
+  useEffect(() => {
+    const grid = dailyGridRef.current;
+    if (!grid || !dailyGridMetrics) return;
+    const updateRange = () => {
+      const { bodyTop, bodyHeight, headerHeight } = dailyGridMetrics;
+      const minuteAt = (y: number) => timelineStart + (y - bodyTop) / bodyHeight * (timelineEnd - timelineStart);
+      const first = Math.max(timelineStart, Math.floor(minuteAt(grid.scrollTop + headerHeight) / 60) * 60);
+      const last = Math.min(timelineEnd, Math.ceil(minuteAt(grid.scrollTop + grid.clientHeight) / 60) * 60);
+      setDailyVisibleRange(`${formatMinutes(first)}–${formatMinutes(last)}`);
+    };
+    updateRange();
+    grid.addEventListener("scroll", updateRange, { passive: true });
+    const observer = new ResizeObserver(updateRange);
+    observer.observe(grid);
+    return () => { grid.removeEventListener("scroll", updateRange); observer.disconnect(); };
+  }, [dailyGridMetrics, scheduleView]);
+
+  useEffect(() => {
+    const grid = dailyGridRef.current;
+    if (!grid || !dailyGridMetrics || !keyboardSelection) return;
+    const { bodyTop, bodyHeight, headerHeight } = dailyGridMetrics;
+    const y = (time: string) => bodyTop + (minutesOf(time) - timelineStart) / (timelineEnd - timelineStart) * bodyHeight;
+    if (y(keyboardSelection.start) < grid.scrollTop + headerHeight) grid.scrollTop = Math.max(0, y(keyboardSelection.start) - headerHeight);
+    else if (y(keyboardSelection.end) > grid.scrollTop + grid.clientHeight) grid.scrollTop = y(keyboardSelection.end) - grid.clientHeight;
+  }, [keyboardSelection, dailyGridMetrics]);
 
   useEffect(() => { setKeyboardSelection(null); setSelectionFeedback(""); }, [date, floor, scheduleView]);
 
@@ -2173,7 +2229,7 @@ export default function Home() {
                 {/* 날짜를 다루는 것들은 한 덩어리로 묶는다. 흩어져 있으면 덩어리 수만 늘어난다. */}
                 <div className="schedule-date-switch">
                   <button type="button" className="nav-step" aria-label={weekView ? "이전 주" : "이전 날짜"} onClick={() => setDate(weekView ? moveDate(weekDays[0], -7) : moveDate(date, -1))}><ChevronIcon direction="prev" /></button>
-                  <button type="button" className="nav-today" onClick={() => setDate(today)}>
+                  <button type="button" className="nav-today" onClick={() => scheduleView === "day" ? jumpToCurrentTime() : setDate(today)}>
                     {weekView ? "이번 주" : "오늘"}
                   </button>
                   <button type="button" className="nav-step" aria-label={weekView ? "다음 주" : "다음 날짜"} onClick={() => setDate(weekView ? moveDate(weekDays[0], 7) : moveDate(date, 1))}><ChevronIcon direction="next" /></button>
@@ -2202,18 +2258,19 @@ export default function Home() {
               </div>
 
               {selectionFeedback && <p className="schedule-selection-feedback" role="status">{selectionFeedback}</p>}
-              {scheduleView === "day" && floorRooms.length > 0 && <div className="week-timeline daily-timeline" data-floor={floor} ref={dailyGridRef} style={{ "--room-count": floorRooms.length } as CSSProperties}>
+              {scheduleView === "day" && floorRooms.length > 0 && <>
+              <div className="daily-timeline-toolbar">
+                <span>{formatMinutes(timelineStart)}–{formatMinutes(timelineEnd)} <small>24시간 보기</small></span>
+                <button type="button" onClick={jumpToCurrentTime} disabled={nowMinutes === null} aria-label="오늘 현재 시간으로 이동">현재 시간</button>
+              </div>
+              <div className="week-timeline daily-timeline timeline-full-day" data-floor={floor} ref={dailyGridRef} role="region" aria-label="24시간 일간 시간표, 위아래로 스크롤" tabIndex={0} style={{ "--room-count": floorRooms.length, "--timeline-hour-height": `${siteConfig.timeline.hourHeightPx}px`, "--timeline-slot-height": `${siteConfig.timeline.hourHeightPx * bookingDefaults.slotMinutes / 60}px`, "--timeline-body-height": `${(timelineEnd - timelineStart) / 60 * siteConfig.timeline.hourHeightPx}px` } as CSSProperties}>
                 <div className="time-axis">
                   <span className="axis-corner">TIME</span>
                   <div className="time-axis-body">
                     {timelineHours.map((hour) => <time key={hour} style={{ top: `${((hour * 60 - timelineStart) / (timelineEnd - timelineStart)) * 100}%` }}>{String(hour).padStart(2, "0")}:00</time>)}
-                    {showCurrentTime && nowMinutes !== null && (
-                      <strong className="current-time-label" style={{ top: `${currentTimePercent}%` }}>{formatMinutes(nowMinutes)}</strong>
-                    )}
                   </div>
                 </div>
-                {/* 시간 칸부터 마지막 회의실까지 선 하나를 잇는다. 위치는 실제
-                    픽셀 크기(dailyGridMetrics)를 재서 계산하며 예약 카드 아래에 그린다. */}
+                {/* 선은 카드 아래, 시각 라벨은 별도 레이어로 선 중앙 위에 표시한다. */}
                 {showCurrentTime && currentTimePercent !== null && dailyGridMetrics && (
                   <span
                     className="current-time-line current-time-line-all"
@@ -2223,6 +2280,14 @@ export default function Home() {
                       top: dailyGridMetrics.bodyTop + (currentTimePercent / 100) * dailyGridMetrics.bodyHeight,
                     }}
                   />
+                )}
+                {showCurrentTime && nowMinutes !== null && currentTimePercent !== null && dailyGridMetrics && (
+                  <strong className="current-time-floating" style={{
+                    left: dailyGridMetrics.left + dailyGridMetrics.width / 2,
+                    top: dailyGridMetrics.bodyTop + currentTimePercent / 100 * dailyGridMetrics.bodyHeight,
+                  }} aria-label={`현재 시각 ${formatMinutes(nowMinutes)}`}>
+                    <small>현재</small><time>{formatMinutes(nowMinutes)}</time>
+                  </strong>
                 )}
                 {floorRooms.map((room) => {
                   const dailyBookings = layoutOverlappingBookings(
@@ -2321,7 +2386,9 @@ export default function Home() {
                     </div>
                   );
                 })}
-              </div>}
+              </div>
+              <div className="daily-timeline-footer"><span>{dailyVisibleRange} 보는 중</span><span>시간표 안에서 위아래로 스크롤 ↕</span></div>
+              </>}
               {scheduleView === "week" && floorRooms.length > 0 && <div className="weekly-room-board" aria-label={`${floor}층 회의실별 주간 예약 현황, 예약은 시간 순서로 표시`} style={{ "--room-count": floorRooms.length } as CSSProperties}>
                 <div className="weekly-room-head weekly-room-corner">회의실</div>
                 {weekDays.map((day) => (

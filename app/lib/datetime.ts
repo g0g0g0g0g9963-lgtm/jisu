@@ -23,7 +23,7 @@ const officeClockFormatter = new Intl.DateTimeFormat("en-GB", {
   timeZone: TIME_ZONE,
   hour: "2-digit",
   minute: "2-digit",
-  hour12: false,
+  hourCycle: "h23",
 });
 const dateLabelFormatter = new Intl.DateTimeFormat("ko-KR", {
   timeZone: "UTC",
@@ -124,6 +124,7 @@ export const addMinutes = (time: string, minutes: number): string =>
 
 /** "오후 2시 30분" 형태의 읽기 쉬운 시각. */
 export const formatSpokenTime = (time: string): string => {
+  if (time === "24:00") return "자정 (다음 날 0시)";
   const [hour, minute] = time.split(":").map(Number);
   const meridiem = hour < 12 ? "오전" : "오후";
   return `${meridiem} ${hour % 12 || 12}시${minute ? ` ${minute}분` : ""}`;

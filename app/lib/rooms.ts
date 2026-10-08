@@ -145,7 +145,7 @@ export function describeRoomSlotAvailability(
   const validTime = (value: string) => /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(value);
   const dateValue = new Date(`${date}T00:00:00Z`);
   const validDate = /^\d{4}-\d{2}-\d{2}$/.test(date) && Number.isFinite(dateValue.getTime()) && dateValue.toISOString().slice(0, 10) === date;
-  if (!validDate || !validTime(start) || !validTime(end) || endMinutes <= startMinutes) {
+  if (!validDate || !validTime(start) || !(validTime(end) || end === "24:00") || endMinutes <= startMinutes) {
     return { status: "invalid", available: false, statusLabel: "날짜·시간 확인 필요", nextLabel: "예약 날짜와 시작·종료 시간을 확인해 주세요." };
   }
   if (date < options.today || (date === options.today && options.nowMinutes !== null && startMinutes < options.nowMinutes)) {

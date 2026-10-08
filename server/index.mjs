@@ -87,7 +87,10 @@ function validateCommon(body) {
 
   const start = trimmed(body?.start);
   const end = trimmed(body?.end);
-  if (!TIME.test(start) || !TIME.test(end)) return { error: "시간 형식이 올바르지 않습니다. (HH:MM)" };
+  // 24:00 is the selected date's closing boundary, never a start time.
+  if (!TIME.test(start) || !(TIME.test(end) || end === "24:00")) {
+    return { error: "시간 형식이 올바르지 않습니다. (HH:MM)" };
+  }
   if (end <= start) return { error: "종료 시간은 시작 시간보다 늦어야 합니다." };
   if (start < openingTime || end > closingTime) {
     return { error: `예약은 ${openingTime}–${closingTime} 사이만 가능합니다.` };

@@ -13,20 +13,32 @@ function load(file){
  const req=s=>{if(!s.startsWith('.'))throw Error(s);const b=path.resolve(path.dirname(p),s);return load([b,b+'.ts',b+'.json'].find(x=>fs.existsSync(x)));};
  vm.runInNewContext('(function(require,module,exports){'+js+'\n})',{console},{filename:p})(req,m,m.exports);return m.exports;
 }
-const lib=load(path.join(appRoot,'app/lib/bookings.ts')),dt=load(path.join(appRoot,'app/lib/datetime.ts'));
-const src=fs.readFileSync(path.join(appRoot,'app/page.tsx'),'utf8'),ast=ts.createSourceFile('page.tsx',src,ts.ScriptTarget.Latest,true,ts.ScriptKind.TSX),initializers=new Map();let disabled;
+const lib=load(path.join(appRoot,'app/lib/bookings.ts')),dt=load(path.join(appRoot,'app/lib/datetime.ts')),roomLib=load(path.join(appRoot,'app/lib/rooms.ts'));
+const src=fs.readFileSync(process.env.QA_PAGE_SOURCE || path.join(appRoot,'app/page.tsx'),'utf8'),ast=ts.createSourceFile('page.tsx',src,ts.ScriptTarget.Latest,true,ts.ScriptKind.TSX),initializers=new Map(),jsxNodes=[];let disabled;
 function walk(n){
  if(ts.isVariableDeclaration(n)&&ts.isIdentifier(n.name)&&n.initializer)initializers.set(n.name.text,n.initializer.getText(ast));
- if(ts.isJsxOpeningElement(n)||ts.isJsxSelfClosingElement(n)){const a=n.attributes.properties.filter(ts.isJsxAttribute),id=a.find(x=>x.name.getText(ast)==='id');if(id?.initializer&&ts.isStringLiteral(id.initializer)&&id.initializer.text==='reserve-button')disabled=a.find(x=>x.name.getText(ast)==='disabled').initializer.expression.getText(ast);}
+ if(ts.isJsxOpeningElement(n)||ts.isJsxSelfClosingElement(n)){jsxNodes.push(n);const a=n.attributes.properties.filter(ts.isJsxAttribute),id=a.find(x=>x.name.getText(ast)==='id');if(id?.initializer&&ts.isStringLiteral(id.initializer)&&id.initializer.text==='reserve-button')disabled=a.find(x=>x.name.getText(ast)==='disabled').initializer.expression.getText(ast);}
  ts.forEachChild(n,walk);
 }walk(ast);
 function fn(name,c){if(!initializers.has(name))throw Error('Missing original source initializer: '+name);vm.runInContext(ts.transpileModule('globalThis.__fn = '+initializers.get(name)+';',{compilerOptions:{target:ts.ScriptTarget.ES2022}}).outputText,c);return c.__fn;}
 const plain=x=>x===undefined?undefined:JSON.parse(JSON.stringify(x)),equal=(a,b)=>JSON.stringify(plain(a))===JSON.stringify(b);
+const attr=(node,name)=>node.attributes.properties.find(item=>ts.isJsxAttribute(item)&&item.name.getText(ast)===name);
+const hasClass=(node,name)=>attr(node,'className')?.initializer?.getText(ast).includes(name);
+const nodesForClass=name=>jsxNodes.filter(node=>hasClass(node,name));
+const nodeContent=node=>node.parent.getText(ast);
 function context(overrides={}){
  const c={authReady:true,mutationBusy:false,submitting:false,selectedTimeConflict:false,timeNeedsPick:false,REQUIRED_FIELDS:[{key:'owner',id:'owner-input',value:'QA User'},{key:'team',id:'team-input',value:'QA Team'}],officeTeams:[{name:'QA Team'}],owner:'QA User',myBookingOwner:'QA User',currentUser:null,team:'QA Team',purpose:'QA',attendees:[],selected:{id:'qa-room',name:'QA room'},start:'10:00',end:'11:00',today:'2026-10-08',date:'2026-10-12',nowMinutes:615,reservationDates:['2026-10-12'],conflictDates:[],bookingDefaults:lib.bookingDefaults,minutesOf:dt.minutesOf,formatDateLabel:dt.formatDateLabel,formatMinutes:dt.formatMinutes,addMinutes:dt.addMinutes,findConflictingDates:lib.findConflictingDates,bookings:[],startTimeOptions:['10:00','11:00','12:00'],lastSelectableTime:'18:00',allDay:false,draftKey:'original-draft',latestDraftKey:{current:'original-draft'},slot:{date:'2026-10-12',start:'10:00',end:'11:00'},roomById:()=>({name:'QA room'}),useCallback:f=>f,useMemo:f=>f(),document:{getElementById:()=>({focus(){}}),querySelector:()=>({scrollTo(){}})},window:{requestAnimationFrame:f=>f()},...overrides};
- c.state={};c.calls={refresh:0,post:0,patch:0,delete:0};
+ Object.assign(c,{bookingBlockReason:'',syncError:'',selectedId:'qa-room',keyboardSelection:null,timePickerOpen:null,selectionFeedback:'',query:'',capacityFilter:'',equipmentFilter:'',availableOnly:false,describeRoomSlotAvailability:roomLib.describeRoomSlotAvailability,formatCapacity:roomLib.formatCapacity,...overrides});
+ c.selected={floor:9,...c.selected};
+ if(!overrides.roomById)c.roomById=()=>({id:'qa-room',floor:9,name:'QA room'});
+ c.state={};c.calls={refresh:0,post:0,patch:0,delete:0,focus:0,flash:0};
+ if(!overrides.document)c.document={activeElement:null,getElementById:id=>({focus(){c.calls.focus++;c.state.focusedId=id;}}),querySelector:()=>({scrollTo(){}})};
+ vm.createContext(c);
+ c.roomIdentity=fn('roomIdentity',c);c.spokenDuration=fn('spokenDuration',c);
+ c.flashFilled=(title,detail)=>{c.calls.flash++;c.state.filledNotice={title,detail};};
+ c.applySlotSelection=selection=>fn('applySlotSelection',c)(selection);
  c.refreshBookings=overrides.refreshBookings??(async()=>{c.calls.refresh++;});
- for(const f of ['Notice','MissingField','TeamOpen','RepeatAsk','SubmitPreviewDates','SelectedId','DraftActive','BookingPanelOpen','RoomPickerOpen','TimeNeedsPick','EditBusy','EarlyEndBusy','CancelBusy','Submitting','CancelSelection','SyncError','Toast','EditDraft','EditNotice','EarlyEndNotice','EarlyEnd','EditConfirmDelete','MyBookingOwner','Purpose','Attendees','AttendeeDraft','Slot','Date']){
+ for(const f of ['Notice','MissingField','TeamOpen','RepeatAsk','SubmitPreviewDates','SelectedId','DraftActive','BookingPanelOpen','RoomPickerOpen','TimeNeedsPick','EditBusy','EarlyEndBusy','CancelBusy','Submitting','CancelSelection','SyncError','Toast','EditDraft','EditNotice','EarlyEndNotice','EarlyEnd','EditConfirmDelete','MyBookingOwner','Purpose','Attendees','AttendeeDraft','Slot','Date','AllDay','Duration','KeyboardSelection','SelectionFeedback','TimePickerOpen']){
   const key=f[0].toLowerCase()+f.slice(1);
   c['set'+f]=v=>{c.state[key]=typeof v==='function'?v(c.state[key]??c[key]):v;};
  }
@@ -70,6 +82,52 @@ try{
  check('SUBMIT-PAST-TODAY','Past start today cannot reach preview',!c.state.submitPreviewDates&&!!c.state.notice);
  c=context();await fn('submitReservation',c)({preventDefault(){}});
  check('SUBMIT-VALID','Valid future draft reaches preview',equal(c.state.submitPreviewDates,['2026-10-12']));
+ c=context({bookingBlockReason:'Synthetic invalid slot'});await fn('submitReservation',c)({preventDefault(){}});
+ check('UX-SUBMIT-EARLY-BLOCK','Known invalid slot is blocked before confirmation and disables CTA',!c.state.submitPreviewDates&&c.state.notice==='Synthetic invalid slot'&&vm.runInContext(disabled,c)===true);
+ c=context();fn('askWeekdaySlot',c)({id:'qa-room',floor:9,name:'QA room'},'2026-10-07');
+ check('UX-WEEK-PAST','Past weekly date does not open a booking draft',!c.state.bookingPanelOpen&&!c.state.draftActive&&!!c.state.selectionFeedback);
+ c=context({nowMinutes:dt.minutesOf(lib.bookingDefaults.closingTime)});fn('askWeekdaySlot',c)({id:'qa-room',floor:9,name:'QA room'},c.today);
+ check('UX-WEEK-CLOSED','Closed same-day weekly date does not open a booking draft',!c.state.bookingPanelOpen&&!c.state.draftActive&&!!c.state.selectionFeedback);
+ const timelineRoom={id:'qa-room',floor:9,name:'QA room'},timelineTarget={},timelineEvent=key=>({key,target:timelineTarget,currentTarget:timelineTarget,preventDefault(){}});
+ c=context();fn('handleTimelineKey',c)(timelineRoom,c.date,timelineEvent('ArrowDown'));
+ check('UX-KEYBOARD-PREVIEW','Arrow moves only the timeline preview without committing or changing focus',c.state.keyboardSelection?.start==='10:30'&&!c.state.slot&&!c.state.bookingPanelOpen&&c.calls.focus===0&&c.calls.flash===0);
+ c.keyboardSelection=c.state.keyboardSelection;fn('handleTimelineKey',c)(timelineRoom,c.date,timelineEvent('ArrowDown'));
+ check('UX-KEYBOARD-REPEAT','A second arrow continues from the existing preview',c.state.keyboardSelection?.start==='11:00'&&c.calls.flash===0);
+ c.keyboardSelection=c.state.keyboardSelection;fn('handleTimelineKey',c)(timelineRoom,c.date,timelineEvent('Enter'));
+ check('UX-KEYBOARD-COMMIT','Enter commits the preview and opens the booking panel once',c.state.slot?.start==='11:00'&&c.state.slot?.end==='12:00'&&c.state.bookingPanelOpen===true&&c.state.keyboardSelection===null&&c.calls.flash===1);
+ c=context({keyboardSelection:{roomId:'qa-room',date:'2026-10-12',start:'11:00',end:'12:00'}});fn('handleTimelineKey',c)(timelineRoom,c.date,timelineEvent('Escape'));
+ check('UX-KEYBOARD-ESCAPE','Escape clears only the preview without opening or erasing a form draft',c.state.keyboardSelection===null&&!c.state.slot&&!c.state.bookingPanelOpen&&c.calls.focus===0);
+ c=context();fn('handleTimelineKey',c)(timelineRoom,c.date,{...timelineEvent('Enter'),target:{}});
+ check('UX-KEYBOARD-CHILD','Reservation-button key events do not also select a parent timeline slot',Object.keys(c.state).length===0&&c.calls.flash===0);
+ c=context();c.applySlotSelection({roomId:'qa-room',date:'2026-10-07',start:'10:00',end:'11:00'});
+ check('UX-SLOT-PAST','Past daily selection is rejected before replacing the form draft',!c.state.slot&&!c.state.bookingPanelOpen&&!!c.state.selectionFeedback);
+ c=context({bookings:[one]});c.applySlotSelection({roomId:'qa-room',date:'2026-10-12',start:'10:30',end:'11:30'});
+ check('UX-SLOT-CONFLICT','Conflicting daily selection gives feedback without replacing the form draft',!c.state.slot&&!c.state.bookingPanelOpen&&!!c.state.selectionFeedback);
+ c=context();check('UX-FLOOR-IDENTITY','Same-name rooms retain distinct floor information',fn('roomIdentity',c)({floor:9,name:'Conference Room 1'})==='9층 · Conference Room 1'&&fn('roomIdentity',c)({floor:12,name:'Conference Room 1'})==='12층 · Conference Room 1');
+ for(const [name,expression]of [['reserve-button-room','roomIdentity(selected)'],['booking-confirm-summary','roomIdentity(selected)'],['my-booking-room','roomIdentity(roomById(booking.roomId))']]){
+  const nodes=nodesForClass(name);check('UX-FLOOR-MARKUP-'+name,'Floor-aware room identity is rendered in '+name,nodes.length>0&&nodes.some(node=>nodeContent(node).includes(expression)));
+ }
+ const weeklyEvents=nodesForClass('weekly-room-event');
+ check('UX-WEEK-LIST','Weekly bookings are normal-flow list items, not overlapping absolute-time rectangles',nodesForClass('weekly-booking-list').length===1&&weeklyEvents.length===1&&!attr(weeklyEvents[0],'style'));
+ check('UX-WEEK-CONTENT','Every weekly booking retains owner, end time, and department',weeklyEvents.length===1&&['booking.owner','booking.end','teamOf(booking)'].every(text=>nodeContent(weeklyEvents[0]).includes(text)));
+ check('UX-DAY-FILTER','Daily timeline uses the filtered room collection',nodesForClass('daily-timeline').some(node=>nodeContent(node).includes('filteredRooms.map')));
+ check('UX-WEEK-FILTER','Weekly board uses the same filtered room collection',nodesForClass('weekly-room-board').some(node=>nodeContent(node).includes('filteredRooms.map')));
+ const filterRooms=[{id:'small',floor:9,name:'Small',capacity:4,location:'East',equipment:['Screen']},{id:'large',floor:9,name:'Large',capacity:10,location:'West',equipment:['Projector','Screen']},{id:'booked',floor:9,name:'Booked',capacity:16,location:'West',equipment:['Projector']}];
+ c=context({floorRooms:filterRooms,capacityFilter:'6',equipmentFilter:'Projector',availableOnly:true,slotIsBookable:id=>id!=='booked'});
+ check('UX-FILTER-INTERSECTION','Capacity, equipment and selected-slot availability filters intersect',equal(fn('filteredRooms',c).map(room=>room.id),['large']));
+ c=context({floorRooms:filterRooms,query:'  LARGE  '});check('UX-FILTER-TEXT','Search ignores case and surrounding whitespace',equal(fn('filteredRooms',c).map(room=>room.id),['large']));
+ c=context({floorRooms:filterRooms,availableOnly:true,syncError:'Synthetic offline',slotIsBookable:()=>true});check('UX-FILTER-STALE','Available-only filter never promises availability while sync is disconnected',fn('filteredRooms',c).length===0);
+ const pickerOptions=[0,1,2].map(index=>({focus(){c.document.activeElement=this;c.state.pickerFocusedIndex=index;},scrollIntoView(){}}));
+ c=context({timePickerOpen:'start'});c.document.activeElement=pickerOptions[0];c.closeTimePicker=()=>fn('closeTimePicker',c)();
+ const pickerEvent=key=>({key,currentTarget:{querySelectorAll:()=>pickerOptions},preventDefault(){},stopPropagation(){}});
+ fn('handleTimePickerKey',c)(pickerEvent('ArrowDown'));check('UX-TIME-ARROW','Time listbox ArrowDown focuses the next option',c.state.pickerFocusedIndex===1);
+ fn('handleTimePickerKey',c)(pickerEvent('End'));check('UX-TIME-END','Time listbox End focuses the final option',c.state.pickerFocusedIndex===2);
+ fn('handleTimePickerKey',c)(pickerEvent('Home'));check('UX-TIME-HOME','Time listbox Home focuses the first option',c.state.pickerFocusedIndex===0);
+ fn('handleTimePickerKey',c)(pickerEvent('Escape'));check('UX-TIME-ESCAPE','Time listbox Escape closes and restores trigger focus',c.state.timePickerOpen===null&&c.state.focusedId==='start-time-select');
+ c=context({selectionAvailability:{status:'conflict',nextLabel:'Synthetic overlap'},selectedTimeConflict:true,reservationDates:['2026-10-12','2026-10-13'],conflictDates:['2026-10-12']});
+ check('UX-REPEAT-PARTIAL-BLOCK','Partial repeat conflicts do not block the free-date confirmation path',fn('bookingBlockReason',c)==='');
+ c=context({selectionAvailability:{status:'conflict',nextLabel:'Synthetic overlap'},selectedTimeConflict:true,reservationDates:['2026-10-12'],conflictDates:['2026-10-12']});
+ check('UX-REPEAT-ALL-BLOCK','All-date repeat conflict has an immediate blocking reason',Boolean(fn('bookingBlockReason',c)));
  for(const [id,overrides,want]of [
   ['all-free',{reservationDates:dates,slotIsFree:()=>true},true],
   ['later-conflict',{reservationDates:dates,slotIsFree:(_r,d)=>d!=='2026-10-13'},false],
@@ -102,6 +160,10 @@ try{
  check('SEND-EMPTY','Direct empty-date send is blocked',c.calls.post===0);
  c=context({authReady:false});c.postBookings=async()=>{c.calls.post++;return{ok:true};};await fn('sendBooking',c)(['2026-10-12']);
  check('AUTH-NOT-READY','Unknown authentication blocks creation and disables button',c.calls.post===0&&vm.runInContext(disabled,c)===true);
+ for(const [id,overrides,date]of [['expired',{today:'2026-10-12',date:'2026-10-12',nowMinutes:615},'2026-10-12'],['new-conflict',{bookings:[one]},'2026-10-12'],['disconnected',{syncError:'Synthetic offline'},'2026-10-12']]){
+  c=context(overrides);c.postBookings=async()=>{c.calls.post++;return{ok:true};};await fn('sendBooking',c)([date]);
+  check('UX-SEND-RECHECK-'+id,'Final send rechecks the slot before dispatch: '+id,c.calls.post===0&&!!c.state.notice&&c.state.submitPreviewDates===null);
+ }
  c=context({nowMinutes:630});check('EARLY-END-BOUNDARY','Exact slot early-end uses current boundary',fn('earlyEndTime',c)({...one,date:'2026-10-08',start:'09:00',end:'11:00'})==='10:30');
 }catch(e){check('FRONTEND-HARNESS','Frontend harness completion',false,{error:String(e),stack:e.stack});}
 const out={testedAt:new Date().toISOString(),method:'Actual TypeScript AST handlers executed in isolated VM; state setters captured separately to preserve React closure semantics; not browser end-to-end',counts:{total:results.length,pass:results.filter(x=>x.status==='PASS').length,fail:results.filter(x=>x.status==='FAIL').length},results};

@@ -1,0 +1,608 @@
+/* UX review implementation. Loaded after the legacy responsive stylesheet. */
+:root {
+  --available: #117a5b;
+  --available-surface: #eaf7f1;
+  --reserved: #334155;
+  --reserved-surface: #eef2f6;
+  --mine: #9f1239;
+  --mine-surface: #fff1f4;
+  --selected: #304b78;
+  --selected-surface: #eef3fa;
+  --occupied: #5f6b7a;
+  --closed-surface: #f1f3f5;
+  --conflict: #b42318;
+  --conflict-surface: #fef3f2;
+  --cta: #d9163a;
+  --ink-3: #5f6b7a;
+  --premium-muted: #5f6b7a;
+  --other-fill: var(--reserved-surface);
+  --mine-fill: var(--mine-surface);
+  --brand-rule-thickness: 3px;
+}
+
+/* A stable desktop sidebar leaves the schedule to scroll, not to shrink. */
+@media (min-width: 1001px) {
+  .app-shell:not(.booking-panel-collapsed) {
+    grid-template-columns: minmax(0, 1fr) clamp(380px, 27vw, 430px);
+  }
+  .app-shell.booking-panel-collapsed {
+    grid-template-columns: minmax(0, 1fr) 56px;
+  }
+  .app-shell > .booking-panel:not(.is-collapsed) {
+    min-width: 0;
+    width: 100%;
+    position: relative;
+  }
+}
+.app-shell .workspace .map-panel,
+.app-shell .weekly-board {
+  min-width: 0;
+}
+.app-shell .workspace .map-panel .weekly-board .weekly-heading.schedule-hero {
+  display: grid;
+  position: relative;
+  grid-template-columns: auto auto minmax(184px, 1fr) auto;
+  grid-template-areas: "date floors nav actions";
+  align-items: end;
+  gap: 18px;
+  height: auto;
+  min-height: 128px;
+  margin-bottom: 16px;
+  padding: 18px 8px 20px;
+  flex: none;
+  overflow: visible;
+  background-image: none;
+}
+.app-shell .weekly-board .schedule-hero .hero-date { grid-area: date; margin: 0; }
+.app-shell .weekly-board .schedule-hero .schedule-floor-switch { grid-area: floors; margin: 0; }
+.app-shell .weekly-board .schedule-hero .schedule-date-switch {
+  grid-area: nav;
+  position: static !important;
+  inset: auto;
+  transform: none !important;
+  justify-self: center;
+  min-width: 184px;
+  margin: 0;
+  flex: none;
+}
+.app-shell .weekly-board .schedule-hero .schedule-heading-actions {
+  grid-area: actions;
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 8px;
+  justify-self: end;
+  min-width: 0;
+  margin: 0;
+}
+.app-shell .schedule-hero .schedule-date-switch > button {
+  flex: none;
+  min-width: 38px;
+}
+/* On a wide single-row header the room card still ends at ~216px.
+   Reserve enough shared height for both brand rules to sit below it.
+   End alignment keeps the date and controls close to the rule, not stranded
+   at the top of a taller header. Narrow two-row content may grow naturally. */
+@media (min-width: 1001px) {
+  .app-shell:not(.booking-panel-collapsed) .workspace .map-panel .weekly-board .weekly-heading.schedule-hero {
+    min-height: 176px;
+    align-items: end;
+  }
+}
+@media (min-width: 1001px) and (max-width: 1439px) {
+  .app-shell .workspace .map-panel .weekly-board .weekly-heading.schedule-hero {
+    grid-template-columns: auto minmax(184px, 1fr) auto;
+    grid-template-areas: "date date date" "floors nav actions";
+    gap: 14px 12px;
+    min-height: 0;
+  }
+}
+@media (max-width: 1000px) {
+  .app-shell .workspace .map-panel .weekly-board .weekly-heading.schedule-hero {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "date date" "nav nav" "floors actions";
+    gap: 12px 8px;
+    min-height: 0;
+    padding: 16px 8px 18px;
+  }
+  .app-shell .weekly-board .schedule-hero .schedule-date-switch { justify-self: start; }
+  .app-shell .weekly-board .schedule-hero .hero-date:has(.hero-date-range) { min-width: 0; }
+  .app-shell .schedule-hero .schedule-floor-switch button { min-width: 0; padding-inline: 9px; }
+}
+
+/* Both brand rules share one thickness and a measured desktop Y coordinate. */
+.app-shell .workspace .map-panel .weekly-board .weekly-heading.schedule-hero::after {
+  content: "";
+  display: block;
+  position: absolute;
+  inset: auto 0 0;
+  left: 0;
+  right: 0;
+  width: auto !important;
+  opacity: 1 !important;
+  height: var(--brand-rule-thickness);
+  border: 0;
+  background: linear-gradient(90deg, #304b7814 0%, #304b7860 48%, #304b78 100%);
+  animation: none;
+  transform: none;
+  pointer-events: none;
+}
+.app-shell > .booking-panel:not(.is-collapsed) { background-image: none; }
+@media (min-width: 1001px) {
+  .app-shell > .booking-panel:not(.is-collapsed)::before {
+    content: "";
+    position: absolute;
+    inset: var(--brand-rule-y, var(--rule-abs)) var(--booking-balanced-inset, 24px) auto;
+    height: var(--brand-rule-thickness);
+    z-index: 3;
+    background: linear-gradient(90deg, #d9163a14 0%, #d9163a60 48%, #d9163a 100%);
+    animation: none;
+    pointer-events: none;
+  }
+}
+
+/* Filter controls are a real toolbar, not overlapping calendar decorations. */
+.room-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 10px 12px;
+  flex: none;
+  margin: 0 0 14px;
+  padding: 12px;
+  background: #f8fafc;
+  border: 1px solid #dfe5ed;
+  border-radius: 9px;
+}
+.room-filter-field { display: grid; gap: 5px; flex: 1 1 145px; min-width: 0; }
+.room-filter-field:first-child { flex: 2 1 210px; }
+.room-filter-field > span { color: #5f6b7a; font-size: 12px; font-weight: 600; }
+.room-filter-field input,
+.room-filter-field select {
+  width: 100%;
+  min-width: 0;
+  min-height: 40px;
+  padding: 0 10px;
+  border: 1px solid #cfd7e2;
+  border-radius: 7px;
+  background: #fff;
+  color: #17223a;
+  font: inherit;
+  font-size: 13px;
+}
+.room-filter-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 40px;
+  padding: 0 10px;
+  color: #334155;
+  border: 1px solid #cfd7e2;
+  border-radius: 7px;
+  background: #fff;
+  font-size: 13px;
+  cursor: pointer;
+}
+.room-filter-toggle input { width: 16px; height: 16px; margin: 0; accent-color: var(--selected); }
+.room-filter-result { align-self: center; color: #5f6b7a; font-size: 12px; line-height: 1.5; }
+
+/* Five rooms retain readable column widths on laptops; only the board scrolls. */
+.app-shell .weekly-board .daily-timeline {
+  grid-template-columns: 64px repeat(var(--room-count, 4), minmax(176px, 1fr));
+  min-width: 0;
+  max-width: 100%;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #a8b4c6 #f3f5f8;
+}
+.app-shell .weekly-board .daily-timeline .time-axis { position: sticky; left: 0; z-index: 15; background: #f8fafc; }
+.app-shell .schedule-design-cards .daily-timeline .time-axis,
+.app-shell .schedule-design-cards .daily-timeline .timeline-day {
+  grid-template-rows: 72px minmax(864px, 1fr);
+}
+.app-shell .schedule-design-cards .daily-timeline .time-axis-body,
+.app-shell .schedule-design-cards .daily-timeline .timeline-day-body {
+  min-height: 864px;
+}
+.app-shell .schedule-design-cards .daily-timeline .daily-room-head,
+.app-shell .schedule-design-cards .daily-timeline .axis-corner {
+  position: sticky;
+  top: 0;
+  z-index: 16;
+  background: #f8fafc;
+}
+.app-shell .schedule-design-cards .daily-timeline .daily-room-title > strong {
+  white-space: normal;
+  overflow: visible;
+  word-break: normal;
+  overflow-wrap: normal;
+  line-height: 1.18;
+}
+
+/* In week view duration is written explicitly; cards are stacked, not squeezed. */
+.app-shell .weekly-board .weekly-room-board {
+  grid-template-columns: 190px repeat(5, minmax(160px, 1fr));
+  grid-template-rows: 52px repeat(var(--room-count, 4), minmax(174px, auto));
+  min-width: 0;
+  max-width: 100%;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+.app-shell .weekly-board .weekly-room-row { display: contents; }
+.app-shell .schedule-design-cards .weekly-room-board .weekly-room-cell {
+  position: relative;
+  min-width: 0;
+  min-height: 174px;
+  padding: 9px;
+  display: block;
+  overflow: visible;
+}
+.app-shell .weekly-room-board .weekly-cell-add { z-index: 0; }
+.weekly-booking-list { display: grid; gap: 7px; position: relative; z-index: 1; min-width: 0; pointer-events: none; }
+.app-shell .schedule-design-cards .weekly-room-board .weekly-booking-list .weekly-room-event {
+  position: relative;
+  inset: auto;
+  width: 100%;
+  height: auto;
+  min-height: 78px;
+  margin: 0;
+  padding: 9px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: 4px;
+  line-height: 1.35;
+  overflow: visible;
+  pointer-events: auto;
+}
+.app-shell .schedule-design-cards .weekly-room-board .weekly-room-event > time {
+  display: block;
+  flex: none;
+  order: 0;
+  font-size: 12px;
+  font-weight: 650;
+  opacity: 1;
+  white-space: nowrap;
+}
+.app-shell .schedule-design-cards .weekly-room-board .weekly-room-event > time .wk-end { display: inline; }
+.app-shell .schedule-design-cards .weekly-room-board .weekly-room-event > b {
+  display: block;
+  flex: none;
+  order: 1;
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+}
+.app-shell .schedule-design-cards .weekly-room-board .weekly-room-event > small {
+  display: block;
+  flex: none;
+  order: 2;
+  font-size: 12px;
+  line-height: 1.35;
+  opacity: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Color distinguishes ownership, not a randomly assigned event tone. */
+.app-shell .schedule-design-cards .daily-timeline .timeline-event:not(.is-mine),
+.app-shell .schedule-design-cards .weekly-room-board .weekly-room-event:not(.is-mine) {
+  color: var(--reserved);
+  background: var(--reserved-surface);
+  border: 1px solid #d7dfe8;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+.app-shell .schedule-design-cards .daily-timeline .timeline-event.is-mine:not(.x),
+.app-shell .schedule-design-cards .weekly-room-board .weekly-room-event.is-mine:not(.x) {
+  color: var(--mine);
+  background: var(--mine-surface);
+  border: 1px solid #f2cdd6;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+.app-shell .schedule-design-cards .timeline-event > strong,
+.app-shell .schedule-design-cards .timeline-event > time,
+.app-shell .schedule-design-cards .weekly-room-event > b,
+.app-shell .schedule-design-cards .weekly-room-event > time { color: inherit; }
+.app-shell .schedule-design-cards .timeline-event > small,
+.app-shell .schedule-design-cards .weekly-room-event > small { color: #5f6b7a; }
+.app-shell .schedule-design-cards .daily-timeline .timeline-event:not(.is-mine):hover,
+.app-shell .schedule-design-cards .weekly-room-board .weekly-room-event:not(.is-mine):hover { background: #e7ecf2; border-color: #aab8c9; box-shadow: none; transform: none; }
+.app-shell .schedule-design-cards .daily-timeline .timeline-event.is-mine:hover,
+.app-shell .schedule-design-cards .weekly-room-board .weekly-room-event.is-mine:hover { background: #fce9ee; border-color: #d597a9; box-shadow: none; transform: none; }
+.booking-owner-badge {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  white-space: nowrap;
+  gap: 3px;
+  margin-left: 6px;
+  padding: 1px 5px;
+  border: 1px solid #e8b8c6;
+  border-radius: 4px;
+  color: var(--mine);
+  background: #fff;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+/* Text and dot always agree, including historical and reserved rooms. */
+.app-shell .status-dot.available,
+.app-shell .room-status-dot.available { background: var(--available); }
+.app-shell .status-dot.reserved,
+.app-shell .room-status-dot.reserved { background: var(--reserved); }
+.app-shell .status-dot.occupied,
+.app-shell .room-status-dot.occupied,
+.app-shell .status-dot.closed,
+.app-shell .room-status-dot.closed { background: var(--occupied); }
+.app-shell .status-text.available,
+.app-shell .daily-room-meta.available,
+.app-shell .weekly-room-name small.available { color: var(--available); }
+.app-shell .status-text.reserved,
+.app-shell .daily-room-meta.reserved,
+.app-shell .weekly-room-name small.reserved { color: var(--reserved); }
+.app-shell .status-text.closed,
+.app-shell .daily-room-meta.closed,
+.app-shell .weekly-room-name small.closed,
+.app-shell .status-text.occupied,
+.app-shell .daily-room-meta.occupied,
+.app-shell .weekly-room-name small.occupied { color: var(--occupied); }
+.app-shell .map-room.available { background: var(--available-surface); border-color: #8fbda9; }
+.app-shell .map-room.reserved { background: var(--reserved-surface); border-color: #a3afbe; }
+.app-shell .map-room.closed,
+.app-shell .map-room.occupied { background: var(--closed-surface); border-color: #b5beca; }
+.app-shell .map-room.selected {
+  border-color: var(--selected);
+  outline: 3px solid #304b7825;
+  background: var(--selected-surface);
+  box-shadow: none;
+}
+.app-shell .map-room .selected-check { background: var(--selected); }
+.app-shell .map-room.reserved .map-status { color: var(--reserved); }
+.app-shell .map-room.closed .map-status,
+.app-shell .map-room.occupied .map-status { color: var(--occupied); }
+.app-shell .map-room:hover { transform: none; }
+
+/* Secondary text is readable without changing the primary typography. */
+.app-shell .booking-panel .field-label,
+.app-shell .booking-panel .room-picker-field-specs > em,
+.app-shell .booking-panel .room-picker-options .room-picker-row em,
+.app-shell .booking-panel .repeat-option em,
+.app-shell .booking-panel .attendee-add em,
+.app-shell .reservation-hover-card .reservation-hover-owner,
+.app-shell .reservation-hover-card .reservation-hover-main em,
+.app-shell .my-bookings-table small {
+  color: #5f6b7a;
+  font-size: 12px;
+  line-height: 1.45;
+}
+.app-shell .schedule-design-cards .daily-timeline .timeline-event > time,
+.app-shell .schedule-design-cards .daily-timeline .timeline-event > small { font-size: 12px; }
+/* A 30-minute slot is 48px tall at the minimum grid height. Keep all three
+   lines within that exact interval instead of inflating overlapping cards. */
+.app-shell .schedule-design-cards .daily-timeline .timeline-event.ev-sm,
+.app-shell .schedule-design-cards .daily-timeline .timeline-event.ev-md {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 0;
+  padding: 3px 6px;
+  font-size: 12px;
+  line-height: 1.1;
+}
+.app-shell .schedule-design-cards .daily-timeline .timeline-event.ev-sm > strong,
+.app-shell .schedule-design-cards .daily-timeline .timeline-event.ev-md > strong,
+.app-shell .schedule-design-cards .daily-timeline .timeline-event.ev-sm > time,
+.app-shell .schedule-design-cards .daily-timeline .timeline-event.ev-md > time,
+.app-shell .schedule-design-cards .daily-timeline .timeline-event.ev-sm > small,
+.app-shell .schedule-design-cards .daily-timeline .timeline-event.ev-md > small {
+  display: block !important;
+  flex: none;
+  min-width: 0;
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.app-shell .schedule-design-cards .daily-timeline .timeline-event.ev-sm > strong,
+.app-shell .schedule-design-cards .daily-timeline .timeline-event.ev-md > strong { order: 0; }
+.app-shell .schedule-design-cards .daily-timeline .timeline-event.ev-sm > time,
+.app-shell .schedule-design-cards .daily-timeline .timeline-event.ev-md > time { order: 1; }
+.app-shell .schedule-design-cards .daily-timeline .timeline-event.ev-sm > small,
+.app-shell .schedule-design-cards .daily-timeline .timeline-event.ev-md > small { order: 2; }
+.app-shell .schedule-design-cards .daily-timeline .timeline-event.ev-sm .booking-owner-badge,
+.app-shell .schedule-design-cards .daily-timeline .timeline-event.ev-md .booking-owner-badge {
+  font-size: 12px;
+  line-height: 1.1;
+  padding: 0 4px;
+  margin-left: 4px;
+  border: 0;
+  vertical-align: baseline;
+}
+.app-shell .booking-panel .room-picker-card,
+.app-shell .booking-panel .room-picker-toggle { animation: none; }
+.app-shell .booking-panel .room-picker-toggle:hover { box-shadow: inset 0 0 0 1px #b3bfce; }
+.app-shell .booking-panel .booking-submit .reserve-button:not(:disabled) {
+  background: var(--cta);
+  color: #fff;
+}
+.app-shell .booking-panel .booking-submit .reserve-button:not(:disabled):hover { background: #bd1232; }
+.app-shell .booking-panel .booking-submit .reserve-button > span,
+.app-shell .booking-panel .booking-submit .reserve-button > strong { color: #fff; }
+
+/* The booking summary makes the target visible before submitting. */
+.booking-selection-summary {
+  display: grid;
+  gap: 5px;
+  flex: none;
+  margin: 0 0 12px;
+  padding: 12px 13px;
+  border: 1px solid #cdd8e7;
+  border-radius: 8px;
+  background: var(--selected-surface);
+  color: var(--selected);
+  font-size: 13px;
+  line-height: 1.45;
+}
+.booking-selection-summary strong { color: #17223a; font-size: 14px; }
+.booking-selection-summary small,
+.booking-selection-summary em { color: #5f6b7a; font-size: 12px; font-style: normal; }
+.booking-selection-summary.is-conflict,
+.booking-selection-summary.conflict { color: var(--conflict); background: var(--conflict-surface); border-color: #ebbbb5; }
+.booking-extra-details { border-top: 1px solid #dfe5ed; margin-top: 14px; padding-top: 12px; }
+.booking-extra-details > summary {
+  display: list-item;
+  cursor: pointer;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 600;
+  padding-block: 7px;
+}
+.booking-extra-details[open] > summary { margin-bottom: 12px; }
+.booking-extra-details label + label { margin-top: 12px; }
+.app-shell .booking-panel .booking-fields .field-missing-msg,
+.app-shell .notice.error { color: var(--conflict); font-size: 12px; }
+
+/* Remove legacy active/red status text without changing the status itself. */
+.app-shell .schedule-design-cards .daily-room-meta {
+  font-size: 12px;
+}
+.app-shell .schedule-design-cards .daily-room-meta > b,
+.app-shell .schedule-design-cards .daily-room-meta > em,
+.app-shell .weekly-room-name small > b {
+  color: inherit !important;
+}
+.app-shell .schedule-design-cards .daily-room-meta > em,
+.app-shell .weekly-room-name small > em {
+  color: #5f6b7a !important;
+}
+.booking-room-section {
+  box-sizing: border-box;
+  min-height: var(--room-section-min-height, auto);
+  flex: none;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.app-shell .booking-selection-summary[data-availability="closed"],
+.app-shell .booking-selection-summary[data-availability="occupied"],
+.app-shell .booking-selection-summary[data-availability="unknown"] {
+  color: var(--occupied);
+  background: var(--closed-surface);
+  border-color: #cdd4dd;
+}
+.app-shell .booking-selection-summary[data-availability="reserved"] {
+  color: var(--reserved);
+  background: var(--reserved-surface);
+  border-color: #cdd4dd;
+}
+.app-shell .booking-selection-summary[data-availability="available"] {
+  color: var(--available);
+  background: var(--available-surface);
+  border-color: #b8d8c8;
+}
+.app-shell .booking-selection-summary[data-availability="conflict"] {
+  color: var(--conflict);
+  background: var(--conflict-surface);
+  border-color: #ebbbb5;
+}
+.app-shell .booking-selection-summary[data-availability] > #booking-selection-status {
+  color: inherit;
+}
+.app-shell .booking-panel:not(.is-collapsed) .booking-submit .reserve-button:disabled {
+  background: #eef2f6 !important;
+  color: #5f6b7a !important;
+  border: 1px solid #d7dfe8;
+  box-shadow: none;
+  opacity: 1;
+  cursor: not-allowed;
+}
+.app-shell .booking-panel:not(.is-collapsed) .booking-submit .reserve-button:disabled > span,
+.app-shell .booking-panel:not(.is-collapsed) .booking-submit .reserve-button:disabled > strong {
+  color: inherit !important;
+  opacity: 1;
+}
+.app-shell .header-account .header-nav .header-bookings-bell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: auto;
+  min-width: 90px;
+  height: 40px;
+  padding: 0 10px;
+  white-space: nowrap;
+}
+.app-shell .header-account .header-nav .header-bookings-bell > svg {
+  flex: none;
+  width: 19px;
+  height: 19px;
+}
+
+/* A navy outline means selection/draft, never an error or confirmed booking. */
+.app-shell .schedule-design-cards .daily-timeline .timeline-draft,
+.app-shell .schedule-design-cards .daily-timeline .timeline-drag-selection {
+  color: #304b78;
+  background: #eef3fa;
+  border: 2px dashed #304b78;
+  box-shadow: none;
+  animation: none;
+}
+.app-shell .schedule-design-cards .daily-timeline .timeline-draft > b,
+.app-shell .schedule-design-cards .daily-timeline .timeline-draft > small,
+.app-shell .schedule-design-cards .daily-timeline .timeline-draft .timeline-draft-duration {
+  color: #304b78;
+  font-size: 12px;
+  line-height: 1.4;
+}
+.app-shell .schedule-design-cards .daily-timeline .timeline-drag-selection .timeline-drag-label {
+  color: #fff;
+  background: #304b78;
+  border-radius: 6px;
+  font-size: 12px;
+  line-height: 1.35;
+}
+.app-shell .schedule-design-cards .daily-timeline .timeline-drag-selection .timeline-drag-label strong,
+.app-shell .schedule-design-cards .daily-timeline .timeline-drag-selection .timeline-drag-label span {
+  color: inherit;
+  font-size: 12px;
+}
+
+.app-shell button:focus-visible,
+.app-shell input:focus-visible,
+.app-shell select:focus-visible,
+.app-shell summary:focus-visible {
+  outline: 2px solid #304b78;
+  outline-offset: 3px;
+}
+@media (max-width: 1000px) {
+  .room-filters { padding: 10px; gap: 10px; margin-inline: 4px; }
+  .room-filter-field { flex-basis: 130px; }
+  .app-shell .weekly-board .daily-timeline { grid-template-columns: 52px repeat(var(--room-count, 4), minmax(176px, 1fr)); }
+  .app-shell .weekly-board .weekly-room-board { grid-template-columns: 170px repeat(5, minmax(160px, 1fr)); }
+  .app-shell > .booking-panel:not(.is-collapsed) { width: calc(100% - 16px); max-width: 430px; margin-left: auto; }
+  .app-shell .booking-panel .booking-room-section { min-height: 0 !important; }
+  .app-shell .booking-panel .booking-selection-summary { padding: 10px 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-shell,
+  .app-shell *,
+  .app-shell *::before,
+  .app-shell *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}

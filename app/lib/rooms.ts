@@ -2,7 +2,7 @@
 import roomsConfig from "../config/rooms.json";
 import siteConfig from "../config/site.json";
 import type { Booking } from "./bookings";
-import { minutesOf } from "./datetime";
+import { minutesOf, type DateKey } from "./datetime";
 
 export type Room = {
   id: string;
@@ -25,7 +25,7 @@ export const roomById = (id: string) => rooms.find((room) => room.id === id);
 export const formatCapacity = (capacity: number) => `최대 ${capacity}명`;
 
 /** "unknown"은 아직 현재 시각을 모르는 첫 렌더 시점에만 쓴다. */
-export type RoomStatus = "available" | "occupied" | "soon" | "unknown";
+export type RoomStatus = "available" | "occupied" | "soon" | "reserved" | "closed" | "unknown";
 
 export type RoomStatusInfo = {
   status: RoomStatus;
@@ -33,28 +33,31 @@ export type RoomStatusInfo = {
   nextLabel: string;
 };
 
-const { closingTime, soonThresholdMinutes } = siteConfig.booking;
+const { openingTime, closingTime, slotMinutes, soonThresholdMinutes } = siteConfig.booking;
 
 /**
  * 예약과 현재 시각으로 회의실 상태를 계산한다.
  * nowMinutes가 null이면(브라우저에서 시계를 읽기 전) 아직 모른다고 표시한다.
  * 추측해서 "사용 가능"으로 보여주면 실제와 다를 수 있기 때문이다.
  *
- * nowMinutes를 넘기지 않으면(=오늘이 아닌 날을 보고 있으면) '지금'이라는
- * 개념이 없다. 그때 "사용 가능"이라고 하면 오늘 기준 상태를 다른 날짜
- * 화면에 붙여 놓는 셈이라 틀린 정보가 된다. 그 날짜의 예약 건수를 말한다.
+ * 오늘이 아닌 날짜는 실시간 점유가 아니라 예약 건수를 표시한다.
+ * reserved는 일부 예약이 있다는 뜻이며, 그날 전체 또는 선택 시간이
+ * 예약 불가라는 뜻이 아니다. 선택 시간의 가능 여부는 별도로 계산한다.
  */
 export function describeRoomStatus(
   todaysBookings: Booking[],
   nowMinutes: number | null,
-  options?: { isToday?: boolean },
+  options?: { isToday?: boolean; isPast?: boolean },
 ): RoomStatusInfo {
+  if (options?.isPast) {
+    return { status: "closed", statusLabel: "지난 날짜", nextLabel: "지난 날짜에는 새로 예약할 수 없습니다." };
+  }
   if (options && options.isToday === false) {
     const count = todaysBookings.length;
     return count === 0
-      ? { status: "available", statusLabel: "사용 가능", nextLabel: "하루 종일 예약이 없습니다" }
+      ? { status: "available", statusLabel: "예약 없음", nextLabel: "하루 종일 예약이 없습니다" }
       : {
-        status: "occupied",
+        status: "reserved",
         statusLabel: `예약 ${count}건`,
         nextLabel: [...todaysBookings]
           .sort((a, b) => a.start.localeCompare(b.start))
@@ -66,6 +69,14 @@ export function describeRoomStatus(
 
   if (nowMinutes === null) {
     return { status: "unknown", statusLabel: "확인 중", nextLabel: "현황 불러오는 중" };
+  }
+
+  if (nowMinutes < minutesOf(openingTime)) {
+    return { status: "closed", statusLabel: "운영 전", nextLabel: `${openingTime}부터 이용할 수 있습니다.` };
+  }
+
+  if (nowMinutes >= minutesOf(closingTime)) {
+    return { status: "closed", statusLabel: "오늘 마감", nextLabel: "오늘 예약 마감" };
   }
 
   const sorted = [...todaysBookings].sort((a, b) => a.start.localeCompare(b.start));
@@ -107,14 +118,52 @@ export function describeRoomStatus(
 
   return {
     status: "available",
-    // '언제 기준인지'를 문구에 넣는다. 그냥 "사용 가능"이면 지금인지
-    // 오늘 하루인지 알 수 없어 정보가 아니라 장식이 된다.
-    statusLabel: nowMinutes >= minutesOf(closingTime) ? "오늘 마감" : "지금 사용 가능",
-    nextLabel:
-      nowMinutes >= minutesOf(closingTime)
-        ? "오늘 예약 마감"
-        : `오늘 ${closingTime}까지 가능`,
+    statusLabel: "지금 사용 가능",
+    nextLabel: `오늘 ${closingTime}까지 가능`,
   };
+}
+
+export type RoomSlotAvailability = "available" | "conflict" | "past" | "outside-hours" | "invalid" | "unknown";
+
+export type RoomSlotAvailabilityInfo = {
+  status: RoomSlotAvailability;
+  available: boolean;
+  statusLabel: string;
+  nextLabel: string;
+};
+
+/** 현재 점유와 독립적으로, 해당 회의실의 선택 날짜·시간만 판단한다. */
+export function describeRoomSlotAvailability(
+  bookingsForRoom: Booking[],
+  date: DateKey,
+  start: string,
+  end: string,
+  options: { today: DateKey; nowMinutes: number | null },
+): RoomSlotAvailabilityInfo {
+  const startMinutes = minutesOf(start);
+  const endMinutes = minutesOf(end);
+  const validTime = (value: string) => /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(value);
+  const dateValue = new Date(`${date}T00:00:00Z`);
+  const validDate = /^\d{4}-\d{2}-\d{2}$/.test(date) && Number.isFinite(dateValue.getTime()) && dateValue.toISOString().slice(0, 10) === date;
+  if (!validDate || !validTime(start) || !validTime(end) || endMinutes <= startMinutes) {
+    return { status: "invalid", available: false, statusLabel: "날짜·시간 확인 필요", nextLabel: "예약 날짜와 시작·종료 시간을 확인해 주세요." };
+  }
+  if (date < options.today || (date === options.today && options.nowMinutes !== null && startMinutes < options.nowMinutes)) {
+    return { status: "past", available: false, statusLabel: "지난 날짜·시간", nextLabel: "앞으로의 날짜와 시간을 선택해 주세요." };
+  }
+  if (startMinutes < minutesOf(openingTime) || endMinutes > minutesOf(closingTime)) {
+    return { status: "outside-hours", available: false, statusLabel: "운영 시간 밖", nextLabel: `${openingTime}–${closingTime} 사이에서 선택해 주세요.` };
+  }
+  if ((startMinutes - minutesOf(openingTime)) % slotMinutes !== 0 || (endMinutes - minutesOf(openingTime)) % slotMinutes !== 0) {
+    return { status: "invalid", available: false, statusLabel: "시간 단위 확인 필요", nextLabel: `${slotMinutes}분 단위로 시간을 선택해 주세요.` };
+  }
+  if (date === options.today && options.nowMinutes === null) {
+    return { status: "unknown", available: false, statusLabel: "확인 중", nextLabel: "현재 시간을 확인하고 있습니다." };
+  }
+  if (bookingsForRoom.some((booking) => booking.date === date && minutesOf(booking.start) < endMinutes && minutesOf(booking.end) > startMinutes)) {
+    return { status: "conflict", available: false, statusLabel: "선택 시간 예약 겹침", nextLabel: "다른 시간이나 회의실을 선택해 주세요." };
+  }
+  return { status: "available", available: true, statusLabel: "선택 시간 예약 가능", nextLabel: `${start}–${end}에 예약할 수 있습니다.` };
 }
 
 export function equipmentIcon(item: string) {

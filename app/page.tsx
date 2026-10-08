@@ -36,6 +36,7 @@ import { useDialogFocus, useNow, useStoredText } from "./lib/hooks";
 import { publicHolidayOf } from "./lib/holidays";
 import {
   describeRoomStatus,
+  describeRoomSlotAvailability,
   equipmentIcon,
   floors,
   formatCapacity,
@@ -243,6 +244,9 @@ const spokenDuration = (minutes: number): string => {
   if (hours === 0) return `${rest}분`;
   return rest === 0 ? `${hours}시간` : `${hours}시간 ${rest}분`;
 };
+
+/** 동명 회의실을 구분하는 위치 표기. */
+const roomIdentity = (room: Room | undefined): string => room ? `${room.floor}층 · ${room.name}` : "회의실 정보 확인 중";
 
 
 const MONTH_ABBR = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
@@ -722,6 +726,10 @@ export default function Home() {
   const [selectedId, setSelectedId] = useState(rooms[0].id);
   const [scheduleView, setScheduleView] = useState<"week" | "day">("day");
   const [query, setQuery] = useState("");
+  const [capacityFilter, setCapacityFilter] = useState("");
+  const [equipmentFilter, setEquipmentFilter] = useState("");
+  const [availableOnly, setAvailableOnly] = useState(false);
+  const equipmentOptions = useMemo(() => [...new Set(rooms.flatMap((room) => room.equipment))], []);
   const [duration, setDuration] = useState(bookingDefaults.defaultDurationMinutes);
   const [slot, setSlot] = useState<SlotForm>(() =>
     nearestAvailableSlot(clock, bookingDefaults.defaultDurationMinutes),
@@ -801,6 +809,11 @@ export default function Home() {
   // 사용자가 펼친 뒤 입력한 값은 패널을 다시 접어도 그대로 남는다.
   const [bookingPanelOpen, setBookingPanelOpen] = useState(false);
   const [slotDrag, setSlotDrag] = useState<SlotDrag | null>(null);
+  const [keyboardSelection, setKeyboardSelection] = useState<SlotSelection | null>(null);
+  const [selectionFeedback, setSelectionFeedback] = useState("");
+  const [extraDetailsOpen, setExtraDetailsOpen] = useState(false);
+  const [brandRuleY, setBrandRuleY] = useState<number | null>(null);
+  const [roomSectionMinHeight, setRoomSectionMinHeight] = useState<number | null>(null);
   const pendingTouchDrag = useRef<PendingTouchDrag | null>(null);
   // 주간 화면 더블클릭은 일간 드래그와 달리 시간을 정한 적이 없다.
   // 회의실·날짜만 고르고, 시간은 빠른 예약 창에서 직접 고르게 한다.
@@ -1000,7 +1013,7 @@ export default function Home() {
     return new Map(
       rooms.map((room) => [
         room.id,
-        describeRoomStatus(byRoom.get(room.id) ?? [], nowMinutes, { isToday: viewingToday }),
+        describeRoomStatus(byRoom.get(room.id) ?? [], nowMinutes, { isToday: viewingToday, isPast: date < today }),
       ]),
     );
   }, [bookings, date, today, nowMinutes]);
@@ -1008,10 +1021,6 @@ export default function Home() {
   const statusOf = (room: Room) => roomStatuses.get(room.id) ?? UNKNOWN_STATUS;
 
   const floorRooms = rooms.filter((room) => room.floor === floor);
-  const filteredRooms = floorRooms.filter((room) => {
-    const haystack = `${room.name} ${formatCapacity(room.capacity)} ${room.location} ${room.equipment.join(" ")}`.toLowerCase();
-    return haystack.includes(query.toLowerCase());
-  });
   const selected = roomById(selectedId) ?? rooms[0];
   const selectedStatus = statusOf(selected);
 
@@ -1027,6 +1036,16 @@ export default function Home() {
     [bookings, selected.id, reservationDates, start, end],
   );
   const selectedTimeConflict = conflictDates.length > 0;
+  const selectionAvailability = describeRoomSlotAvailability(
+    bookings.filter((booking) => booking.roomId === selected.id), date, start, end, { today, nowMinutes },
+  );
+  // 부분 반복 충돌은 예약 가능한 날짜만 확인하는 기존 흐름을 유지한다.
+  const bookingBlockReason = syncError ? "예약 현황 연결을 확인한 뒤 다시 시도해 주세요."
+    : reservationDates.length === 0 ? "예약할 날짜가 없습니다. 반복 기간을 확인해 주세요."
+    : reservationDates.some((day) => day < today) ? "지난 날짜에는 예약할 수 없습니다."
+    : selectionAvailability.status !== "available" && selectionAvailability.status !== "conflict" ? selectionAvailability.nextLabel
+    : selectedTimeConflict && conflictDates.length === reservationDates.length ? "선택 시간과 기존 예약이 겹칩니다. 다른 시간을 선택해 주세요."
+    : "";
 
   const slotIsFree = useCallback((roomId: string, targetDate: DateKey, slotStart: string, slotEnd: string, ignoreId?: string) => (
     !bookings.some((booking) => booking.id !== ignoreId && booking.roomId === roomId && booking.date === targetDate
@@ -1058,6 +1077,13 @@ export default function Home() {
   const roomPickerChoices = useMemo(() => [...roomChoices].sort((a, b) => (
     rooms.findIndex((room) => room.id === a.room.id) - rooms.findIndex((room) => room.id === b.room.id)
   )), [roomChoices]);
+  const filteredRooms = floorRooms.filter((room) => {
+    const haystack = `${room.name} ${room.floor}층 ${formatCapacity(room.capacity)} ${room.location} ${room.equipment.join(" ")}`.toLowerCase();
+    return haystack.includes(query.trim().toLowerCase())
+      && (!capacityFilter || room.capacity >= Number(capacityFilter))
+      && (!equipmentFilter || room.equipment.includes(equipmentFilter))
+      && (!availableOnly || (!syncError && slotIsBookable(room.id, start, end)));
+  });
 
   const availableStartOptions = useMemo(() => {
     // 프리셋(1/2/4시간)에 없는 길이(드래그로 잡은 30분·90분 등)도 실제 길이 그대로 써야 한다.
@@ -1116,7 +1142,7 @@ export default function Home() {
     setAlternativesExpanded(false);
   }, [selectedId, date, start, end]);
 
-  const availableCount = floorRooms.filter((room) => statusOf(room).status === "available").length;
+  const availableCount = syncError ? 0 : floorRooms.filter((room) => slotIsBookable(room.id, start, end)).length;
   const weekDays = useMemo(() => getWorkWeek(date), [date]);
   // 주간 화면에서는 날짜 칸이 한 주를 통째로 가리키고 화살표도 일주일씩 움직인다.
   const weekView = scheduleView === "week";
@@ -1166,7 +1192,43 @@ export default function Home() {
     const observer = new ResizeObserver(measure);
     observer.observe(grid);
     return () => observer.disconnect();
-  }, [scheduleView, floor, floorRooms.length]);
+  }, [scheduleView, floor, filteredRooms.length, query, capacityFilter, equipmentFilter, availableOnly]);
+
+  // 양쪽 띠는 날짜 영역의 실제 높이를 함께 사용한다.
+  useLayoutEffect(() => {
+    const hero = document.querySelector<HTMLElement>(".schedule-hero");
+    const panel = document.querySelector<HTMLElement>(".booking-panel");
+    if (!hero || !panel) return;
+    const measure = () => {
+      const blueY = hero.getBoundingClientRect().bottom - 3;
+      const next = blueY - panel.getBoundingClientRect().top;
+      setBrandRuleY((current) => current !== null && Math.abs(current - next) < .5 ? current : next);
+      const section = panel.querySelector<HTMLElement>(".booking-room-section");
+      if (section && !panel.classList.contains("is-collapsed")) {
+        const minHeight = Math.max(0, blueY - section.getBoundingClientRect().top + 20);
+        setRoomSectionMinHeight((current) => current !== null && Math.abs(current - minHeight) < .5 ? current : minHeight);
+      }
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(hero);
+    observer.observe(panel);
+    window.addEventListener("resize", measure);
+    return () => { observer.disconnect(); window.removeEventListener("resize", measure); };
+  }, [scheduleView, bookingPanelOpen, showMap]);
+
+  useEffect(() => { setKeyboardSelection(null); setSelectionFeedback(""); }, [date, floor, scheduleView]);
+
+  useEffect(() => {
+    if (!timePickerOpen) return;
+    const frame = window.requestAnimationFrame(() => {
+      const popover = document.querySelector<HTMLElement>(".time-picker-popover");
+      const option = popover?.querySelector<HTMLButtonElement>('[role="option"][aria-selected="true"]')
+        ?? popover?.querySelector<HTMLButtonElement>('[role="option"]');
+      (option ?? popover)?.focus({ preventScroll: true });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [timePickerOpen]);
 
   /** SSO 소유권은 서버 판정만 사용하고, 확인된 익명 모드에서만 이름을 비교한다. */
   const isMyBooking = useCallback((booking: Booking) => authReady && (
@@ -1292,7 +1354,7 @@ export default function Home() {
       setEditDraft(null);
       setToast({
         text: "예약을 수정했습니다.",
-        detail: roomById(editDraft.roomId)?.name ?? "",
+        detail: roomIdentity(roomById(editDraft.roomId)),
         time: `${formatDateLabel(editDraft.date)} ${editDraft.start}–${editDraft.end}`,
       });
     } catch {
@@ -1347,7 +1409,7 @@ export default function Home() {
       setEditDraft(null);
       setToast({
         text: "회의를 끝냈습니다.",
-        detail: roomById(earlyEnd.roomId)?.name ?? "",
+        detail: roomIdentity(roomById(earlyEnd.roomId)),
         time: `${nextEnd}부터 예약 가능`,
       });
     } catch {
@@ -1370,7 +1432,7 @@ export default function Home() {
       }
       await refreshBookings();
       setEditDraft(null);
-      setToast({ text: "예약을 삭제했습니다.", detail: roomById(editDraft.roomId)?.name ?? "", time: formatDateLabel(editDraft.date) });
+      setToast({ text: "예약을 삭제했습니다.", detail: roomIdentity(roomById(editDraft.roomId)), time: formatDateLabel(editDraft.date) });
     } catch {
       setEditNotice("삭제 결과를 확인하지 못했습니다. 예약 목록을 확인한 뒤 다시 시도해 주세요.");
       await refreshBookings();
@@ -1400,6 +1462,16 @@ export default function Home() {
   const startSlotDrag = (room: Room, reservationDate: DateKey, event: ReactPointerEvent<HTMLDivElement>) => {
     if (event.button !== 0) return;
     const startMinutes = getSlotMinutes(event);
+    const availability = describeRoomSlotAvailability(
+      bookings.filter((booking) => booking.roomId === room.id), reservationDate,
+      formatMinutes(startMinutes), formatMinutes(startMinutes + bookingDefaults.slotMinutes), { today, nowMinutes },
+    );
+    if (!availability.available) {
+      setSelectionFeedback(availability.nextLabel);
+      return;
+    }
+    setSelectionFeedback("");
+    setKeyboardSelection(null);
 
     if (event.pointerType === "touch") {
       cancelPendingTouchDrag();
@@ -1497,6 +1569,11 @@ export default function Home() {
    * 사람이 직접 고른다 — 겹치는 시간이면 그 자리에서 바로 알려 준다.
    */
   const askWeekdaySlot = (room: Room, day: DateKey) => {
+    if (day < today || (day === today && nowMinutes !== null && nowMinutes >= minutesOf(bookingDefaults.closingTime))) {
+      setSelectionFeedback(day < today ? "지난 날짜는 현황만 확인할 수 있습니다. 예약할 날짜를 선택해 주세요." : "오늘 운영 시간이 마감되었습니다. 다음 날짜를 선택해 주세요.");
+      return;
+    }
+    setSelectionFeedback("");
     setSelectedId(room.id);
     setDate(day);
     setDraftActive(true);
@@ -1561,10 +1638,8 @@ export default function Home() {
     filledTimer.current = window.setTimeout(() => setFilledNotice(null), 3000);
     window.requestAnimationFrame(() => {
       document.querySelector(".booking-fields")?.scrollTo({ top: 0, behavior: "smooth" });
-      // 값을 가져온 뒤 남는 칸은 회의 목적 하나뿐이다(선택 항목이지만 대개
-      // 채운다). 커서를 미리 넣어 두면 표시를 읽기 전에 손이 먼저 움직인다.
-      // 스크롤은 위에서 이미 잡았다.
-      document.getElementById("purpose-input")?.focus({ preventScroll: true });
+      // 입력 전에 날짜와 시간을 확인한다. 선택 항목으로 포커스를 강제로 보내지 않는다.
+      document.getElementById("start-time-select")?.focus({ preventScroll: true });
     });
   };
 
@@ -1656,6 +1731,12 @@ export default function Home() {
   }, []);
 
   const applySlotSelection = (selection: SlotSelection) => {
+    const availability = describeRoomSlotAvailability(
+      bookings.filter((booking) => booking.roomId === selection.roomId), selection.date, selection.start, selection.end, { today, nowMinutes },
+    );
+    if (!availability.available) { setSelectionFeedback(availability.nextLabel); return; }
+    setSelectionFeedback("");
+    setKeyboardSelection(null);
     const minutes = minutesOf(selection.end) - minutesOf(selection.start);
     setSelectedId(selection.roomId);
     setAllDay(false);
@@ -1666,7 +1747,7 @@ export default function Home() {
     setBookingPanelOpen(true);
     setTimeNeedsPick(false);
     flashFilled(
-      roomById(selection.roomId)?.name ?? "회의실",
+      roomIdentity(roomById(selection.roomId)),
       `${formatDateLabel(selection.date)} · ${selection.start}–${selection.end}`,
     );
   };
@@ -1678,18 +1759,45 @@ export default function Home() {
   };
 
   const handleTimelineKey = (room: Room, reservationDate: DateKey, event: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (event.target !== event.currentTarget) return;
     if (event.key === "Escape") {
-      setDraftActive(false);
+      event.preventDefault();
+      setKeyboardSelection(null);
+      setSelectionFeedback("");
       return;
     }
     if (event.key !== "ArrowUp" && event.key !== "ArrowDown" && event.key !== "Enter") return;
     event.preventDefault();
-    const length = Math.max(bookingDefaults.slotMinutes, minutesOf(end) - minutesOf(start));
-    let nextStartMinutes = minutesOf(start);
+    const preview = keyboardSelection?.roomId === room.id && keyboardSelection.date === reservationDate ? keyboardSelection : null;
+    const length = Math.min(minutesOf(bookingDefaults.closingTime) - minutesOf(bookingDefaults.openingTime), Math.max(bookingDefaults.slotMinutes, minutesOf(end) - minutesOf(start)));
+    let nextStartMinutes = minutesOf(preview?.start ?? start);
     if (event.key === "ArrowUp") nextStartMinutes -= bookingDefaults.slotMinutes;
     if (event.key === "ArrowDown") nextStartMinutes += bookingDefaults.slotMinutes;
     nextStartMinutes = Math.max(minutesOf(bookingDefaults.openingTime), Math.min(nextStartMinutes, minutesOf(bookingDefaults.closingTime) - length));
-    applySlotSelection({ roomId: room.id, date: reservationDate, start: formatMinutes(nextStartMinutes), end: formatMinutes(nextStartMinutes + length) });
+    const next = { roomId: room.id, date: reservationDate, start: formatMinutes(nextStartMinutes), end: formatMinutes(nextStartMinutes + length) };
+    if (event.key === "Enter") { applySlotSelection(next); return; }
+    setKeyboardSelection(next);
+    const availability = describeRoomSlotAvailability(bookings.filter((booking) => booking.roomId === room.id), reservationDate, next.start, next.end, { today, nowMinutes });
+    setSelectionFeedback(`${roomIdentity(room)} · ${next.start}–${next.end} · 총 ${spokenDuration(length)}. ${availability.available ? "Enter로 선택하세요." : availability.nextLabel}`);
+  };
+
+  const closeTimePicker = () => {
+    const picker = timePickerOpen;
+    setTimePickerOpen(null);
+    window.requestAnimationFrame(() => document.getElementById(picker === "end" ? "end-time-select" : "start-time-select")?.focus({ preventScroll: true }));
+  };
+  const handleTimePickerKey = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (event.key === "Escape" || event.key === "Tab") {
+      event.preventDefault(); event.stopPropagation(); closeTimePicker(); return;
+    }
+    if (!["ArrowUp", "ArrowDown", "Home", "End"].includes(event.key)) return;
+    event.preventDefault();
+    const options = [...event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="option"]')];
+    const current = options.indexOf(document.activeElement as HTMLButtonElement);
+    const index = event.key === "Home" ? 0 : event.key === "End" ? options.length - 1
+      : (current + (event.key === "ArrowDown" ? 1 : -1) + options.length) % options.length;
+    options[index]?.focus({ preventScroll: true });
+    options[index]?.scrollIntoView({ block: "nearest" });
   };
 
   const changeStart = (nextStart: string) => {
@@ -1748,6 +1856,7 @@ export default function Home() {
       document.getElementById("start-time-select")?.focus({ preventScroll: true });
       return;
     }
+    if (bookingBlockReason) { setNotice(bookingBlockReason); return; }
     if (reservationDates.length === 0) {
       setNotice("예약할 날짜가 없습니다. 반복 기간과 주말·공휴일 포함 여부를 확인해 주세요.");
       return;
@@ -1803,6 +1912,9 @@ export default function Home() {
   /** 실제로 서버에 보내는 부분. '겹치는 날만 빼고' 보낼 때도 같은 길을 쓴다. */
   const sendBooking = async (dates: string[]) => {
     if (mutationBusy || !authReady || dates.length === 0 || timeNeedsPick) return;
+    // 확인 중 시간 경과·새 예약도 재검증한다. 최종 동시 예약 판정은 서버가 수행한다.
+    const invalidSlot = dates.map((day) => describeRoomSlotAvailability(bookings.filter((booking) => booking.roomId === selected.id), day, start, end, { today, nowMinutes })).find((item) => !item.available);
+    if (invalidSlot || syncError) { setSubmitPreviewDates(null); setNotice(syncError || invalidSlot?.nextLabel || "예약 상태를 확인해 다시 선택해 주세요."); return; }
     const submittedDraftKey = draftKey;
     const ownerName = currentUser?.name ?? owner.trim();
     const teamName = team.trim();
@@ -1841,8 +1953,8 @@ export default function Home() {
       setToast({
         text: "예약이 완료되었습니다",
         detail: dates.length > 1
-          ? `${selected.name} · 반복 ${dates.length}회`
-          : `${selected.name} · ${formatDateLabel(dates[0])}`,
+          ? `${roomIdentity(selected)} · 반복 ${dates.length}회`
+          : `${roomIdentity(selected)} · ${formatDateLabel(dates[0])}`,
         time: `${start}–${end}`,
         kind: "booking",
       });
@@ -1914,6 +2026,7 @@ export default function Home() {
                 onClick={() => { setCancelSelection(null); setMyBookingsOpen(true); }}
               >
                 <BellIcon />
+                <span>내 예약</span>
                 {upcomingMyBookings.length > 0 && <span className="header-bookings-dot" aria-hidden="true" />}
               </button>
             </span>
@@ -1934,7 +2047,7 @@ export default function Home() {
           {floors.map((item) => (
             <button key={item} type="button" className={floor === item ? "active" : ""} onClick={() => selectFloor(item)}>
               {item}층
-              <small>{rooms.filter((room) => room.floor === item && statusOf(room).status === "available").length}개 사용 가능</small>
+              <small>{rooms.filter((room) => room.floor === item && slotIsBookable(room.id, start, end)).length}개 선택 시간 가능</small>
             </button>
           ))}
         </div>
@@ -2130,7 +2243,17 @@ export default function Home() {
                     말인지 알기 어려웠다. */}
               </div>
 
-              {scheduleView === "day" && <div className="week-timeline daily-timeline" data-floor={floor} ref={dailyGridRef} style={{ "--room-count": floorRooms.length } as CSSProperties}>
+              <section className="room-filters" aria-label="회의실 탐색 필터">
+                <label className="room-filter-field"><span>회의실 검색</span><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="회의실명 또는 위치" /></label>
+                <label className="room-filter-field"><span>참석 인원</span><input type="number" min="1" step="1" value={capacityFilter} onChange={(event) => { const value = event.target.value; if (value === "" || (Number.isInteger(Number(value)) && Number(value) >= 1)) setCapacityFilter(value); }} placeholder="전체 인원" /></label>
+                <label className="room-filter-field"><span>필요한 장비</span><select value={equipmentFilter} onChange={(event) => setEquipmentFilter(event.target.value)}><option value="">모든 장비</option>{equipmentOptions.map((item) => <option value={item} key={item}>{item}</option>)}</select></label>
+                <label className="room-filter-toggle"><input type="checkbox" checked={availableOnly} onChange={(event) => setAvailableOnly(event.target.checked)} />선택 시간 예약 가능</label>
+                <span className="room-filter-result" role="status">{floor}층 {filteredRooms.length}/{floorRooms.length}개 · {formatDateLabel(date)} {start}–{end}{repeatWeekly ? ` · 반복 ${reservationDates.length}일 기준` : ""}</span>
+                {(query || capacityFilter || equipmentFilter || availableOnly) && <button type="button" className="room-filter-reset" onClick={() => { setQuery(""); setCapacityFilter(""); setEquipmentFilter(""); setAvailableOnly(false); }}>초기화</button>}
+              </section>
+              {selectionFeedback && <p className="schedule-selection-feedback" role="status">{selectionFeedback}</p>}
+              {filteredRooms.length === 0 && <div className="empty-search room-filter-empty"><p>조건에 맞는 회의실이 없습니다. 인원·장비 조건을 줄이거나 다른 시간과 층을 확인해 주세요.</p><button type="button" onClick={() => { setQuery(""); setCapacityFilter(""); setEquipmentFilter(""); setAvailableOnly(false); }}>필터 초기화</button></div>}
+              {scheduleView === "day" && filteredRooms.length > 0 && <div className="week-timeline daily-timeline" data-floor={floor} ref={dailyGridRef} style={{ "--room-count": filteredRooms.length } as CSSProperties}>
                 <div className="time-axis">
                   <span className="axis-corner">TIME</span>
                   <div className="time-axis-body">
@@ -2152,7 +2275,7 @@ export default function Home() {
                     }}
                   />
                 )}
-                {floorRooms.map((room) => {
+                {filteredRooms.map((room) => {
                   const dailyBookings = layoutOverlappingBookings(
                     bookings.filter((booking) => booking.roomId === room.id && booking.date === date),
                   );
@@ -2163,7 +2286,7 @@ export default function Home() {
                         type="button"
                         className="timeline-day-head daily-room-head"
                         aria-pressed={selected.id === room.id}
-                        title={room.name}
+                        title={roomIdentity(room)}
                         onClick={() => setSelectedId(room.id)}
                       >
                         <span className="daily-room-title">
@@ -2178,17 +2301,19 @@ export default function Home() {
                       </button>
                       <div
                         className={`timeline-day-body${slotDrag?.pointerType === "touch" && slotDrag.roomId === room.id && slotDrag.date === date ? " touch-dragging" : ""}`}
-                        role="gridcell"
+                        role="group"
                         tabIndex={0}
-                        aria-label={`${room.name} ${formatDateLabel(date)} 시간 선택. 위아래 방향키로 30분 이동, Enter로 선택`}
+                        aria-label={`${roomIdentity(room)} ${formatDateLabel(date)} 시간 선택. 위아래 방향키로 ${bookingDefaults.slotMinutes}분 이동, Enter로 선택, Escape로 미리보기 취소`}
                         onPointerDown={(event) => startSlotDrag(room, date, event)}
                         onPointerMove={(event) => updateSlotDrag(room, date, event)}
                         onPointerUp={(event) => finishSlotDrag(room, date, event)}
                         onPointerCancel={cancelSlotDrag}
                         onKeyDown={(event) => handleTimelineKey(room, date, event)}
+                        onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setKeyboardSelection(null); }}
                       >
                         {(() => {
-                          const selection = slotDrag?.roomId === room.id && slotDrag.date === date ? slotDrag : null;
+                          const selection = slotDrag?.roomId === room.id && slotDrag.date === date ? slotDrag
+                            : keyboardSelection?.roomId === room.id && keyboardSelection.date === date ? keyboardSelection : null;
                           if (!selection) return null;
                           const top = ((minutesOf(selection.start) - timelineStart) / (timelineEnd - timelineStart)) * 100;
                           const height = ((minutesOf(selection.end) - minutesOf(selection.start)) / (timelineEnd - timelineStart)) * 100;
@@ -2205,7 +2330,7 @@ export default function Home() {
                             '표에 뭔가 생겼으니 됐겠지'라고 믿는 그 자리에 점선으로 남겨 둔다. */}
                         {draftActive && room.id === selected.id && date === slot.date && (() => {
                           const top = ((minutesOf(start) - timelineStart) / (timelineEnd - timelineStart)) * 100;
-                          const height = Math.max(((minutesOf(end) - minutesOf(start)) / (timelineEnd - timelineStart)) * 100, 6.5);
+                          const height = ((minutesOf(end) - minutesOf(start)) / (timelineEnd - timelineStart)) * 100;
                           return (
                             <span className="timeline-draft" style={{ top: `${top}%`, height: `${height}%` }}>
                               <b>작성 중 <strong className="timeline-draft-duration">총 {spokenDuration(minutesOf(end) - minutesOf(start))}</strong></b>
@@ -2217,8 +2342,8 @@ export default function Home() {
                           const bookingStart = Math.max(timelineStart, minutesOf(booking.start));
                           const bookingEnd = Math.min(timelineEnd, minutesOf(booking.end));
                           const top = ((bookingStart - timelineStart) / (timelineEnd - timelineStart)) * 100;
-                          const height = Math.max(((bookingEnd - bookingStart) / (timelineEnd - timelineStart)) * 100, 6.5);
-                          // 블록이 짧을수록 글자를 줄여 시간·제목·예약자가 모두 보이게 한다.
+                          const height = ((bookingEnd - bookingStart) / (timelineEnd - timelineStart)) * 100;
+                          // 실제 시간 길이를 유지해 연속된 예약끼리 시각적으로 겹치지 않게 한다.
                           const spanMinutes = bookingEnd - bookingStart;
                           const sizeClass = spanMinutes >= 120 ? "ev-xl" : spanMinutes >= 75 ? "ev-lg" : spanMinutes >= 50 ? "ev-md" : "ev-sm";
                           const leftEdge = booking.lane === 0 ? 7 : 3;
@@ -2236,7 +2361,7 @@ export default function Home() {
                               onPointerDown={(event) => event.stopPropagation()}
                               onClick={(event) => { event.stopPropagation(); setSelectedId(room.id); openEditor(booking); }}
                             >
-                              <strong>{booking.owner}</strong>
+                              <strong>{booking.owner}{isMyBooking(booking) && <em className="booking-owner-badge">내 예약</em>}</strong>
                               <time>{booking.start}–{booking.end}</time>
                               <small>{teamOf(booking)}</small>
                               {isMyBooking(booking) && <ReservationHoverCard />}
@@ -2248,7 +2373,7 @@ export default function Home() {
                   );
                 })}
               </div>}
-              {scheduleView === "week" && <div className="weekly-room-board" aria-label={`${floor}층 회의실별 주간 예약 현황`} style={{ "--room-count": floorRooms.length } as CSSProperties}>
+              {scheduleView === "week" && filteredRooms.length > 0 && <div className="weekly-room-board" aria-label={`${floor}층 회의실별 주간 예약 현황, 예약은 시간 순서로 표시`} style={{ "--room-count": filteredRooms.length } as CSSProperties}>
                 <div className="weekly-room-head weekly-room-corner">회의실</div>
                 {weekDays.map((day) => (
                   <button type="button" className={`weekly-room-head ${day === date ? "active" : ""}`} key={day} aria-pressed={day === date} onClick={() => setDate(day)}>
@@ -2256,12 +2381,12 @@ export default function Home() {
                     {day === date && <span className="daily-room-selected-icon"><SelectedRoomIcon /></span>}
                   </button>
                 ))}
-                {floorRooms.map((room) => {
+                {filteredRooms.map((room) => {
                   const status = statusOf(room);
                   return (
                     <div className="weekly-room-row" key={room.id}>
                       <button type="button" className={`weekly-room-name ${selected.id === room.id ? "selected" : ""}`} aria-pressed={selected.id === room.id} title={room.name} onClick={() => setSelectedId(room.id)}>
-                        <span className="weekly-room-title">{room.name}</span><small className={status.status}><i className={`room-status-dot ${status.status}`} /><b>{status.statusLabel}</b><em>·</em>{formatCapacity(room.capacity)}</small>
+                        <span className="weekly-room-title">{room.name}</span><span className="weekly-room-floor">{room.floor}층</span><small className={status.status}><i className={`room-status-dot ${status.status}`} /><b>{status.statusLabel}</b><em>·</em>{formatCapacity(room.capacity)}</small>
                         {selected.id === room.id && <span className="daily-room-selected-icon"><SelectedRoomIcon /></span>}
                       </button>
                       {weekDays.map((day) => {
@@ -2272,7 +2397,7 @@ export default function Home() {
                           <button
                             type="button"
                             className="weekly-cell-add"
-                            aria-label={`${room.name} ${formatDateLabel(day)} 빈 시간 예약하기`}
+                            aria-label={`${roomIdentity(room)} ${formatDateLabel(day)} 빈 시간 예약하기`}
                             // 한 번 클릭으로는 열리지 않게 한다. 표를 훑다가 실수로 열리는 일이 잦았다.
                             // (키보드로 Tab해 와서 누르는 것은 실수로 볼 이유가 없어 Enter/Space는 바로 연다)
                             onDoubleClick={() => askWeekdaySlot(room, day)}
@@ -2289,37 +2414,23 @@ export default function Home() {
                           >
                             <span aria-hidden="true">＋</span>
                           </button>
-                          {dayBookings.map((booking, index) => {
-                            // 칸 전체를 예약 가능 시간(09:00~18:00)으로 보고 그만큼만 차지하게 한다.
-                            // 그래야 종일 예약이 칸을 위아래로 꽉 채운다.
-                            const dayStart = minutesOf(bookingDefaults.openingTime);
-                            const dayEnd = minutesOf(bookingDefaults.closingTime);
-                            const bookingStart = Math.max(dayStart, minutesOf(booking.start));
-                            const bookingEnd = Math.min(dayEnd, minutesOf(booking.end));
-                            const top = ((bookingStart - dayStart) / (dayEnd - dayStart)) * 100;
-                            const height = Math.max(((bookingEnd - bookingStart) / (dayEnd - dayStart)) * 100, 12);
-                            // 주간 칸은 일간보다 훨씬 낮아서 단계를 한 칸씩 더 내린다.
-                            const spanMinutes = bookingEnd - bookingStart;
-                            // 90분짜리는 칸이 26px밖에 안 돼 두 줄이 안 들어간다. 2시간부터 두 줄.
-                            const sizeClass = spanMinutes >= 180 ? "wk-lg" : spanMinutes >= 120 ? "wk-md" : "wk-sm";
-                            const width = 100 / booking.laneCount;
+                          <div className="weekly-booking-list">{dayBookings.map((booking, index) => {
                             return (
                               <button
                                 type="button"
-                                className={`weekly-room-event tone-${index % 3}${isMyBooking(booking) ? " is-mine" : ""} ${sizeClass}`}
+                                className={`weekly-room-event tone-${index % 3}${isMyBooking(booking) ? " is-mine" : ""}`}
                                 key={booking.id}
-                                style={{ top: `${top}%`, height: `${height}%`, left: `${booking.lane * width}%`, width: `${width}%` }}
                                 aria-label={isMyBooking(booking) ? `내 예약 ${booking.start}–${booking.end} · 눌러서 수정하거나 삭제합니다`
                                   : `${booking.start}–${booking.end} / ${booking.owner} · ${teamOf(booking)}`}
                                 onClick={() => { setSelectedId(room.id); setDate(day); openEditor(booking); }}
                               >
-                                <b>{booking.owner}</b>
+                                <b>{booking.owner}{isMyBooking(booking) && <em className="booking-owner-badge">내 예약</em>}</b>
                                 <time>{booking.start}<span className="wk-end">–{booking.end}</span></time>
-                                <small>{teamOf(booking)}</small>
+                                <small title={teamOf(booking)}>{teamOf(booking)}</small>
                                 {isMyBooking(booking) && <ReservationHoverCard />}
                               </button>
                             );
-                          })}
+                          })}</div>
                         </div>;
                       })}
                     </div>
@@ -2334,7 +2445,7 @@ export default function Home() {
 
       {/* 빠른 예약은 작업 영역 밖으로 뺀다. 화면 맨 위부터 아래까지 한 칸으로
           쓰려면 상단바·작업영역과 형제여야 격자에 자리를 잡을 수 있다. */}
-      <aside className={`booking-panel ${bookingPanelOpen ? "" : "is-collapsed"} ${filledNotice ? "just-filled" : ""}`} id="quick-booking">
+      <aside className={`booking-panel ${bookingPanelOpen ? "" : "is-collapsed"} ${filledNotice ? "just-filled" : ""}`} id="quick-booking" style={{ "--brand-rule-y": brandRuleY === null ? undefined : `${brandRuleY}px`, "--room-section-min-height": roomSectionMinHeight === null ? undefined : `${roomSectionMinHeight}px` } as CSSProperties}>
         <button
           type="button"
           className="booking-panel-rail"
@@ -2391,6 +2502,7 @@ export default function Home() {
             {/* 입력칸만 스크롤시키고 '예약하기'는 그 아래에 늘 보이게 둔다.
                 버튼을 sticky로 띄우면 밑에 있는 칸을 덮어 버린다. */}
             <label className="sr-only" htmlFor="room-picker-select">회의실</label>
+            <div className="booking-room-section">
           <section className="room-picker-card" aria-label="room picker">
             <button
               type="button"
@@ -2460,6 +2572,8 @@ export default function Home() {
               ))}
             </select>
 
+            </div>
+
             {/* 스크롤되는 영역은 여기서부터. 회의실 카드를 이 밖에 두어야
                 스크롤 막대가 빨강 선을 가로지르지 않는다. */}
             <div className="booking-fields">
@@ -2489,31 +2603,33 @@ export default function Home() {
               {/* 고르고 나면 커서(포커스)를 놓아 준다. select는 값을 고른
                   뒤에도 포커스가 남아, 다른 칸과 달리 빨간 포커스 테두리가
                   할 일이 끝난 뒤에도 계속 떠 있는 것처럼 보였다. */}
-              <label className={timeNeedsPick ? "needs-input" : undefined}><span className="field-label">시작 시간</span><button id="start-time-select" className="time-picker-toggle" type="button" aria-haspopup="listbox" aria-expanded={timePickerOpen === "start"} onClick={() => { setRoomPickerOpen(false); setBookingDateCalendarOpen(false); setRepeatEndCalendarOpen(false); setTimePickerOpen((current) => current === "start" ? null : "start"); }}>{start}</button></label>
-              <label className={timeNeedsPick ? "needs-input" : undefined}><span className="field-label">종료 시간</span><button className="time-picker-toggle" type="button" aria-haspopup="listbox" aria-expanded={timePickerOpen === "end"} onClick={() => { setRoomPickerOpen(false); setBookingDateCalendarOpen(false); setRepeatEndCalendarOpen(false); setTimePickerOpen((current) => current === "end" ? null : "end"); }}>{end}</button></label>
+              <label className={timeNeedsPick ? "needs-input" : undefined}><span className="field-label">시작 시간</span><button id="start-time-select" className="time-picker-toggle" type="button" aria-haspopup="listbox" aria-controls={timePickerOpen === "start" ? "booking-time-options" : undefined} aria-expanded={timePickerOpen === "start"} onKeyDown={(event) => { if (event.key === "ArrowDown" || event.key === "ArrowUp") { event.preventDefault(); setTimePickerOpen("start"); } }} onClick={() => { setRoomPickerOpen(false); setBookingDateCalendarOpen(false); setRepeatEndCalendarOpen(false); setTimePickerOpen((current) => current === "start" ? null : "start"); }}>{start}</button></label>
+              <label className={timeNeedsPick ? "needs-input" : undefined}><span className="field-label">종료 시간</span><button id="end-time-select" className="time-picker-toggle" type="button" aria-haspopup="listbox" aria-controls={timePickerOpen === "end" ? "booking-time-options" : undefined} aria-expanded={timePickerOpen === "end"} onKeyDown={(event) => { if (event.key === "ArrowDown" || event.key === "ArrowUp") { event.preventDefault(); setTimePickerOpen("end"); } }} onClick={() => { setRoomPickerOpen(false); setBookingDateCalendarOpen(false); setRepeatEndCalendarOpen(false); setTimePickerOpen((current) => current === "end" ? null : "end"); }}>{end}</button></label>
               </div>
 
-              {timePickerOpen && <div className="time-picker-popover" role="listbox" aria-label={timePickerOpen === "start" ? "예약 가능한 시작 시간" : "예약 가능한 종료 시간"} onPointerDown={(event) => event.stopPropagation()}>
+              {timePickerOpen && <div id="booking-time-options" className="time-picker-popover" role="listbox" tabIndex={-1} aria-label={timePickerOpen === "start" ? "예약 가능한 시작 시간" : "예약 가능한 종료 시간"} onKeyDown={handleTimePickerKey} onPointerDown={(event) => event.stopPropagation()}>
                 <div className="time-picker-popover-head"><b>{timePickerOpen === "start" ? "시작 시간" : "종료 시간"}</b><span>예약 가능한 시간만 표시</span></div>
                 <div className="time-picker-slots">
                   {timePickerOpen === "start" && availableStartOptions.map((time) => (
                     <button
                       type="button"
                       role="option"
+                      tabIndex={-1}
                       aria-selected={start === time}
                       className={start === time ? "selected" : ""}
                       key={time}
-                      onClick={() => { changeStart(time); setTimePickerOpen(null); }}
+                      onClick={() => { changeStart(time); closeTimePicker(); }}
                     >{time}</button>
                   ))}
                   {timePickerOpen === "end" && availableEndOptions.map((time) => (
                     <button
                       type="button"
                       role="option"
+                      tabIndex={-1}
                       aria-selected={end === time}
                       className={end === time ? "selected" : ""}
                       key={time}
-                      onClick={() => { changeEnd(time); setTimePickerOpen(null); }}
+                      onClick={() => { changeEnd(time); closeTimePicker(); }}
                     >{time}</button>
                   ))}
                 </div>
@@ -2686,9 +2802,8 @@ export default function Home() {
             </div>
             </div>
 
-            {/* 회의 목적은 선택 항목이다. 그래도 예약자 바로 밑에 둔다 —
-                표의 칸에 적히는 이름이라 대부분 채우게 되는 칸이다.
-                비워 두면 서버가 기본 이름(site.json의 defaultPurpose)을 넣는다. */}
+            <details className="booking-extra-details" open={extraDetailsOpen} onToggle={(event) => setExtraDetailsOpen(event.currentTarget.open)}>
+            <summary>추가 정보 <span>(선택){purpose.trim() || attendees.length ? " · 입력됨" : ""}</span></summary>
             <label>
               <span className="field-label">회의 목적</span>
               <input
@@ -2729,6 +2844,7 @@ export default function Home() {
                 참석자 추가 <em>(선택)</em>
               </button>
             )}
+            </details>
 
             </section>
 
@@ -2736,6 +2852,12 @@ export default function Home() {
             </div>
 
             <div className="booking-submit">
+            <div className={`booking-selection-summary${selectedTimeConflict ? " is-conflict" : ""}`} data-availability={timeNeedsPick ? "unknown" : selectedTimeConflict ? "conflict" : bookingBlockReason ? "closed" : "available"}>
+              <strong>{roomIdentity(selected)}</strong>
+              <span>{formatDateLabel(date)} · {timeNeedsPick ? "시간을 선택해 주세요" : `${start}–${end} · 총 ${spokenDuration(minutesOf(end) - minutesOf(start))}`}</span>
+              {repeatWeekly && <small>반복 {reservationDates.length}일{selectedTimeConflict ? ` · ${reservationDates.length - conflictDates.length}일 예약 가능` : ""}</small>}
+              <small id="booking-selection-status" role="status">{timeNeedsPick ? "시작·종료 시간을 먼저 확인해 주세요." : bookingBlockReason || (selectedTimeConflict ? "일부 날짜에 예약이 겹칩니다. 가능한 날짜를 확인할 수 있습니다." : "선택 시간 예약 가능")}</small>
+            </div>
             {notice && <div className={`notice ${notice.includes("완료") ? "success" : "error"}`}>{notice}</div>}
             {selectedTimeConflict && !notice && <div className="notice error booking-conflict-notice"><b>이미 예약된 시간입니다.</b><span>다른 시간을 선택해 주세요.</span></div>}
             {selectedTimeConflict && bookingAlternatives.length > 0 && <section className="booking-alternatives" aria-label="예약 가능한 대안">
@@ -2751,9 +2873,9 @@ export default function Home() {
                 </button>
               )}
             </section>}
-            <button id="reserve-button" className="reserve-button" type="submit" disabled={mutationBusy || !authReady}>
+            <button id="reserve-button" className="reserve-button" type="submit" aria-describedby="booking-selection-status" disabled={mutationBusy || !authReady || Boolean(bookingBlockReason)}>
               <span className="reserve-button-meta">
-                <span className="reserve-button-room">{selected.name}</span>
+                <span className="reserve-button-room">{roomIdentity(selected)}</span>
                 {/* 반복 예약이면 몇 건이 만들어지는지 버튼이 직접 말해야 한다.
                     회의실과 시간을 한 줄에 묶고, 행동은 아래에서 크게 강조한다. */}
                 <span className="reserve-button-time">
@@ -2761,7 +2883,7 @@ export default function Home() {
                 </span>
               </span>
               <strong className="reserve-button-action">
-                {submitting ? "저장 중…" : !authReady ? "로그인 확인 중…" : selectedTimeConflict && conflictDates.length < reservationDates.length ? "예약 가능한 날짜 확인" : "예약하기"}
+                {submitting ? "저장 중…" : !authReady ? "로그인 확인 중…" : bookingBlockReason ? "예약 불가" : selectedTimeConflict && conflictDates.length < reservationDates.length ? "예약 가능한 날짜 확인" : "예약하기"}
               </strong>
             </button>
             </div>
@@ -2773,10 +2895,11 @@ export default function Home() {
           <h2 id="booking-confirm-title">예약 내용을 확인해 주세요</h2>
           <p>아래 내용으로 예약을 진행합니다.</p>
           <div className="early-summary booking-confirm-summary">
-            <b>{selected.name}</b>
-            <span>{formatDateLabel(date)} · {start}–{end}</span>
+            <b>{roomIdentity(selected)}</b>
+            <span>{formatDateLabel(submitPreviewDates[0])} · {start}–{end}</span>
             <span>{spokenDuration(minutesOf(end) - minutesOf(start))}{submitPreviewDates.length > 1 ? ` · ${submitPreviewDates.length}회` : ""}</span>
             {purpose.trim() && <span>{purpose.trim()}</span>}
+            {submitPreviewDates.length > 1 && <details className="booking-confirm-dates"><summary>{submitPreviewDates.length}회 예약 날짜 확인</summary><ul>{submitPreviewDates.map((day) => <li key={day}>{formatDateLabel(day)}</li>)}</ul></details>}
           </div>
           <div className="early-foot">
             <button type="button" onClick={() => setSubmitPreviewDates(null)}>수정하기</button>
@@ -2837,7 +2960,7 @@ export default function Home() {
                     <tr key={booking.id} className={`${upcoming ? "" : "is-past"} ${picked ? "is-picked" : ""}`.trim() || undefined}>
                       <td className="my-booking-date">{formatDateLabel(booking.date)}</td>
                       <td className="my-booking-time">{booking.start}–{booking.end}</td>
-                      <td className="my-booking-room">{roomById(booking.roomId)?.name}</td>
+                      <td className="my-booking-room">{roomIdentity(roomById(booking.roomId))}</td>
                       <td className="my-booking-team">
                         {booking.purpose} · {teamOf(booking)}
                       </td>
@@ -2975,7 +3098,7 @@ export default function Home() {
           <h2 id="early-end-title">지금 끝낼까요?</h2>
           <p>남은 시간이 바로 풀려서 다른 사람이 예약할 수 있게 됩니다.</p>
           <div className="early-summary">
-            <b>{roomById(earlyEnd.roomId)?.name} · {earlyEnd.purpose}</b>
+            <b>{roomIdentity(roomById(earlyEnd.roomId))} · {earlyEnd.purpose}</b>
             <span>{earlyEnd.start}–{earlyEnd.end} → <em>{earlyEnd.start}–{earlyEndTime(earlyEnd)}</em></span>
             <span className="early-free">{spokenDuration(minutesOf(earlyEnd.end) - minutesOf(earlyEndTime(earlyEnd)))} 다시 열립니다</span>
           </div>
@@ -2993,7 +3116,7 @@ export default function Home() {
           <h2 id="repeat-ask-title">{repeatAsk.conflicts.length}일은 이미 차 있어요</h2>
           <p>그 날만 빼고 나머지를 예약할 수 있습니다.</p>
           <div className="early-summary">
-            <b>{selected.name} · {start}–{end}</b>
+            <b>{roomIdentity(selected)} · {start}–{end}</b>
             <span className="repeat-ask-list">
               {repeatAsk.conflicts.map((day) => {
                 const taken = bookings.find(
@@ -3037,7 +3160,7 @@ export default function Home() {
                 <span className="cancel-ask-list">
                   {picked.map((booking) => (
                     <em key={booking.id}>
-                      <b>{roomById(booking.roomId)?.name ?? booking.roomId}</b>
+                      <b>{roomIdentity(roomById(booking.roomId))}</b>
                       {formatDateLabel(booking.date)} · {booking.start}–{booking.end}
                       <i>{booking.purpose}</i>
                     </em>

@@ -2052,7 +2052,12 @@ button {
 .booking-panel:not(.is-collapsed) .booking-title .booking-title-state .draft-chip {
   margin: 0 !important;
   padding: 5px 9px;
-  font-size: 11px;
+  font-size: 13px;
+}
+
+.booking-panel:not(.is-collapsed) .booking-title .booking-title-state .draft-chip::before {
+  width: 9px;
+  height: 9px;
 }
 
 .schedule-hero .schedule-floor-switch button {
@@ -4180,9 +4185,9 @@ button {
   align-items: center;
   justify-content: center;
   gap: 5px;
-  height: 84px;
-  min-height: 84px;
-  padding: 8px 16px;
+  height: 76px;
+  min-height: 76px;
+  padding: 6px 16px;
   line-height: 1.12;
 }
 
@@ -4218,9 +4223,9 @@ button {
 .booking-panel:not(.is-collapsed) .booking-submit .reserve-button > .reserve-button-action {
   margin-top: 1px;
   color: #fff;
-  font-size: 23px;
+  font-size: 25px;
   font-weight: 800;
-  letter-spacing: 0;
+  letter-spacing: 0.14em;
 }
 
 .booking-panel:not(.is-collapsed) .booking-submit .reserve-button:disabled > .reserve-button-meta,
@@ -4236,12 +4241,12 @@ button {
 }
 
 .booking-panel:not(.is-collapsed) .booking-submit .reserve-button {
-  flex: 0 0 84px;
+  flex: 0 0 76px;
   width: 100%;
-  height: 84px;
-  min-height: 84px;
+  height: 76px;
+  min-height: 76px;
   margin-top: 0;
-  padding: 8px 16px;
+  padding: 6px 16px;
   overflow: hidden;
 }
 
@@ -4326,19 +4331,130 @@ button {
   -webkit-backdrop-filter: blur(16px) saturate(120%);
 }
 
+.booking-panel:not(.is-collapsed) .booking-section-heading {
+  gap: 9px;
 }
 
 .booking-panel:not(.is-collapsed) .booking-section-heading > span {
-  display: grid;
-  place-items: center;
-  width: 22px;
-  height: 22px;
-  min-width: 22px;
-  flex: 0 0 22px;
-  border-radius: 999px;
-  background: #17223a;
-  color: #fff;
-  font-size: 11px;
-  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  flex: 0 0 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  background: #eef1f5;
+  color: #19253c;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
   font-variant-numeric: tabular-nums;
+}
+
+/* 번호 앞에 붙던 0이 사각형 안의 숫자와 겹치지 않도록 제거한다. */
+.booking-panel:not(.is-collapsed) .booking-section-heading > span::before {
+  content: none;
+}
+
+/* 지난 예약의 한 달 조회 범위를 목록과 같은 기준으로 안내한다. */
+.my-bookings-dialog .my-bookings-summary {
+  flex-wrap: wrap;
+  align-items: center;
+  row-gap: 6px;
+}
+
+.my-bookings-dialog .my-bookings-history-range {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+/* 빠른 예약 B 정돈형: 제목·입력칸·CTA의 공통 좌우선과 상하 여백. */
+.app-shell > .booking-panel:not(.is-collapsed) {
+  --booking-balanced-inset: 24px;
+  --booking-balanced-section-gap: 24px;
+  padding: var(--booking-balanced-inset);
+  background: #fafbfc;
+}
+
+.app-shell .booking-panel:not(.is-collapsed) .booking-panel-content {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  background: transparent;
+}
+
+.app-shell .booking-panel:not(.is-collapsed) .booking-title {
+  width: 100%;
+  min-height: 76px;
+  height: 76px;
+  flex: 0 0 76px;
+  margin: 0;
+  border-radius: 10px;
+}
+
+.app-shell .booking-panel:not(.is-collapsed) .booking-title h2 {
+  font-size: 20px;
+}
+
+.app-shell .booking-panel:not(.is-collapsed) .booking-room-heading {
+  width: 100%;
+  flex: none;
+  margin: var(--booking-balanced-section-gap) 0 12px;
+}
+
+.app-shell .booking-panel:not(.is-collapsed) form {
+  width: 100%;
+  min-height: 0;
+  flex: 1 1 0%;
+  background: transparent;
+}
+
+.app-shell .booking-panel:not(.is-collapsed) .room-picker-card {
+  width: 100%;
+  max-width: none;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.app-shell .booking-panel:not(.is-collapsed) .booking-fields {
+  width: 100%;
+  min-height: 0;
+  flex: 1 1 0%;
+  gap: 0;
+  margin: 12px 0 0;
+  padding: 0;
+  background: transparent;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.app-shell .booking-panel:not(.is-collapsed) .booking-form-section {
+  padding: var(--booking-balanced-section-gap) 0;
+}
+
+.app-shell .booking-panel:not(.is-collapsed) .booking-submit {
+  width: 100%;
+  flex: none;
+  margin: var(--booking-balanced-section-gap) 0 0;
+  padding: 0;
+  border-top: 0;
+  background: transparent;
+}
+
+.app-shell .booking-panel:not(.is-collapsed) .booking-submit .reserve-button {
+  border-radius: 10px;
+  box-shadow: none;
+}
+
+@media (max-width: 1150px) {
+  .app-shell > .booking-panel:not(.is-collapsed) {
+    --booking-balanced-inset: 16px;
+    --booking-balanced-section-gap: 18px;
+  }
 }

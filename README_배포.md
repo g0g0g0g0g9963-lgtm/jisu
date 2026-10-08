@@ -1,3 +1,5 @@
+> 2026-10-08 보안 수정본: 배포 전에 `SECURITY_FIXES_20261008.md`를 먼저 읽으세요. 운영 SSO 필수, 기존 예약 소유권 매핑 필요.
+
 ﻿# BDO 서울오피스 회의실 예약 — NAS 배포판 v2
 
 > 현재 배포 패키지 버전: v2.1 (2026-09-07)
@@ -140,7 +142,7 @@ npm run dev:web        # 5173 포트, /api는 3000으로 프록시
 ## 4. Microsoft SSO (Entra ID)
 
 v2.1부터 Microsoft 365 계정 로그인을 지원한다. `.env`의 `MS_TENANT_ID`, `MS_CLIENT_ID`,
-`MS_CLIENT_SECRET`, `APP_BASE_URL` 4개를 모두 채우면 켜지고, 하나라도 비면 익명 모드다.
+`MS_CLIENT_SECRET`, `APP_BASE_URL` 4개를 모두 채워야 실행됩니다. 일부 누락은 항상 기동 오류이며, 운영에서는 익명 모드를 허용하지 않습니다. 개발에서만 SSO 네 값을 모두 비우고 ALLOW_ANONYMOUS=1을 명시합니다.
 
 SSO가 켜지면:
 
@@ -179,5 +181,5 @@ sudo docker compose logs --tail 5    # "[auth] Microsoft SSO 사용" 확인
 ## 5. 운영 전 확인
 
 1. 배포용 ZIP에는 로컬 시험 예약 DB와 `.env`가 포함되지 않는다. 기존 NAS의 `data/`와 `.env`는 덮어쓰지 말고 유지한다.
-2. SSO 이전에 만들어진 예약(시드 포함)은 등록 이메일이 없어서, 취소 시 이름 일치로만 확인한다.
+2. SSO 이전 예약은 이름으로 권한을 인정하지 않습니다. 검증된 계정 ID/이메일로 수동 연결한 뒤 수정·취소할 수 있습니다.
 3. 예약 수정, 반복 예약, 내 예약 조회·취소 기능은 현재 배포판에 포함되어 있다.

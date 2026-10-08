@@ -49,6 +49,8 @@ export function useNow(intervalMs: number): Date | null {
 }
 
 function createTextStore(key: string) {
+  let memoryValue = "";
+  let storageAvailable = true;
   const listeners = new Set<() => void>();
   const notify = () => {
     for (const listener of listeners) listener();
@@ -66,17 +68,21 @@ function createTextStore(key: string) {
     },
     getSnapshot() {
       try {
-        return window.localStorage.getItem(key) ?? "";
+        if (storageAvailable) memoryValue = window.localStorage.getItem(key) ?? "";
+        return memoryValue;
       } catch {
         // 저장소를 막아둔 브라우저에서도 화면은 정상 동작해야 한다.
-        return "";
+        storageAvailable = false;
+        return memoryValue;
       }
     },
     write(value: string) {
+      memoryValue = value;
       try {
         window.localStorage.setItem(key, value);
       } catch {
-        // 저장만 실패할 뿐 화면 동작에는 영향이 없다.
+        storageAvailable = false;
+        // 저장소가 막혀도 현재 화면에서는 입력값을 유지한다.
       }
       notify();
     },

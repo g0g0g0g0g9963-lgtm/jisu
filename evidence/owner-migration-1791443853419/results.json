@@ -1,0 +1,36 @@
+{
+  "results": [
+    {
+      "name": "Default dry-run leaves database byte-identical and plans only exact ID",
+      "pass": true
+    },
+    {
+      "name": "Apply without offline confirmation rejected with no DB changes",
+      "pass": true
+    },
+    {
+      "name": "Wrong owner label rejected with no DB changes",
+      "pass": true
+    },
+    {
+      "name": "Explicit apply succeeds",
+      "pass": true
+    },
+    {
+      "name": "Only confirmed ID assigned; namesake remains untouched",
+      "pass": true
+    },
+    {
+      "name": "Automatic pre-migration backup preserves original database",
+      "pass": true
+    },
+    {
+      "name": "Migrated database passes SQLite integrity_check",
+      "pass": true
+    },
+    {
+      "name": "Already-assigned booking rejected without overwriting owner",
+      "pass": true
+    }
+  ]
+}

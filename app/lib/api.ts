@@ -29,9 +29,18 @@ function redirectToLogin(): never {
 export async function fetchMe(): Promise<CurrentUser | null> {
   const response = await fetch("/api/me", { headers: { accept: "application/json" } });
   if (response.status === 401) redirectToLogin();
-  if (!response.ok) return null;
-  const payload = (await response.json()) as { user: CurrentUser | null };
-  return payload.user;
+  if (!response.ok) throw new Error(`로그인 상태를 확인하지 못했습니다. (${response.status})`);
+  const payload: unknown = await response.json();
+  if (!payload || typeof payload !== "object" || !("user" in payload)) {
+    throw new Error("로그인 상태 응답을 확인할 수 없습니다.");
+  }
+  const user = payload.user;
+  if (user === null) return null;
+  if (typeof user !== "object" || !("name" in user) || !("email" in user)
+    || typeof user.name !== "string" || typeof user.email !== "string" || !user.name.trim() || !user.email.trim()) {
+    throw new Error("로그인 사용자 정보가 올바르지 않습니다.");
+  }
+  return { name: user.name, email: user.email };
 }
 
 export async function fetchBookings(): Promise<Booking[]> {

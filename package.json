@@ -1,16 +1,16 @@
 {
   "name": "bdo-meeting-rooms",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "private": true,
   "type": "module",
   "engines": {
-    "node": ">=22.5.0"
+    "node": ">=24.0.0"
   },
   "scripts": {
-    "dev:api": "node --watch server/index.mjs",
+    "dev:api": "node --env-file-if-exists=.env --watch server/index.mjs",
     "dev:web": "vite",
     "build": "vite build",
-    "start": "node server/index.mjs",
+    "start": "node --env-file-if-exists=.env server/index.mjs",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -25,6 +25,7 @@
     "react-dom": "19.2.6",
     "tailwindcss": "4.2.1",
     "typescript": "5.9.3",
-    "vite": "8.0.13"
-  }
+    "vite": "8.0.16"
+  },
+  "packageManager": "npm@11.11.0"
 }

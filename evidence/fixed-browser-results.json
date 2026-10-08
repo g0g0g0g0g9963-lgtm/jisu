@@ -1,0 +1,49 @@
+{
+  "date": "2026-10-08",
+  "method": "Codex in-app browser, local fake data; development UI then final dist via Express",
+  "checks": [
+    {
+      "id": "UI01",
+      "status": "PASS",
+      "title": "390px 문서 폭",
+      "detail": "viewport=390, document.scrollWidth=390 (수정 전1000)"
+    },
+    {
+      "id": "UI02",
+      "status": "PASS",
+      "title": "모바일 빠른 예약 패널",
+      "detail": "390x844에서 필드 스크롤과 고정 예약 버튼 표시"
+    },
+    {
+      "id": "UI03",
+      "status": "PASS",
+      "title": "모바일 예약 생성",
+      "detail": "QA 수정검증, 2026-10-09 15:00–16:00, 완료 알림과 일정표 반영"
+    },
+    {
+      "id": "UI04",
+      "status": "PASS",
+      "title": "1366px 일간·예약패널",
+      "detail": "4개 Conference Room 번호까지 줄바꿈으로 표시"
+    },
+    {
+      "id": "UI05",
+      "status": "PASS",
+      "title": "12층 주간 시간 선택 보호",
+      "detail": "빈 날짜 더블클릭 후 제출 시 시간 직접 선택 안내, 확인창 진입 차단"
+    },
+    {
+      "id": "UI06",
+      "status": "PASS",
+      "title": "최종 dist 직접 실행",
+      "detail": "Vite 없이 Express에서 배포빌드 로드,390px 문서 폭390"
+    },
+    {
+      "id": "UI07",
+      "status": "PASS",
+      "title": "모바일 내 예약 팝업",
+      "detail": "뷰포트390, 팝업 left18/right372, 예약 표 안에서만 가로 스크롤"
+    }
+  ],
+  "cleanup": "Temporary browser closed and viewport reset; local UI server stopped at completion"
+}

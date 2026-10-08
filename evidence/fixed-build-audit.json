@@ -1,0 +1,33 @@
+{
+  "date": "2026-10-08",
+  "runtime": "Node 24.14.1, npm 11.11.0",
+  "cleanInstall": {
+    "command": "npm ci --ignore-scripts --no-audit --no-fund",
+    "exitCode": 0
+  },
+  "typecheck": {
+    "command": "npm run typecheck",
+    "exitCode": 0
+  },
+  "build": {
+    "command": "npm run build",
+    "exitCode": 0,
+    "assets": [
+      "index-C4M4D4w8.css",
+      "index-BEP8FeaW.js"
+    ]
+  },
+  "audit": {
+    "command": "NODE_OPTIONS=--use-system-ca npm audit --json --ignore-scripts",
+    "exitCode": 0,
+    "vulnerabilities": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0,
+      "total": 0
+    }
+  },
+  "scope": "Runtime from original app in local QA copy; no deployment; real SSO untested"
+}

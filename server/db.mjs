@@ -31,7 +31,14 @@ const bookingColumns = db.prepare("SELECT name FROM pragma_table_info('bookings'
 if (!bookingColumns.includes("owner_email")) {
   db.exec("ALTER TABLE bookings ADD COLUMN owner_email TEXT NOT NULL DEFAULT ''");
 }
-// 참석자 목록. JSON 배열 문자열로 담는다(이름에 쉼표가 있어도 안전하다).
+// Preserve stable account identity and exact repeated-booking membership.
+if (!bookingColumns.includes("owner_id")) {
+  db.exec("ALTER TABLE bookings ADD COLUMN owner_id TEXT NOT NULL DEFAULT ''");
+}
+if (!bookingColumns.includes("series_id")) {
+  db.exec("ALTER TABLE bookings ADD COLUMN series_id TEXT");
+}
+// 참석자 목록은 JSON 배열로 보관한다.
 if (!bookingColumns.includes("attendees")) {
   db.exec("ALTER TABLE bookings ADD COLUMN attendees TEXT NOT NULL DEFAULT '[]'");
 }
@@ -51,27 +58,27 @@ db.exec(`
 `);
 
 const selectAll = db.prepare(
-  "SELECT id, room_id, date, start, end, owner, team, purpose, attendees FROM bookings ORDER BY date, start",
+  "SELECT id, room_id, date, start, end, owner, owner_id, owner_email, series_id, team, purpose, attendees FROM bookings ORDER BY date, start",
 );
 const selectRange = db.prepare(
-  "SELECT id, room_id, date, start, end, owner, team, purpose, attendees FROM bookings WHERE date >= ? AND date <= ? ORDER BY date, start",
+  "SELECT id, room_id, date, start, end, owner, owner_id, owner_email, series_id, team, purpose, attendees FROM bookings WHERE date >= ? AND date <= ? ORDER BY date, start",
 );
 const selectOverlap = db.prepare(
   "SELECT id, room_id, date, start, end, owner FROM bookings WHERE room_id = ? AND date = ? AND start < ? AND end > ? LIMIT 1",
 );
-const selectById = db.prepare("SELECT id, owner, owner_email, date FROM bookings WHERE id = ?");
+const selectById = db.prepare("SELECT id, owner, owner_id, owner_email, date, end FROM bookings WHERE id = ?");
 // 수정할 때는 자기 자신을 겹침 검사에서 빼야 한다.
 const selectOverlapExcept = db.prepare(
   "SELECT id, room_id, date, start, end, owner FROM bookings WHERE room_id = ? AND date = ? AND start < ? AND end > ? AND id <> ? LIMIT 1",
 );
 const selectFullById = db.prepare(
-  "SELECT id, room_id, date, start, end, owner, owner_email, team, purpose, attendees FROM bookings WHERE id = ?",
+  "SELECT id, room_id, date, start, end, owner, owner_id, owner_email, series_id, team, purpose, attendees FROM bookings WHERE id = ?",
 );
 const updateById = db.prepare(
   "UPDATE bookings SET room_id = ?, date = ?, start = ?, end = ?, team = ?, purpose = ?, attendees = ? WHERE id = ?",
 );
 const insertBooking = db.prepare(
-  "INSERT INTO bookings (id, room_id, date, start, end, owner, owner_email, team, purpose, attendees, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+  "INSERT INTO bookings (id, room_id, date, start, end, owner, owner_id, owner_email, series_id, team, purpose, attendees, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
 );
 const deleteById = db.prepare("DELETE FROM bookings WHERE id = ?");
 const countAll = db.prepare("SELECT COUNT(*) AS total FROM bookings");
@@ -95,7 +102,7 @@ const parseAttendees = (value) => {
 };
 
 /** DB 행(snake_case)을 프런트엔드 Booking 형태(camelCase)로 변환. */
-const toBooking = (row) => ({
+const toBooking = (row, identity) => ({
   id: row.id,
   roomId: row.room_id,
   date: row.date,
@@ -105,11 +112,13 @@ const toBooking = (row) => ({
   team: row.team || undefined,
   purpose: row.purpose,
   attendees: parseAttendees(row.attendees),
+  seriesId: row.series_id || null,
+  ...(identity?.sso ? { isMine: isOwner(row, identity) } : {}),
 });
 
-export function listBookings({ from, to } = {}) {
+export function listBookings({ from, to, identity } = {}) {
   const rows = from && to ? selectRange.all(from, to) : selectAll.all();
-  return rows.map(toBooking);
+  return rows.map((row) => toBooking(row, identity));
 }
 
 export function countBookings() {
@@ -122,9 +131,10 @@ export function countBookings() {
  * (프런트엔드도 같은 검사를 하지만, 두 사람이 동시에 누르는 경우의
  *  최종 판정은 반드시 서버가 한다.)
  */
-export function createBookings({ roomId, dates, start, end, owner, ownerEmail = "", team, purpose, attendees = [] }) {
+export function createBookings({ roomId, dates, start, end, owner, ownerId = "", ownerEmail = "", team = "", purpose, attendees = [], identity }) {
   const createdAt = new Date().toISOString();
   const attendeesJson = JSON.stringify(attendees);
+  const seriesId = dates.length > 1 ? "series-" + crypto.randomUUID() : null;
   db.exec("BEGIN IMMEDIATE");
   try {
     // 먼저 모든 날짜를 훑어 안 되는 날을 전부 모은다. 첫 번째만 알려 주면
@@ -144,8 +154,9 @@ export function createBookings({ roomId, dates, start, end, owner, ownerEmail = 
     const created = [];
     for (const date of dates) {
       const id = `bk-${crypto.randomUUID()}`;
-      insertBooking.run(id, roomId, date, start, end, owner, ownerEmail, team, purpose, attendeesJson, createdAt);
-      created.push({ id, roomId, date, start, end, owner, team: team || undefined, purpose, attendees });
+      insertBooking.run(id, roomId, date, start, end, owner, ownerId, ownerEmail, seriesId, team, purpose, attendeesJson, createdAt);
+      created.push(toBooking({ id, room_id: roomId, date, start, end, owner, owner_id: ownerId,
+        owner_email: ownerEmail, series_id: seriesId, team, purpose, attendees: attendeesJson }, identity));
     }
     db.exec("COMMIT");
     return { ok: true, created };
@@ -155,20 +166,27 @@ export function createBookings({ roomId, dates, start, end, owner, ownerEmail = 
   }
 }
 
-/**
- * 예약 취소. SSO 모드에서는 로그인 이메일로, 익명 모드에서는 이름으로 본인을 확인한다.
- * (과거 데이터는 owner_email이 비어 있을 수 있어 그때는 이름 비교로 폴백)
- */
-const isOwner = (row, { owner = "", ownerEmail = "" }) =>
-  (ownerEmail && row.owner_email ? row.owner_email === ownerEmail : row.owner === owner);
+/** SSO identity never falls back to a display name. Email is only for rows without an ID. */
+const normalized = (value) => typeof value === "string" ? value.trim().toLowerCase() : "";
+const isOwner = (row, { owner = "", ownerId = "", ownerEmail = "", sso = false } = {}) => {
+  if (sso) {
+    const storedId = normalized(row.owner_id);
+    if (storedId) return Boolean(normalized(ownerId)) && storedId === normalized(ownerId);
+    const storedEmail = normalized(row.owner_email);
+    return Boolean(storedEmail && normalized(ownerEmail)) && storedEmail === normalized(ownerEmail);
+  }
+  return Boolean(owner) && row.owner === owner;
+};
+const hasEnded = (row, today, now) => Boolean(today) &&
+  (row.date < today || (row.date === today && Boolean(now) && row.end <= now));
 
-export function deleteBooking(id, identity = {}, { today = "" } = {}) {
+export function deleteBooking(id, identity = {}, { today = "", now = "" } = {}) {
   const row = selectById.get(id);
   if (!row) return { ok: false, reason: "not-found" };
   if (!isOwner(row, identity)) return { ok: false, reason: "forbidden" };
   // 지난 예약은 취소할 수 없다. 화면에서도 그 버튼을 숨기지만, API를 직접
   // 불러도 막히도록 여기서도 확인한다.
-  if (today && row.date < today) return { ok: false, reason: "past" };
+  if (hasEnded(row, today, now)) return { ok: false, reason: "past" };
   deleteById.run(id);
   return { ok: true };
 }
@@ -177,15 +195,25 @@ export function deleteBooking(id, identity = {}, { today = "" } = {}) {
  * 예약 내용 수정. 본인 확인은 취소와 같은 규칙을 쓴다.
  * 참석자를 넘기지 않으면 기존 값을 그대로 둔다.
  */
-export function updateBooking(id, identity = {}, patch, { today = "" } = {}) {
+export function updateBooking(id, identity = {}, patch, { today = "", now = "", maxDate = "" } = {}) {
   const row = selectFullById.get(id);
   if (!row) return { ok: false, reason: "not-found" };
   if (!isOwner(row, identity)) return { ok: false, reason: "forbidden" };
 
   // 이미 지나간 예약은 통째로 고칠 수 없다. 지난 예약은 기록으로 남아야
   // 하고, 지난 날짜로 "옮기는" 것도 같은 이유로 막는다.
-  if (today && row.date < today) return { ok: false, reason: "past" };
+  if (hasEnded(row, today, now)) return { ok: false, reason: "past" };
   if (today && patch.date < today) return { ok: false, reason: "past" };
+  if (maxDate && patch.date > maxDate) return { ok: false, reason: "too-far" };
+  if (today && now && patch.date === today && patch.start < now) {
+    // Keep an ongoing booking's room/date/start stable. Its end may move to
+    // the current or a future slot; the overlap check below still applies.
+    const sameOngoingStart = row.date === today && row.start < now && row.end > now &&
+      patch.roomId === row.room_id && patch.start === row.start;
+    if (!sameOngoingStart || patch.end < now) {
+      return { ok: false, reason: "past-time" };
+    }
+  }
 
   const team = patch.team ?? row.team;
   const purpose = patch.purpose ?? row.purpose;
@@ -214,7 +242,7 @@ export function updateBooking(id, identity = {}, patch, { today = "" } = {}) {
     booking: toBooking({
       ...row, ...patch, room_id: patch.roomId, team, purpose,
       attendees: JSON.stringify(attendees),
-    }),
+    }, identity),
   };
 }
 

@@ -1,0 +1,296 @@
+{
+  "testedAt": "2026-10-08T07:28:41.866Z",
+  "method": "Actual TypeScript AST handlers executed in isolated VM; state setters captured separately to preserve React closure semantics; not browser end-to-end",
+  "counts": {
+    "total": 48,
+    "pass": 48,
+    "fail": 0
+  },
+  "results": [
+    {
+      "id": "F01",
+      "title": "Weekdays-only weekend interval is empty",
+      "status": "PASS"
+    },
+    {
+      "id": "FC01",
+      "title": "Weekdays include following Monday",
+      "status": "PASS"
+    },
+    {
+      "id": "FC-HOLIDAY",
+      "title": "Weekdays exclude configured public holiday",
+      "status": "PASS"
+    },
+    {
+      "id": "FC-REVERSED",
+      "title": "Repeat reversed interval is empty",
+      "status": "PASS"
+    },
+    {
+      "id": "F02",
+      "title": "Matching independent bookings remain separate",
+      "status": "PASS"
+    },
+    {
+      "id": "SERIES-POSITIVE",
+      "title": "True series siblings stay grouped after a member edit",
+      "status": "PASS"
+    },
+    {
+      "id": "OWN-server-true",
+      "title": "Ownership guard: server-true",
+      "status": "PASS"
+    },
+    {
+      "id": "OWN-server-false",
+      "title": "Ownership guard: server-false",
+      "status": "PASS"
+    },
+    {
+      "id": "OWN-sso-no-field",
+      "title": "Ownership guard: sso-no-field",
+      "status": "PASS"
+    },
+    {
+      "id": "OWN-anonymous",
+      "title": "Ownership guard: anonymous",
+      "status": "PASS"
+    },
+    {
+      "id": "OWN-not-ready",
+      "title": "Ownership guard: not-ready",
+      "status": "PASS"
+    },
+    {
+      "id": "ENDED-SAME-DAY",
+      "title": "Same-day elapsed reservation is ended",
+      "status": "PASS"
+    },
+    {
+      "id": "ENDED-BOUNDARY",
+      "title": "Booking ending exactly now is ended",
+      "status": "PASS"
+    },
+    {
+      "id": "ENDED-ONGOING",
+      "title": "Ongoing reservation is not ended",
+      "status": "PASS"
+    },
+    {
+      "id": "F03",
+      "title": "Partial repeat reaches exact free-date confirmation",
+      "status": "PASS"
+    },
+    {
+      "id": "EMPTY-REPEAT",
+      "title": "Empty repeated dates cannot reach confirmation",
+      "status": "PASS"
+    },
+    {
+      "id": "F04",
+      "title": "Weekly booking requires explicit time selection",
+      "status": "PASS"
+    },
+    {
+      "id": "SUBMIT-PAST-TODAY",
+      "title": "Past start today cannot reach preview",
+      "status": "PASS"
+    },
+    {
+      "id": "SUBMIT-VALID",
+      "title": "Valid future draft reaches preview",
+      "status": "PASS"
+    },
+    {
+      "id": "ALTERNATIVE-all-free",
+      "title": "Room alternative covers all valid dates: all-free",
+      "status": "PASS"
+    },
+    {
+      "id": "ALTERNATIVE-later-conflict",
+      "title": "Room alternative covers all valid dates: later-conflict",
+      "status": "PASS"
+    },
+    {
+      "id": "ALTERNATIVE-empty",
+      "title": "Room alternative covers all valid dates: empty",
+      "status": "PASS"
+    },
+    {
+      "id": "ALTERNATIVE-past-today",
+      "title": "Room alternative covers all valid dates: past-today",
+      "status": "PASS"
+    },
+    {
+      "id": "ASYNC-sendBooking-network",
+      "title": "Mutation resolves busy state and reports result: sendBooking/network",
+      "status": "PASS",
+      "busy": false,
+      "requestCalls": 1,
+      "hasNotice": true
+    },
+    {
+      "id": "ASYNC-sendBooking-http",
+      "title": "Mutation resolves busy state and reports result: sendBooking/http",
+      "status": "PASS",
+      "busy": false,
+      "requestCalls": 1,
+      "hasNotice": true
+    },
+    {
+      "id": "ASYNC-sendBooking-success",
+      "title": "Mutation resolves busy state and reports result: sendBooking/success",
+      "status": "PASS",
+      "busy": false,
+      "requestCalls": 1,
+      "hasNotice": true
+    },
+    {
+      "id": "BUSY-sendBooking",
+      "title": "Busy mutation does not dispatch again: sendBooking",
+      "status": "PASS"
+    },
+    {
+      "id": "ASYNC-saveEdit-network",
+      "title": "Mutation resolves busy state and reports result: saveEdit/network",
+      "status": "PASS",
+      "busy": false,
+      "requestCalls": 1,
+      "hasNotice": true
+    },
+    {
+      "id": "ASYNC-saveEdit-http",
+      "title": "Mutation resolves busy state and reports result: saveEdit/http",
+      "status": "PASS",
+      "busy": false,
+      "requestCalls": 1,
+      "hasNotice": true
+    },
+    {
+      "id": "ASYNC-saveEdit-success",
+      "title": "Mutation resolves busy state and reports result: saveEdit/success",
+      "status": "PASS",
+      "busy": false,
+      "requestCalls": 1,
+      "hasNotice": false
+    },
+    {
+      "id": "BUSY-saveEdit",
+      "title": "Busy mutation does not dispatch again: saveEdit",
+      "status": "PASS"
+    },
+    {
+      "id": "ASYNC-cancelBookings-network",
+      "title": "Mutation resolves busy state and reports result: cancelBookings/network",
+      "status": "PASS",
+      "busy": false,
+      "requestCalls": 1,
+      "hasNotice": true
+    },
+    {
+      "id": "ASYNC-cancelBookings-http",
+      "title": "Mutation resolves busy state and reports result: cancelBookings/http",
+      "status": "PASS",
+      "busy": false,
+      "requestCalls": 1,
+      "hasNotice": true
+    },
+    {
+      "id": "ASYNC-cancelBookings-success",
+      "title": "Mutation resolves busy state and reports result: cancelBookings/success",
+      "status": "PASS",
+      "busy": false,
+      "requestCalls": 1,
+      "hasNotice": false
+    },
+    {
+      "id": "BUSY-cancelBookings",
+      "title": "Busy mutation does not dispatch again: cancelBookings",
+      "status": "PASS"
+    },
+    {
+      "id": "ASYNC-confirmEarlyEnd-network",
+      "title": "Mutation resolves busy state and reports result: confirmEarlyEnd/network",
+      "status": "PASS",
+      "busy": false,
+      "requestCalls": 1,
+      "hasNotice": true
+    },
+    {
+      "id": "ASYNC-confirmEarlyEnd-http",
+      "title": "Mutation resolves busy state and reports result: confirmEarlyEnd/http",
+      "status": "PASS",
+      "busy": false,
+      "requestCalls": 1,
+      "hasNotice": true
+    },
+    {
+      "id": "ASYNC-confirmEarlyEnd-success",
+      "title": "Mutation resolves busy state and reports result: confirmEarlyEnd/success",
+      "status": "PASS",
+      "busy": false,
+      "requestCalls": 1,
+      "hasNotice": false
+    },
+    {
+      "id": "BUSY-confirmEarlyEnd",
+      "title": "Busy mutation does not dispatch again: confirmEarlyEnd",
+      "status": "PASS"
+    },
+    {
+      "id": "ASYNC-deleteEditing-network",
+      "title": "Mutation resolves busy state and reports result: deleteEditing/network",
+      "status": "PASS",
+      "busy": false,
+      "requestCalls": 1,
+      "hasNotice": true
+    },
+    {
+      "id": "ASYNC-deleteEditing-http",
+      "title": "Mutation resolves busy state and reports result: deleteEditing/http",
+      "status": "PASS",
+      "busy": false,
+      "requestCalls": 1,
+      "hasNotice": true
+    },
+    {
+      "id": "ASYNC-deleteEditing-success",
+      "title": "Mutation resolves busy state and reports result: deleteEditing/success",
+      "status": "PASS",
+      "busy": false,
+      "requestCalls": 1,
+      "hasNotice": false
+    },
+    {
+      "id": "BUSY-deleteEditing",
+      "title": "Busy mutation does not dispatch again: deleteEditing",
+      "status": "PASS"
+    },
+    {
+      "id": "CANCEL-PARTIAL",
+      "title": "Batch cancellation deduplicates and preserves only failed IDs",
+      "status": "PASS"
+    },
+    {
+      "id": "DRAFT-PRESERVE",
+      "title": "Completed request does not erase a newer draft",
+      "status": "PASS"
+    },
+    {
+      "id": "SEND-EMPTY",
+      "title": "Direct empty-date send is blocked",
+      "status": "PASS"
+    },
+    {
+      "id": "AUTH-NOT-READY",
+      "title": "Unknown authentication blocks creation and disables button",
+      "status": "PASS"
+    },
+    {
+      "id": "EARLY-END-BOUNDARY",
+      "title": "Exact slot early-end uses current boundary",
+      "status": "PASS"
+    }
+  ]
+}

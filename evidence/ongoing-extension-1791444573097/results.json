@@ -1,0 +1,28 @@
+{
+  "results": [
+    {
+      "name": "Ongoing booking may extend from 11:00 to 11:30 while preserving room/date/start",
+      "pass": true
+    },
+    {
+      "name": "Extension overlapping another booking still conflicts",
+      "pass": true
+    },
+    {
+      "name": "Changing ongoing start into elapsed time remains blocked",
+      "pass": true
+    },
+    {
+      "name": "Moving ongoing booking to another room in elapsed time remains blocked",
+      "pass": true
+    },
+    {
+      "name": "Early end at current slot boundary remains allowed",
+      "pass": true
+    },
+    {
+      "name": "Ended booking cannot be extended again",
+      "pass": true
+    }
+  ]
+}

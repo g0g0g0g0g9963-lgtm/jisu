@@ -15,6 +15,10 @@ import { publicHolidayOf } from "./holidays";
 export type Booking = {
   id: string;
   roomId: string;
+  /** SSO 서버가 판정한 소유권. 익명 모드에서만 생략한다. */
+  isMine?: boolean;
+  /** 같은 요청으로 생성된 반복 예약의 영구 식별자. */
+  seriesId?: string | null;
   date: DateKey;
   start: string;
   end: string;
@@ -48,7 +52,7 @@ export function expandRepeatDates(
   endDate: DateKey,
   cycle: RepeatCycle,
 ): DateKey[] {
-  if (endDate < startDate) return [startDate];
+  if (endDate < startDate) return [];
 
   const dates: DateKey[] = [];
   const step = cycle === "weekly" ? 7 : 1;
@@ -56,7 +60,7 @@ export function expandRepeatDates(
     if (cycle === "weekdays" && (isWeekend(date) || publicHolidayOf(date))) continue;
     dates.push(date);
   }
-  return dates.length ? dates : [startDate];
+  return dates;
 }
 
 /**

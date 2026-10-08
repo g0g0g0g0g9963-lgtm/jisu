@@ -17,11 +17,12 @@ services:
     build:
       context: .
       network: host
-    image: bdo-meeting-rooms:2.1.0
+    image: bdo-meeting-rooms:2.0.1-security-20261008
     container_name: bdo-meeting-rooms
     restart: unless-stopped
     network_mode: host
     environment:
+      NODE_ENV: production
       TZ: Asia/Seoul
       PORT: ${HOST_PORT:-3500}
       # 127.0.0.1 바인딩: https 역방향 프록시로만 접근 가능. http 직접 접근 차단.
@@ -29,7 +30,7 @@ services:
       DATA_DIR: /app/data
       # 첫 실행 시 예시 예약을 넣고 싶을 때만 1. (DB가 비어 있을 때만 동작)
       SEED_DEMO: ${SEED_DEMO:-0}
-      # Microsoft SSO — .env에서 채우면 로그인 강제, 비우면 익명 모드
+      # Microsoft SSO — all four values required; incomplete settings stop startup
       MS_TENANT_ID: ${MS_TENANT_ID:-}
       MS_CLIENT_ID: ${MS_CLIENT_ID:-}
       MS_CLIENT_SECRET: ${MS_CLIENT_SECRET:-}

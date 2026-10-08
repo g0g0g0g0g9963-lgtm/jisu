@@ -283,8 +283,8 @@ function DateField({ value, min, onChange, rangeFrom, onRangeChange, variant = "
   /** 반복 종료 달력은 팝업 위치 계산 없이 입력칸 바로 아래에 펼친다. */
   inlineWhenOpen?: boolean;
   /**
-   * 기간 안의 토·일을 건너뛸지. 끄면 달력에서도 주말이 회색으로 빠지지 않는다.
-   * 달력 아래 '주말 포함' 체크로 바꾼다.
+   * 기간 안의 주말·공휴일을 건너뛸지. 끄면 모든 날짜를 포함한다.
+   * 달력 아래 '주말·공휴일 포함' 체크로 바꾼다.
    */
   skipWeekends?: boolean;
   onSkipWeekendsChange?: (skip: boolean) => void;
@@ -587,10 +587,11 @@ function DateField({ value, min, onChange, rangeFrom, onRangeChange, variant = "
               const weekendClass = weekdayIndex === 0 ? "is-sun" : weekdayIndex === 6 ? "is-sat" : "";
               const inRange = Boolean(previewFrom && previewTo && key > previewFrom && key < previewTo);
               // 기간 고르기는 반복 예약에만 쓰고 반복은 평일만 잡히므로,
-              // 범위 안의 주말은 칠하지 않고 빠지는 날로 보여 준다.
-              const skipped = inRange && Boolean(rangeFrom) && weekendClass !== "" && skipWeekends;
+              // 범위 안의 주말·공휴일은 칠하지 않고 빠지는 날로 보여 준다.
+              const skipped = Boolean(rangeFrom) && skipWeekends && (weekendClass !== "" || Boolean(holiday))
+                && Boolean(previewFrom && previewTo && key >= previewFrom && key <= previewTo);
               const isEdge = rangeFrom
-                ? key === previewFrom || key === previewTo
+                ? !skipped && (key === previewFrom || key === previewTo)
                 : key === value;
               return (
                 <button
@@ -639,8 +640,8 @@ function DateField({ value, min, onChange, rangeFrom, onRangeChange, variant = "
                     checked={!skipWeekends}
                     onChange={(event) => onSkipWeekendsChange(!event.target.checked)}
                   />
-                  <span>주말 포함</span>
-                  <em>{skipWeekends ? "토·일은 건너뜁니다" : "토·일도 예약합니다"}</em>
+                  <span>주말·공휴일 포함</span>
+                  <em>{skipWeekends ? "주말·공휴일은 건너뜁니다" : "주말·공휴일도 예약합니다"}</em>
                 </label>
               )}
               {/* 기간 고르기는 스스로 닫지 않는다. 닫는 것은 사람이 정한다. */}
@@ -743,6 +744,8 @@ export default function Home() {
   const [submitting, setSubmitting] = useState(false);
   // SSO 모드에서는 로그인 계정이 예약자다. null이면 익명 모드(이름 직접 입력).
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
+  const [authReady, setAuthReady] = useState(false);
+  const [authError, setAuthError] = useState("");
   const [showMap, setShowMap] = useState(false);
   const [allDay, setAllDay] = useState(false);
   const [roomPickerOpen, setRoomPickerOpen] = useState(false);
@@ -780,6 +783,7 @@ export default function Home() {
   // 조기 종료 확인 창에 띄울 예약.
   const [earlyEnd, setEarlyEnd] = useState<Booking | null>(null);
   const [earlyEndBusy, setEarlyEndBusy] = useState(false);
+  const [earlyEndNotice, setEarlyEndNotice] = useState("");
   // 표에서 값을 가져온 뒤 아직 예약하기를 누르지 않은 상태. 표의 점선 블록과
   // 패널의 '작성 중' 딱지를 띄우는 근거가 된다. 예약이 끝나면 내린다.
   const [draftActive, setDraftActive] = useState(false);
@@ -825,10 +829,10 @@ export default function Home() {
   const myBookingsDialogRef = useRef<HTMLElement | null>(null);
 
   useDialogFocus(cancelAskDialogRef, Boolean(cancelAsk), topmostDialog === "cancelAsk", () => setCancelAsk(null));
-  useDialogFocus(earlyEndDialogRef, Boolean(earlyEnd), topmostDialog === "earlyEnd", () => setEarlyEnd(null));
+  useDialogFocus(earlyEndDialogRef, Boolean(earlyEnd), topmostDialog === "earlyEnd", () => { if (!earlyEndBusy) setEarlyEnd(null); });
   useDialogFocus(repeatAskDialogRef, Boolean(repeatAsk), topmostDialog === "repeatAsk", () => setRepeatAsk(null));
   useDialogFocus(submitPreviewDialogRef, Boolean(submitPreviewDates), topmostDialog === "submitPreviewDates", () => setSubmitPreviewDates(null));
-  useDialogFocus(editDraftDialogRef, Boolean(editDraft), topmostDialog === "editDraft", () => setEditDraft(null));
+  useDialogFocus(editDraftDialogRef, Boolean(editDraft), topmostDialog === "editDraft", () => { if (!editBusy && !earlyEndBusy) setEditDraft(null); });
   useDialogFocus(myBookingsDialogRef, myBookingsOpen, topmostDialog === "myBookingsOpen", () => { setMyBookingsOpen(false); setCancelSelection(null); });
 
   const [monitorMode] = useState(() => {
@@ -837,6 +841,12 @@ export default function Home() {
   });
 
   const { date, start, end } = slot;
+  const mutationBusy = submitting || editBusy || earlyEndBusy || cancelBusy;
+  // 응답을 기다리며 다음 예약을 작성했다면 완료 처리가 새 입력을 지우지 않는다.
+  const draftKey = JSON.stringify([selectedId, slot, owner, team, purpose, attendees, attendeeDraft,
+    repeatWeekly, repeatEnd, repeatWeekends, allDay, timeNeedsPick]);
+  const latestDraftKey = useRef(draftKey);
+  latestDraftKey.current = draftKey;
   const setDate = (next: DateKey) => setSlot((current) => ({ ...current, date: next }));
 
   // 예약 완료 카드는 충분히 읽을 시간을 둔 뒤 상단 알림 종으로 들어간다.
@@ -926,15 +936,30 @@ export default function Home() {
   }, [date, repeatEndTouched]);
 
   useEffect(() => {
-    void fetchMe().then((user) => {
-      if (!user) return;
-      setCurrentUser(user);
-      setOwner(user.name);
-      setMyBookingOwner(user.name);
-    });
-    // setMyBookingOwner는 useStoredText가 주는 안정된 setter라 의존성에 넣지 않는다.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    let active = true;
+    let timer: number | undefined;
+    let delay = 1000;
+    const checkUser = async () => {
+      try {
+        const user = await fetchMe();
+        if (!active) return;
+        setCurrentUser(user);
+        setAuthReady(true);
+        setAuthError("");
+        if (user) {
+          setOwner(user.name);
+          setMyBookingOwner(user.name);
+        }
+      } catch {
+        if (!active) return;
+        setAuthError("로그인 상태를 확인하지 못했습니다. 연결을 확인하며 다시 시도하고 있습니다.");
+        timer = window.setTimeout(() => { void checkUser(); }, delay);
+        delay = Math.min(delay * 2, 8000);
+      }
+    };
+    void checkUser();
+    return () => { active = false; if (timer !== undefined) window.clearTimeout(timer); };
+  }, [setMyBookingOwner]);
 
   useEffect(() => {
     const closePickers = (event: MouseEvent) => {
@@ -992,7 +1017,7 @@ export default function Home() {
   const selected = roomById(selectedId) ?? rooms[0];
   const selectedStatus = statusOf(selected);
 
-  // 달력의 '주말 포함'을 켜면 토·일도 빠짐없이 잡는다.
+  // 달력의 '주말·공휴일 포함'을 켜면 모든 날짜를 빠짐없이 잡는다.
   const repeatCycle: RepeatCycle = repeatWeekends ? "everyday" : REPEAT_CYCLE;
   // 반복 예약이면 전체 회차를, 아니면 그날 하루만 검사한다.
   const reservationDates = useMemo(
@@ -1010,15 +1035,25 @@ export default function Home() {
       && booking.start < slotEnd && booking.end > slotStart)
   ), [bookings]);
 
+  const slotIsBookable = useCallback((roomId: string, slotStart: string, slotEnd: string) => (
+    reservationDates.length > 0
+    && minutesOf(slotStart) >= minutesOf(bookingDefaults.openingTime)
+    && minutesOf(slotEnd) <= minutesOf(bookingDefaults.closingTime)
+    && minutesOf(slotEnd) > minutesOf(slotStart)
+    && reservationDates.every((day) => day >= today
+      && (day !== today || (nowMinutes !== null && minutesOf(slotStart) >= nowMinutes))
+      && slotIsFree(roomId, day, slotStart, slotEnd))
+  ), [reservationDates, today, nowMinutes, slotIsFree]);
+
   const roomChoices = useMemo(() => rooms.map((room) => {
-    const availableForSlot = slotIsFree(room.id, date, start, end);
+    const availableForSlot = slotIsBookable(room.id, start, end);
     const next = bookings
       .filter((booking) => booking.roomId === room.id && booking.date === date && booking.start >= end)
       .sort((a, b) => a.start.localeCompare(b.start))[0];
     return { room, availableForSlot, next };
   }).sort((a, b) => Number(b.availableForSlot) - Number(a.availableForSlot)
     || Number(b.room.floor === floor) - Number(a.room.floor === floor)
-    || a.room.capacity - b.room.capacity), [bookings, date, end, floor, slotIsFree, start]);
+    || a.room.capacity - b.room.capacity), [bookings, date, end, floor, slotIsBookable, start]);
 
   // 선택 팝업은 상태가 바뀌어도 위치가 움직이지 않게 설정 파일의 고정 순서를 쓴다.
   // 9층은 1–4, 12층은 대회의실 다음 1–3 순서로 rooms.json에 정의돼 있다.
@@ -1035,13 +1070,13 @@ export default function Home() {
       if (date === today && nowMinutes !== null && minutesOf(candidate) < nowMinutes) return false;
       const candidateEnd = addMinutes(candidate, length);
       return minutesOf(candidateEnd) <= minutesOf(lastSelectableTime)
-        && slotIsFree(selected.id, date, candidate, candidateEnd);
+        && slotIsBookable(selected.id, candidate, candidateEnd);
     });
-  }, [date, end, nowMinutes, selected.id, slotIsFree, start, today]);
+  }, [date, end, nowMinutes, selected.id, slotIsBookable, start, today]);
 
   const availableEndOptions = useMemo(() => timeOptions.filter((candidate) => (
-    minutesOf(candidate) > minutesOf(start) && slotIsFree(selected.id, date, start, candidate)
-  )), [date, selected.id, slotIsFree, start]);
+    minutesOf(candidate) > minutesOf(start) && slotIsBookable(selected.id, start, candidate)
+  )), [selected.id, slotIsBookable, start]);
 
   const bookingAlternatives = useMemo<BookingAlternative[]>(() => {
     if (!selectedTimeConflict) return [];
@@ -1063,7 +1098,7 @@ export default function Home() {
       if (nextStartMinutes < minutesOf(bookingDefaults.openingTime) || nextEndMinutes > minutesOf(bookingDefaults.closingTime)) continue;
       const nextStart = formatMinutes(nextStartMinutes);
       const nextEnd = formatMinutes(nextEndMinutes);
-      if (slotIsFree(selected.id, date, nextStart, nextEnd)) add({
+      if (slotIsBookable(selected.id, nextStart, nextEnd)) add({
         roomId: selected.id, date, start: nextStart, end: nextEnd,
         label: `${selected.name} · ${nextStart}–${nextEnd}`, reason: offset > 0 ? `${offset}분 뒤 이용 가능` : `${Math.abs(offset)}분 앞 이용 가능`,
       });
@@ -1071,13 +1106,13 @@ export default function Home() {
 
     if (length > bookingDefaults.slotMinutes) {
       const shorterEnd = formatMinutes(minutesOf(end) - bookingDefaults.slotMinutes);
-      if (slotIsFree(selected.id, date, start, shorterEnd)) add({
+      if (slotIsBookable(selected.id, start, shorterEnd)) add({
         roomId: selected.id, date, start, end: shorterEnd,
         label: `${selected.name} · ${start}–${shorterEnd}`, reason: `${bookingDefaults.slotMinutes}분 짧게 이용 가능`,
       });
     }
     return suggestions.slice(0, 4);
-  }, [date, end, roomChoices, selected, selectedTimeConflict, slotIsFree, start]);
+  }, [date, end, roomChoices, selected, selectedTimeConflict, slotIsBookable, start]);
 
   useEffect(() => {
     setAlternativesExpanded(false);
@@ -1135,13 +1170,20 @@ export default function Home() {
     return () => observer.disconnect();
   }, [scheduleView, floor, floorRooms.length]);
 
+  /** SSO 소유권은 서버 판정만 사용하고, 확인된 익명 모드에서만 이름을 비교한다. */
+  const isMyBooking = useCallback((booking: Booking) => authReady && (
+    typeof booking.isMine === "boolean" ? booking.isMine
+      : currentUser === null && Boolean(myBookingOwner.trim()) && booking.owner === myBookingOwner.trim()
+  ), [authReady, currentUser, myBookingOwner]);
+  const hasEnded = (booking: Booking) => booking.date < today
+    || (booking.date === today && nowMinutes !== null && minutesOf(booking.end) <= nowMinutes);
   const myBookings = useMemo(() => bookings
-    .filter((booking) => myBookingOwner.trim() && booking.owner === myBookingOwner.trim())
-    .sort((a, b) => `${a.date}${a.start}`.localeCompare(`${b.date}${b.start}`)), [bookings, myBookingOwner]);
-  const upcomingMyBookings = myBookings.filter((booking) => booking.date >= today);
+    .filter(isMyBooking)
+    .sort((a, b) => `${a.date}${a.start}`.localeCompare(`${b.date}${b.start}`)), [bookings, isMyBooking]);
+  const upcomingMyBookings = myBookings.filter((booking) => !hasEnded(booking));
   const pastBookingCutoff = oneCalendarMonthAgo(today);
   const pastMyBookings = myBookings
-    .filter((booking) => booking.date < today && booking.date >= pastBookingCutoff)
+    .filter((booking) => hasEnded(booking) && booking.date >= pastBookingCutoff)
     .reverse();
   /** 예정 예약을 위, 지난 예약을 아래에 둔 한 벌의 표 데이터. */
   const myBookingRows = [
@@ -1167,27 +1209,38 @@ export default function Home() {
     setNotice("");
   };
 
-  /** 내가 등록한 예약인지. 서버도 같은 검사를 하지만 화면에서 먼저 걸러 준다. */
-  const isMyBooking = (booking: Booking) =>
-    Boolean(myBookingOwner.trim()) && booking.owner === myBookingOwner.trim();
-
-  /** 반복 예약처럼 회의실·시간·목적이 같은 한 벌. 한꺼번에 고를 때 쓴다. */
+  /** 같은 요청에서 생성된 반복 예약만 함께 선택한다. 과거 데이터는 개별 예약이다. */
   const sameSeriesIds = (booking: Booking) => upcomingMyBookings
-    .filter((item) => item.roomId === booking.roomId && item.start === booking.start
-      && item.end === booking.end && item.purpose === booking.purpose)
+    .filter((item) => booking.seriesId ? item.seriesId === booking.seriesId : item.id === booking.id)
     .map((item) => item.id);
 
   const cancelBookings = async (ids: string[]) => {
-    if (ids.length === 0) return;
+    if (ids.length === 0 || mutationBusy || !authReady) return;
+    const requestedIds = [...new Set(ids)];
     setCancelBusy(true);
-    const results = await Promise.all(ids.map((id) => deleteBookingRequest(id, currentUser?.name ?? myBookingOwner.trim())));
-    setCancelBusy(false);
-    setCancelSelection(null);
-    await refreshBookings();
-    // 새로고침이 성공하면 syncError가 비워지므로, 취소 실패 메시지는 그 뒤에 얹는다.
-    const failed = results.find((result) => !result.ok);
-    if (failed && !failed.ok) setSyncError(failed.message);
-    else setToast({ text: `예약 ${ids.length}건을 취소했습니다.`, detail: "내 예약", time: "" });
+    try {
+      const results = await Promise.allSettled(requestedIds.map((id) =>
+        deleteBookingRequest(id, currentUser?.name ?? myBookingOwner.trim())));
+      const succeeded = requestedIds.filter((_, index) => {
+        const result = results[index];
+        return result.status === "fulfilled" && result.value.ok;
+      });
+      const failed = requestedIds.filter((id) => !succeeded.includes(id));
+      setCancelSelection(failed.length ? failed : null);
+      await refreshBookings();
+      if (failed.length) {
+        const firstError = results.find((result) => result.status === "fulfilled" && !result.value.ok);
+        const detail = firstError?.status === "fulfilled" && !firstError.value.ok
+          ? firstError.value.message : "연결이 끊겨 일부 취소 결과를 확인하지 못했습니다. 예약 목록을 확인해 주세요.";
+        setSyncError(`취소 확인 ${succeeded.length}건, 실패 또는 결과 미확인 ${failed.length}건. ${detail}`);
+      } else {
+        setToast({ text: `예약 ${succeeded.length}건을 취소했습니다.`, detail: "내 예약", time: "" });
+      }
+    } catch {
+      setSyncError("취소 결과를 확인하지 못했습니다. 예약 목록을 확인한 뒤 다시 시도해 주세요.");
+    } finally {
+      setCancelBusy(false);
+    }
   };
 
   const openEditor = (booking: Booking) => {
@@ -1196,7 +1249,7 @@ export default function Home() {
     // 버튼을 두지 않는 것과 같은 규칙을, 일정표에서 블록을 눌렀을 때도
     // 적용한다. 서버도 같은 검사를 하지만(past 응답) 열어놓고 저장 시점에
     // 막는 것보다, 열리지 않는 쪽이 헷갈리지 않는다.
-    if (booking.date < today) return;
+    if (hasEnded(booking) || mutationBusy) return;
     // 예약 수정창과 새 예약용 빠른예약 패널이 동시에 열리면 서로 다른
     // 날짜·시간이 한 화면에 겹쳐 보여 오류처럼 보인다. 수정할 때는 패널만
     // 접고 입력값은 유지해, 닫은 뒤 다시 펼치면 작성 내용을 이어갈 수 있게 한다.
@@ -1216,33 +1269,40 @@ export default function Home() {
   };
 
   const saveEdit = async () => {
-    if (!editDraft) return;
+    if (!editDraft || mutationBusy || !authReady) return;
     if (editDraft.end <= editDraft.start) {
       setEditNotice("종료 시간은 시작 시간보다 늦어야 합니다.");
       return;
     }
     setEditBusy(true);
-    const result = await patchBookingRequest(editDraft.id, {
-      roomId: editDraft.roomId,
-      date: editDraft.date,
-      start: editDraft.start,
-      end: editDraft.end,
-      owner: myBookingOwner.trim(),
-      team: editDraft.team,
-      purpose: editDraft.purpose,
-    });
-    setEditBusy(false);
-    if (!result.ok) {
-      setEditNotice(result.message);
-      return;
+    setEditNotice("");
+    try {
+      const result = await patchBookingRequest(editDraft.id, {
+        roomId: editDraft.roomId,
+        date: editDraft.date,
+        start: editDraft.start,
+        end: editDraft.end,
+        owner: currentUser?.name ?? myBookingOwner.trim(),
+        team: editDraft.team,
+        purpose: editDraft.purpose,
+      });
+      if (!result.ok) {
+        setEditNotice(result.message);
+        return;
+      }
+      await refreshBookings();
+      setEditDraft(null);
+      setToast({
+        text: "예약을 수정했습니다.",
+        detail: roomById(editDraft.roomId)?.name ?? "",
+        time: `${formatDateLabel(editDraft.date)} ${editDraft.start}–${editDraft.end}`,
+      });
+    } catch {
+      setEditNotice("수정 결과를 확인하지 못했습니다. 예약 목록을 확인한 뒤 다시 시도해 주세요.");
+      await refreshBookings();
+    } finally {
+      setEditBusy(false);
     }
-    await refreshBookings();
-    setEditDraft(null);
-    setToast({
-      text: "예약을 수정했습니다.",
-      detail: roomById(editDraft.roomId)?.name ?? "",
-      time: `${formatDateLabel(editDraft.date)} ${editDraft.start}–${editDraft.end}`,
-    });
   };
 
   /**
@@ -1266,45 +1326,59 @@ export default function Home() {
   const editingBooking = editDraft ? bookings.find((booking) => booking.id === editDraft.id) ?? null : null;
 
   const confirmEarlyEnd = async () => {
-    if (!earlyEnd) return;
+    if (!earlyEnd || mutationBusy || !authReady) return;
     const nextEnd = earlyEndTime(earlyEnd);
     setEarlyEndBusy(true);
-    const result = await patchBookingRequest(earlyEnd.id, {
-      roomId: earlyEnd.roomId,
-      date: earlyEnd.date,
-      start: earlyEnd.start,
-      end: nextEnd,
-      owner: currentUser?.name ?? earlyEnd.owner,
-      team: earlyEnd.team ?? "",
-      purpose: earlyEnd.purpose,
-    });
-    setEarlyEndBusy(false);
-    if (!result.ok) {
-      setSyncError(result.message);
-      return;
+    setEarlyEndNotice("");
+    try {
+      const result = await patchBookingRequest(earlyEnd.id, {
+        roomId: earlyEnd.roomId,
+        date: earlyEnd.date,
+        start: earlyEnd.start,
+        end: nextEnd,
+        owner: currentUser?.name ?? earlyEnd.owner,
+        team: earlyEnd.team ?? "",
+        purpose: earlyEnd.purpose,
+      });
+      if (!result.ok) {
+        setEarlyEndNotice(result.message);
+        return;
+      }
+      await refreshBookings();
+      setEarlyEnd(null);
+      setEditDraft(null);
+      setToast({
+        text: "회의를 끝냈습니다.",
+        detail: roomById(earlyEnd.roomId)?.name ?? "",
+        time: `${nextEnd}부터 예약 가능`,
+      });
+    } catch {
+      setEarlyEndNotice("종료 결과를 확인하지 못했습니다. 예약 목록을 확인한 뒤 다시 시도해 주세요.");
+      await refreshBookings();
+    } finally {
+      setEarlyEndBusy(false);
     }
-    await refreshBookings();
-    setEarlyEnd(null);
-    setEditDraft(null);
-    setToast({
-      text: "회의를 끝냈습니다.",
-      detail: roomById(earlyEnd.roomId)?.name ?? "",
-      time: `${nextEnd}부터 예약 가능`,
-    });
   };
 
   const deleteEditing = async () => {
-    if (!editDraft) return;
+    if (!editDraft || mutationBusy || !authReady) return;
     setEditBusy(true);
-    const result = await deleteBookingRequest(editDraft.id, currentUser?.name ?? myBookingOwner.trim());
-    setEditBusy(false);
-    if (!result.ok) {
-      setEditNotice(result.message);
-      return;
+    setEditNotice("");
+    try {
+      const result = await deleteBookingRequest(editDraft.id, currentUser?.name ?? myBookingOwner.trim());
+      if (!result.ok) {
+        setEditNotice(result.message);
+        return;
+      }
+      await refreshBookings();
+      setEditDraft(null);
+      setToast({ text: "예약을 삭제했습니다.", detail: roomById(editDraft.roomId)?.name ?? "", time: formatDateLabel(editDraft.date) });
+    } catch {
+      setEditNotice("삭제 결과를 확인하지 못했습니다. 예약 목록을 확인한 뒤 다시 시도해 주세요.");
+      await refreshBookings();
+    } finally {
+      setEditBusy(false);
     }
-    await refreshBookings();
-    setEditDraft(null);
-    setToast({ text: "예약을 삭제했습니다.", detail: roomById(editDraft.roomId)?.name ?? "", time: formatDateLabel(editDraft.date) });
   };
 
   const getSlotMinutes = (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -1670,7 +1744,16 @@ export default function Home() {
 
   const submitReservation = async (event: FormEvent) => {
     event.preventDefault();
-    if (submitting) return;
+    if (mutationBusy || !authReady) return;
+    if (timeNeedsPick) {
+      setNotice("시작 또는 종료 시간을 직접 선택해 주세요.");
+      document.getElementById("start-time-select")?.focus({ preventScroll: true });
+      return;
+    }
+    if (reservationDates.length === 0) {
+      setNotice("예약할 날짜가 없습니다. 반복 기간과 주말·공휴일 포함 여부를 확인해 주세요.");
+      return;
+    }
     // 빈 필수 칸이 있으면 첫 칸에 딱지를 붙이고 커서를 보낸다. 알림 문구는
     // 띄우지 않는다. 어느 칸인지 딱지가 직접 가리키므로 두 번 말할 필요가 없다.
     const empty = REQUIRED_FIELDS.find((field) => !field.value.trim());
@@ -1688,6 +1771,10 @@ export default function Home() {
     }
     if (minutesOf(end) <= minutesOf(start)) {
       setNotice("종료 시간은 시작 시간보다 늦게 선택해 주세요.");
+      return;
+    }
+    if (reservationDates.some((day) => day === today && nowMinutes !== null && minutesOf(start) < nowMinutes)) {
+      setNotice("이미 지난 시간에는 예약할 수 없습니다.");
       return;
     }
     if (reservationDates.some((day) => day < today)) {
@@ -1717,75 +1804,87 @@ export default function Home() {
 
   /** 실제로 서버에 보내는 부분. '겹치는 날만 빼고' 보낼 때도 같은 길을 쓴다. */
   const sendBooking = async (dates: string[]) => {
-    const ownerName = owner.trim();
+    if (mutationBusy || !authReady || dates.length === 0 || timeNeedsPick) return;
+    const submittedDraftKey = draftKey;
+    const ownerName = currentUser?.name ?? owner.trim();
     const teamName = team.trim();
     setRepeatAsk(null);
     setSubmitPreviewDates(null);
     setSubmitting(true);
-    const result = await postBookings({
-      roomId: selected.id,
-      dates,
-      start,
-      end,
-      owner: ownerName,
-      team: teamName,
-      purpose: purpose.trim(),
-      attendees,
-    });
-    setSubmitting(false);
+    try {
+      const result = await postBookings({
+        roomId: selected.id,
+        dates,
+        start,
+        end,
+        owner: ownerName,
+        team: teamName,
+        purpose: purpose.trim(),
+        attendees,
+      });
 
-    if (!result.ok) {
-      // 동시에 다른 사람이 먼저 잡았을 수 있다. 서버 판정을 보여주고 최신 상태로 맞춘다.
-      setNotice(result.message);
+      if (!result.ok) {
+        // 동시에 다른 사람이 먼저 잡았을 수 있다. 서버 판정을 보여주고 최신 상태로 맞춘다.
+        setNotice(result.message);
+        await refreshBookings();
+        return;
+      }
+
+      const draftUnchanged = latestDraftKey.current === submittedDraftKey;
+      if (draftUnchanged) {
+        setDraftActive(false);
+        setTimeNeedsPick(false);
+        setPurpose("");
+        setAttendees([]);
+        setAttendeeDraft("");
+      }
+      setMyBookingOwner(ownerName);
+      setNotice("예약이 완료되었습니다.");
+      setToast({
+        text: "예약이 완료되었습니다",
+        detail: dates.length > 1
+          ? `${selected.name} · 반복 ${dates.length}회`
+          : `${selected.name} · ${formatDateLabel(dates[0])}`,
+        time: `${start}–${end}`,
+        kind: "booking",
+      });
+      // 방금 잡은 시간이 양식에 그대로 남으면 "이미 예약된 시간"으로 보인다.
+      // 같은 길이로 비어 있는 시간대를 찾아 옮겨 두어 이어서 예약하기 쉽게 한다.
+      const justBooked = dates.map((bookedDate) => ({
+        id: `just-${bookedDate}`,
+        roomId: selected.id,
+        date: bookedDate,
+        start,
+        end,
+        owner: ownerName,
+        team: teamName,
+        purpose: "",
+      })) as Booking[];
+      const pool = [...bookings, ...justBooked];
+      const durationMinutes = minutesOf(end) - minutesOf(start);
+      const freeStarts = startTimeOptions.filter((candidate) => {
+        const candidateEnd = addMinutes(candidate, durationMinutes);
+        if (minutesOf(candidateEnd) > minutesOf(lastSelectableTime)) return false;
+        if (dates.some((day) => day < today || (day === today && nowMinutes !== null && minutesOf(candidate) < nowMinutes))) return false;
+        return findConflictingDates(pool, selected.id, dates, candidate, candidateEnd).length === 0;
+      });
+      // 방금 예약한 시간 뒤쪽을 먼저 보고, 없으면 그날 가장 이른 빈 시간으로 간다.
+      const nextStart = freeStarts.find((candidate) => minutesOf(candidate) >= minutesOf(end)) ?? freeStarts[0];
+      if (draftUnchanged && !allDay && nextStart) {
+        setSlot((current) => ({ ...current, start: nextStart, end: addMinutes(nextStart, durationMinutes) }));
+      }
       await refreshBookings();
-      return;
+    } catch {
+      setNotice("예약 결과를 확인하지 못했습니다. 예약 목록을 확인한 뒤 다시 시도해 주세요. 입력 내용은 유지했습니다.");
+      await refreshBookings();
+    } finally {
+      setSubmitting(false);
     }
-
-    setDraftActive(false);
-    setTimeNeedsPick(false);
-    setMyBookingOwner(ownerName);
-    setPurpose("");
-    setAttendees([]);
-    setAttendeeDraft("");
-    setNotice("예약이 완료되었습니다.");
-    setToast({
-      text: "예약이 완료되었습니다",
-      detail: dates.length > 1
-        ? `${selected.name} · 반복 ${dates.length}회`
-        : `${selected.name} · ${formatDateLabel(dates[0])}`,
-      time: `${start}–${end}`,
-      kind: "booking",
-    });
-    // 방금 잡은 시간이 양식에 그대로 남으면 "이미 예약된 시간"으로 보인다.
-    // 같은 길이로 비어 있는 시간대를 찾아 옮겨 두어 이어서 예약하기 쉽게 한다.
-    const justBooked = dates.map((bookedDate) => ({
-      id: `just-${bookedDate}`,
-      roomId: selected.id,
-      date: bookedDate,
-      start,
-      end,
-      owner: ownerName,
-      team: teamName,
-      purpose: "",
-    })) as Booking[];
-    const pool = [...bookings, ...justBooked];
-    const durationMinutes = minutesOf(end) - minutesOf(start);
-    const freeStarts = startTimeOptions.filter((candidate) => {
-      const candidateEnd = addMinutes(candidate, durationMinutes);
-      if (minutesOf(candidateEnd) > minutesOf(lastSelectableTime)) return false;
-      return findConflictingDates(pool, selected.id, dates, candidate, candidateEnd).length === 0;
-    });
-    // 방금 예약한 시간 뒤쪽을 먼저 보고, 없으면 그날 가장 이른 빈 시간으로 간다.
-    const nextStart = freeStarts.find((candidate) => minutesOf(candidate) >= minutesOf(end)) ?? freeStarts[0];
-    if (!allDay && nextStart) {
-      setSlot((current) => ({ ...current, start: nextStart, end: addMinutes(nextStart, durationMinutes) }));
-    }
-    await refreshBookings();
   };
 
   return (
     <main className={`app-shell ${showMap ? "map-open" : ""} ${bookingPanelOpen ? "" : "booking-panel-collapsed"} ${monitorMode ? "monitor-mode" : ""}`}>
-      {syncError && <div className="sync-error-banner" role="alert">{syncError}</div>}
+      {(authError || syncError) && <div className="sync-error-banner" role="alert">{authError || syncError}</div>}
       <header className="topbar">
         <div className="brand-wrap">
           <div className="brand-lockup">
@@ -2466,7 +2565,7 @@ export default function Home() {
                 {formatDateLabel(date)}부터 총 <b>{reservationDates.length}</b>회 예약됩니다.
                 {REPEAT_CYCLE === "weekdays" && repeatEnd > date && (
                   <em className="repeat-note">
-                    {repeatWeekends ? "주말 포함 · 공휴일 제외" : "주말·공휴일 제외"}
+                    {repeatWeekends ? "주말·공휴일 포함" : "주말·공휴일 제외"}
                   </em>
                 )}
               </p>
@@ -2635,28 +2734,6 @@ export default function Home() {
 
             </div>
 
-            {/* 넓은 화면에서만 보이는 회의실 설명. 예약 버튼 바로 위라 누르기
-                직전에 '이 방이 맞나'를 마지막으로 확인하는 자리가 된다.
-                (좁은 화면에서는 자리가 없어 CSS로 감춘다. 선 위의 카드를
-                키우면 170px 기준선을 뚫으므로 여기에 둔다) */}
-            <div className="selected-room-brief" aria-hidden="true">
-              <div className="brief-top">
-                <b>{selected.name}</b>
-                <s>{formatCapacity(selected.capacity)} · {selected.floor}층 {selected.location}</s>
-              </div>
-              {selected.equipment.length > 0 && (
-                <div className="brief-tags">{selected.equipment.map((item) => <em key={item}>{item}</em>)}</div>
-              )}
-              {(() => {
-                const next = bookings
-                  .filter((item) => item.roomId === selected.id && item.date === date && item.start >= end)
-                  .sort((a, b) => a.start.localeCompare(b.start))[0];
-                return next
-                  ? <div className="brief-next">다음 예약 <b>{next.start} · {next.purpose}</b></div>
-                  : <div className="brief-next">이 시간 뒤로 <b>예약 없음</b></div>;
-              })()}
-            </div>
-
             <div className="booking-submit">
             {notice && <div className={`notice ${notice.includes("완료") ? "success" : "error"}`}>{notice}</div>}
             {selectedTimeConflict && !notice && <div className="notice error booking-conflict-notice"><b>이미 예약된 시간입니다.</b><span>다른 시간을 선택해 주세요.</span></div>}
@@ -2673,7 +2750,7 @@ export default function Home() {
                 </button>
               )}
             </section>}
-            <button id="reserve-button" className="reserve-button" type="submit" disabled={selectedTimeConflict || submitting}>
+            <button id="reserve-button" className="reserve-button" type="submit" disabled={mutationBusy || !authReady}>
               <span className="reserve-button-meta">
                 <span className="reserve-button-room">{selected.name}</span>
                 {/* 반복 예약이면 몇 건이 만들어지는지 버튼이 직접 말해야 한다.
@@ -2683,7 +2760,7 @@ export default function Home() {
                 </span>
               </span>
               <strong className="reserve-button-action">
-                {submitting ? "저장 중…" : selectedTimeConflict ? "이미 예약된 시간입니다" : "예약하기"}
+                {submitting ? "저장 중…" : !authReady ? "로그인 확인 중…" : selectedTimeConflict && conflictDates.length < reservationDates.length ? "예약 가능한 날짜 확인" : "예약하기"}
               </strong>
             </button>
             </div>
@@ -2709,10 +2786,13 @@ export default function Home() {
       {myBookingsOpen && <div className="my-bookings-backdrop" role="presentation" onMouseDown={() => { setMyBookingsOpen(false); setCancelSelection(null); }}>
         <section ref={myBookingsDialogRef} className="my-bookings-dialog" role="dialog" aria-modal="true" aria-labelledby="my-bookings-title" onMouseDown={(event) => event.stopPropagation()}>
           <div className="my-bookings-dialog-head"><div><h2 id="my-bookings-title">내 예약</h2></div><button type="button" onClick={() => { setMyBookingsOpen(false); setCancelSelection(null); }} aria-label="내 예약 닫기"><CloseIcon /></button></div>
-          {!currentUser && <label className="my-bookings-search"><span>예약자 이름</span><input value={myBookingOwner} onChange={(event) => setMyBookingOwner(event.target.value)} placeholder="예약자 이름을 입력하세요" /></label>}
+          {authReady && !currentUser && <label className="my-bookings-search"><span>예약자 이름</span><input value={myBookingOwner} onChange={(event) => setMyBookingOwner(event.target.value)} placeholder="예약자 이름을 입력하세요" /></label>}
           <p className="my-bookings-summary">
             <span>예정 예약 <b>{upcomingMyBookings.length}</b></span>
-            <span>지난 예약 <b>{pastMyBookings.length}</b></span>
+            <span>지난 예약 · 최근 1개월 <b>{pastMyBookings.length}</b></span>
+            <span className="my-bookings-history-range">
+              지난 예약 조회: {pastBookingCutoff.replaceAll("-", ".")}–{moveDate(today, -1).replaceAll("-", ".")}
+            </span>
           </p>
           <div className="my-bookings-table-wrap">
             <table className="my-bookings-table">
@@ -2777,7 +2857,7 @@ export default function Home() {
                               // 진행 중인 회의는 취소가 아니라 '지금 끝내기'가 필요한 동작이다.
                               // 단, 남은 시간이 30분 미만이면 끝내봤자 풀리는 시간이 없어 버튼을 두지 않는다.
                               minutesOf(earlyEndTime(booking)) < minutesOf(booking.end) && (
-                                <button type="button" className="end-now" onClick={() => setEarlyEnd(booking)}>지금 끝내기</button>
+                                <button type="button" className="end-now" onClick={() => { setEarlyEndNotice(""); setEarlyEnd(booking); }}>지금 끝내기</button>
                               )
                             ) : (
                               // '예약 취소'는 곧바로 확인창을 연다. 예전에는 고르기 모드로
@@ -2794,6 +2874,7 @@ export default function Home() {
               </tbody>
             </table>
           </div>
+          {syncError && <p className="edit-dialog-notice" role="alert">{syncError}</p>}
           {cancelSelection !== null && (() => {
             const first = upcomingMyBookings.find((booking) => booking.id === cancelSelection[0]);
             const series = first ? sameSeriesIds(first) : [];
@@ -2823,13 +2904,13 @@ export default function Home() {
           })()}
         </section>
       </div>}
-      {editDraft && <div className="edit-backdrop" role="presentation" onMouseDown={() => setEditDraft(null)}>
+      {editDraft && <div className="edit-backdrop" role="presentation" onMouseDown={() => { if (!editBusy && !earlyEndBusy) setEditDraft(null); }}>
         <section ref={editDraftDialogRef} className="edit-dialog" role="dialog" aria-modal="true" aria-labelledby="edit-dialog-title" onMouseDown={(event) => event.stopPropagation()}>
           <div className="edit-dialog-head">
             <div><h2 id="edit-dialog-title">예약 수정</h2></div>
-            <button type="button" onClick={() => setEditDraft(null)} aria-label="예약 수정 닫기"><CloseIcon /></button>
+            <button type="button" onClick={() => { if (!editBusy && !earlyEndBusy) setEditDraft(null); }} aria-label="예약 수정 닫기"><CloseIcon /></button>
           </div>
-          <div className="edit-dialog-body">
+          <div className="edit-dialog-body" inert={editBusy || earlyEndBusy}>
             <label>
               <span className="field-label">회의실</span>
               <select value={editDraft.roomId} onChange={(event) => setEditDraft({ ...editDraft, roomId: event.target.value })}>
@@ -2866,7 +2947,7 @@ export default function Home() {
               && minutesOf(earlyEndTime(editingBooking)) < minutesOf(editingBooking.end) && (
               <div className="edit-running-action">
                 <span><b>현재 진행 중인 회의</b><em>일찍 끝내면 남은 시간이 바로 예약 가능해집니다.</em></span>
-                <button type="button" onClick={() => setEarlyEnd(editingBooking)}>회의 일찍 끝내기</button>
+                <button type="button" onClick={() => { setEarlyEndNotice(""); setEarlyEnd(editingBooking); }}>회의 일찍 끝내기</button>
               </div>
             )}
           </div>
@@ -2875,20 +2956,20 @@ export default function Home() {
             {editConfirmDelete ? (
               <>
                 <p>이 예약을 삭제할까요?</p>
-                <button type="button" onClick={() => setEditConfirmDelete(false)}>유지</button>
-                <button type="button" className="edit-delete" disabled={editBusy} onClick={deleteEditing}>삭제하기</button>
+                <button type="button" disabled={editBusy || earlyEndBusy} onClick={() => setEditConfirmDelete(false)}>유지</button>
+                <button type="button" className="edit-delete" disabled={mutationBusy || !authReady} onClick={deleteEditing}>삭제하기</button>
               </>
             ) : (
               <>
-                <button type="button" className="edit-delete" onClick={() => setEditConfirmDelete(true)}>예약 삭제</button>
-                <button type="button" onClick={() => setEditDraft(null)}>닫기</button>
-                <button type="button" className="edit-save" disabled={editBusy} onClick={saveEdit}>{editBusy ? "저장 중…" : "수정 저장"}</button>
+                <button type="button" className="edit-delete" disabled={editBusy || earlyEndBusy} onClick={() => setEditConfirmDelete(true)}>예약 삭제</button>
+                <button type="button" onClick={() => { if (!editBusy && !earlyEndBusy) setEditDraft(null); }}>닫기</button>
+                <button type="button" className="edit-save" disabled={mutationBusy || !authReady} onClick={saveEdit}>{editBusy ? "저장 중…" : "수정 저장"}</button>
               </>
             )}
           </div>
         </section>
       </div>}
-      {earlyEnd && <div className="edit-backdrop" role="presentation" onMouseDown={() => setEarlyEnd(null)}>
+      {earlyEnd && <div className="edit-backdrop" role="presentation" onMouseDown={() => { if (!earlyEndBusy) setEarlyEnd(null); }}>
         <section ref={earlyEndDialogRef} className="early-dialog" role="dialog" aria-modal="true" aria-labelledby="early-end-title" onMouseDown={(event) => event.stopPropagation()}>
           <h2 id="early-end-title">지금 끝낼까요?</h2>
           <p>남은 시간이 바로 풀려서 다른 사람이 예약할 수 있게 됩니다.</p>
@@ -2897,9 +2978,10 @@ export default function Home() {
             <span>{earlyEnd.start}–{earlyEnd.end} → <em>{earlyEnd.start}–{earlyEndTime(earlyEnd)}</em></span>
             <span className="early-free">{spokenDuration(minutesOf(earlyEnd.end) - minutesOf(earlyEndTime(earlyEnd)))} 다시 열립니다</span>
           </div>
+          {earlyEndNotice && <p className="edit-dialog-notice" role="alert">{earlyEndNotice}</p>}
           <div className="early-foot">
-            <button type="button" onClick={() => setEarlyEnd(null)}>그대로 두기</button>
-            <button type="button" className="early-go" disabled={earlyEndBusy} onClick={confirmEarlyEnd}>
+            <button type="button" disabled={earlyEndBusy} onClick={() => { if (!earlyEndBusy) setEarlyEnd(null); }}>그대로 두기</button>
+            <button type="button" className="early-go" disabled={mutationBusy || !authReady} onClick={confirmEarlyEnd}>
               {earlyEndBusy ? "끝내는 중…" : "끝내기"}
             </button>
           </div>

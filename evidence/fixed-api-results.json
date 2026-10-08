@@ -1,0 +1,549 @@
+{
+  "testedAt": "2026-10-08T07:29:38.090Z",
+  "appClock": "2026-10-08T10:15:00+09:00",
+  "isolation": "Loopback only; synthetic SQLite; OIDC response mocked; no real Microsoft network",
+  "counts": {
+    "total": 96,
+    "pass": 96,
+    "fail": 0
+  },
+  "results": [
+    {
+      "id": "AUTH-CONFIG-unconfigured",
+      "title": "Unsafe configuration fails closed: unconfigured",
+      "status": "PASS",
+      "listened": false,
+      "exitCode": 1
+    },
+    {
+      "id": "AUTH-CONFIG-partial",
+      "title": "Unsafe configuration fails closed: partial",
+      "status": "PASS",
+      "listened": false,
+      "exitCode": 1
+    },
+    {
+      "id": "AUTH-CONFIG-production-anonymous",
+      "title": "Unsafe configuration fails closed: production-anonymous",
+      "status": "PASS",
+      "listened": false,
+      "exitCode": 1
+    },
+    {
+      "id": "AUTH-CONFIG-production-http",
+      "title": "Unsafe configuration fails closed: production-http",
+      "status": "PASS",
+      "listened": false,
+      "exitCode": 1
+    },
+    {
+      "id": "C01",
+      "title": "Health and empty synthetic database",
+      "status": "PASS"
+    },
+    {
+      "id": "C02",
+      "title": "Create valid booking",
+      "status": "PASS"
+    },
+    {
+      "id": "C03",
+      "title": "Persist and list booking",
+      "status": "PASS"
+    },
+    {
+      "id": "C04",
+      "title": "Overlapping booking rejected",
+      "status": "PASS"
+    },
+    {
+      "id": "C05",
+      "title": "Adjacent booking allowed",
+      "status": "PASS"
+    },
+    {
+      "id": "CACHE-BOOKING",
+      "title": "Booking responses disable cache",
+      "status": "PASS"
+    },
+    {
+      "id": "C06",
+      "title": "Unknown room rejected",
+      "status": "PASS",
+      "actual": 400
+    },
+    {
+      "id": "C07",
+      "title": "Invalid calendar date rejected",
+      "status": "PASS",
+      "actual": 400
+    },
+    {
+      "id": "C08",
+      "title": "Past date rejected",
+      "status": "PASS",
+      "actual": 400
+    },
+    {
+      "id": "C09",
+      "title": "Today past time rejected",
+      "status": "PASS",
+      "actual": 400
+    },
+    {
+      "id": "C10",
+      "title": "Beyond 12 months rejected",
+      "status": "PASS",
+      "actual": 400
+    },
+    {
+      "id": "C11",
+      "title": "End before start rejected",
+      "status": "PASS",
+      "actual": 400
+    },
+    {
+      "id": "C12",
+      "title": "Outside opening hours rejected",
+      "status": "PASS",
+      "actual": 400
+    },
+    {
+      "id": "C13",
+      "title": "Non 30-minute boundary rejected",
+      "status": "PASS",
+      "actual": 400
+    },
+    {
+      "id": "C14",
+      "title": "Invalid time format rejected",
+      "status": "PASS",
+      "actual": 400
+    },
+    {
+      "id": "C15",
+      "title": "Blank owner rejected",
+      "status": "PASS",
+      "actual": 400
+    },
+    {
+      "id": "C16",
+      "title": "Long owner rejected",
+      "status": "PASS",
+      "actual": 400
+    },
+    {
+      "id": "C17",
+      "title": "Null body rejected",
+      "status": "PASS",
+      "actual": 400
+    },
+    {
+      "id": "C18",
+      "title": "61-date batch rejected",
+      "status": "PASS"
+    },
+    {
+      "id": "C19",
+      "title": "Duplicate date deduplicated",
+      "status": "PASS"
+    },
+    {
+      "id": "C20",
+      "title": "Repeated batch conflict is atomic",
+      "status": "PASS",
+      "before": 3,
+      "after": 3
+    },
+    {
+      "id": "C21",
+      "title": "20 simultaneous requests create exactly one booking",
+      "status": "PASS"
+    },
+    {
+      "id": "C22",
+      "title": "Wrong anonymous name rejected",
+      "status": "PASS"
+    },
+    {
+      "id": "C23",
+      "title": "Missing booking returns 404",
+      "status": "PASS"
+    },
+    {
+      "id": "C24",
+      "title": "Patch preserves omitted metadata",
+      "status": "PASS"
+    },
+    {
+      "id": "C25",
+      "title": "Patch collision rejected",
+      "status": "PASS"
+    },
+    {
+      "id": "C26",
+      "title": "Incomplete date range rejected",
+      "status": "PASS"
+    },
+    {
+      "id": "C27",
+      "title": "Date range filter",
+      "status": "PASS"
+    },
+    {
+      "id": "RANGE-ORDER",
+      "title": "Reversed date range rejected",
+      "status": "PASS"
+    },
+    {
+      "id": "C28",
+      "title": "SQL metacharacters stored as data",
+      "status": "PASS"
+    },
+    {
+      "id": "B01",
+      "title": "Patch rejects beyond 12 months",
+      "status": "PASS",
+      "actual": 400
+    },
+    {
+      "id": "B02",
+      "title": "Patch rejects elapsed today",
+      "status": "PASS",
+      "actual": 400
+    },
+    {
+      "id": "B03",
+      "title": "Malformed JSON returns 400",
+      "status": "PASS"
+    },
+    {
+      "id": "CACHE-MALFORMED",
+      "title": "Malformed request errors disable cache",
+      "status": "PASS"
+    },
+    {
+      "id": "B04",
+      "title": "Oversized request returns 413",
+      "status": "PASS"
+    },
+    {
+      "id": "CACHE-OVERSIZED",
+      "title": "Oversized request errors disable cache",
+      "status": "PASS"
+    },
+    {
+      "id": "C29",
+      "title": "Delete persists",
+      "status": "PASS"
+    },
+    {
+      "id": "SERIES-A",
+      "title": "One batch has a server-generated shared series",
+      "status": "PASS"
+    },
+    {
+      "id": "SERIES-B",
+      "title": "Matching fields in independent batches have different series",
+      "status": "PASS"
+    },
+    {
+      "id": "SERIES-SINGLE",
+      "title": "Single independent booking has no series",
+      "status": "PASS"
+    },
+    {
+      "id": "SERIES-PATCH",
+      "title": "Patch preserves original series",
+      "status": "PASS"
+    },
+    {
+      "id": "ONGOING-past-end",
+      "title": "Ongoing booking rejects invalid change: past-end",
+      "status": "PASS",
+      "actual": 400
+    },
+    {
+      "id": "ONGOING-room",
+      "title": "Ongoing booking rejects invalid change: room",
+      "status": "PASS",
+      "actual": 400
+    },
+    {
+      "id": "ONGOING-start",
+      "title": "Ongoing booking rejects invalid change: start",
+      "status": "PASS",
+      "actual": 400
+    },
+    {
+      "id": "ONGOING-past-date",
+      "title": "Ongoing booking rejects invalid change: past-date",
+      "status": "PASS",
+      "actual": 400
+    },
+    {
+      "id": "EXTEND-BLOCKER",
+      "title": "Future reservation after ongoing meeting creates",
+      "status": "PASS"
+    },
+    {
+      "id": "ONGOING-EXTEND",
+      "title": "Ongoing meeting can extend into free future time",
+      "status": "PASS",
+      "actual": 200
+    },
+    {
+      "id": "ONGOING-EXTEND-CONFLICT",
+      "title": "Ongoing extension cannot overlap following reservation",
+      "status": "PASS",
+      "actual": 409
+    },
+    {
+      "id": "EARLY-END",
+      "title": "Legitimate ongoing early-end succeeds",
+      "status": "PASS",
+      "actual": 200
+    },
+    {
+      "id": "ENDED-PATCH",
+      "title": "Ended same-day booking cannot be moved",
+      "status": "PASS"
+    },
+    {
+      "id": "ENDED-DELETE",
+      "title": "Ended same-day booking cannot be deleted",
+      "status": "PASS"
+    },
+    {
+      "id": "EARLY-END-EXACT",
+      "title": "Early-end at exact current slot boundary is allowed",
+      "status": "PASS",
+      "actual": 200
+    },
+    {
+      "id": "ENDED-EXACT",
+      "title": "Booking ending exactly now cannot be deleted",
+      "status": "PASS"
+    },
+    {
+      "id": "C30",
+      "title": "SSO anonymous API denied",
+      "status": "PASS"
+    },
+    {
+      "id": "CACHE-UNAUTHORIZED",
+      "title": "Unauthenticated API errors disable cache",
+      "status": "PASS"
+    },
+    {
+      "id": "C31",
+      "title": "SSO anonymous UI redirects to login",
+      "status": "PASS"
+    },
+    {
+      "id": "C32",
+      "title": "Mock OIDC yields local session",
+      "status": "PASS"
+    },
+    {
+      "id": "C33",
+      "title": "Session identity",
+      "status": "PASS"
+    },
+    {
+      "id": "C34",
+      "title": "SSO ignores supplied ownership",
+      "status": "PASS"
+    },
+    {
+      "id": "OWNER-DELETE-bob",
+      "title": "Other immutable identity cannot delete: bob",
+      "status": "PASS"
+    },
+    {
+      "id": "OWNER-PATCH-bob",
+      "title": "Other immutable identity cannot patch: bob",
+      "status": "PASS"
+    },
+    {
+      "id": "OWNER-MARK-bob",
+      "title": "isMine rejects other immutable identity: bob",
+      "status": "PASS"
+    },
+    {
+      "id": "OWNER-DELETE-same-email-different-oid",
+      "title": "Other immutable identity cannot delete: same-email-different-oid",
+      "status": "PASS"
+    },
+    {
+      "id": "OWNER-PATCH-same-email-different-oid",
+      "title": "Other immutable identity cannot patch: same-email-different-oid",
+      "status": "PASS"
+    },
+    {
+      "id": "OWNER-MARK-same-email-different-oid",
+      "title": "isMine rejects other immutable identity: same-email-different-oid",
+      "status": "PASS"
+    },
+    {
+      "id": "OWNER-UNCHANGED",
+      "title": "Rejected mutations leave booking unchanged",
+      "status": "PASS"
+    },
+    {
+      "id": "B06-DELETE",
+      "title": "Namesake cannot mutate unrelated name-only legacy booking: DELETE",
+      "status": "PASS"
+    },
+    {
+      "id": "B06-PATCH",
+      "title": "Namesake cannot mutate unrelated name-only legacy booking: PATCH",
+      "status": "PASS"
+    },
+    {
+      "id": "LEGACY-MARK",
+      "title": "Name-only legacy booking isMine false",
+      "status": "PASS"
+    },
+    {
+      "id": "LEGACY-EMAIL",
+      "title": "Legacy row with recorded email retains email ownership",
+      "status": "PASS"
+    },
+    {
+      "id": "B10-renamed",
+      "title": "Same oid retains ownership after renamed",
+      "status": "PASS"
+    },
+    {
+      "id": "B10-emailChanged",
+      "title": "Same oid retains ownership after emailChanged",
+      "status": "PASS"
+    },
+    {
+      "id": "OWNER-PRIVATE",
+      "title": "API does not expose immutable IDs or email ownership fields",
+      "status": "PASS"
+    },
+    {
+      "id": "AUTH-NO-OID",
+      "title": "Missing immutable identity cannot create session",
+      "status": "PASS"
+    },
+    {
+      "id": "B07-valid",
+      "title": "Provider error with valid state is safe",
+      "status": "PASS"
+    },
+    {
+      "id": "B07-missing",
+      "title": "Provider error with missing state is safe",
+      "status": "PASS"
+    },
+    {
+      "id": "B07-wrong",
+      "title": "Provider error with wrong state is safe",
+      "status": "PASS"
+    },
+    {
+      "id": "AUTH-TOKEN-ERROR",
+      "title": "Token-exchange error is HTML-escaped",
+      "status": "PASS"
+    },
+    {
+      "id": "B08-backslash",
+      "title": "Return target remains local: backslash",
+      "status": "PASS",
+      "location": "/"
+    },
+    {
+      "id": "B08-double-slash",
+      "title": "Return target remains local: double-slash",
+      "status": "PASS",
+      "location": "/"
+    },
+    {
+      "id": "B08-absolute",
+      "title": "Return target remains local: absolute",
+      "status": "PASS",
+      "location": "/"
+    },
+    {
+      "id": "B08-crlf",
+      "title": "Return target remains local: crlf",
+      "status": "PASS",
+      "location": "/"
+    },
+    {
+      "id": "B08-normalized-parent",
+      "title": "Return target remains local: normalized-parent",
+      "status": "PASS",
+      "location": "/"
+    },
+    {
+      "id": "B08-normalized-deep",
+      "title": "Return target remains local: normalized-deep",
+      "status": "PASS",
+      "location": "/"
+    },
+    {
+      "id": "B08-normalized-encoded",
+      "title": "Return target remains local: normalized-encoded",
+      "status": "PASS",
+      "location": "/"
+    },
+    {
+      "id": "B08-local",
+      "title": "Return target remains local: local",
+      "status": "PASS",
+      "location": "/rooms?floor=2"
+    },
+    {
+      "id": "B09",
+      "title": "Malformed cookie is unauthenticated",
+      "status": "PASS"
+    },
+    {
+      "id": "C37",
+      "title": "Logout invalidates session",
+      "status": "PASS"
+    },
+    {
+      "id": "C38-wrong",
+      "title": "Invalid auth state rejected: wrong",
+      "status": "PASS"
+    },
+    {
+      "id": "C38-tampered",
+      "title": "Invalid auth state rejected: tampered",
+      "status": "PASS"
+    },
+    {
+      "id": "AUTH-EXPIRED-STATE",
+      "title": "Validly signed expired state is rejected",
+      "status": "PASS"
+    },
+    {
+      "id": "C40",
+      "title": "SQLite survives stop and integrity_check with new columns",
+      "status": "PASS",
+      "count": 11,
+      "integrity": "ok",
+      "columns": [
+        "id",
+        "room_id",
+        "date",
+        "start",
+        "end",
+        "owner",
+        "team",
+        "purpose",
+        "created_at",
+        "owner_email",
+        "owner_id",
+        "series_id",
+        "attendees"
+      ]
+    }
+  ]
+}

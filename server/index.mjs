@@ -21,11 +21,16 @@ const app = express();
 app.disable("x-powered-by");
 // DSM 역방향 프록시(https) 뒤에서 동작할 때 프록시 헤더를 신뢰한다.
 app.set("trust proxy", 1);
+app.use("/api", (_req, res, next) => {
+  // Identity-specific responses must never survive logout or be shared by a cache.
+  res.setHeader("Cache-Control", "no-store");
+  next();
+});
 app.use(express.json({ limit: "64kb" }));
 
 // SSO가 켜져 있으면 /auth/* 라우트 + 로그인 강제 미들웨어가 여기서 걸린다.
 registerAuthRoutes(app);
-console.log(ssoEnabled ? "[auth] Microsoft SSO 사용" : "[auth] 익명 모드 (MS_* 환경변수 없음)");
+console.log(ssoEnabled ? "[auth] Microsoft SSO 사용" : "[auth] 명시적으로 허용된 개발용 익명 모드");
 
 // ── 입력 검증 (운영 시간 규칙은 app/config/site.json에서 온다) ──
 const TIME = /^([01]\d|2[0-3]):([0-5]\d)$/;
@@ -53,24 +58,21 @@ const isRealDate = (value) => {
 
 const trimmed = (value) => (typeof value === "string" ? value.trim() : "");
 
-/** 서버가 있는 곳의 오늘 날짜(YYYY-MM-DD). 지난 날짜 예약을 막는 기준. */
-const todayKey = () => {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+// Use the configured business time zone even if the NAS/container runs in UTC.
+const clockFormatter = new Intl.DateTimeFormat("en-GB", {
+  timeZone: siteConfig.timeZone, year: "numeric", month: "2-digit", day: "2-digit",
+  hour: "2-digit", minute: "2-digit", hourCycle: "h23",
+});
+const bookingLimits = () => {
+  const parts = Object.fromEntries(clockFormatter.formatToParts(new Date()).map(({ type, value }) => [type, value]));
+  const today = parts.year + "-" + parts.month + "-" + parts.day;
+  const now = parts.hour + ":" + parts.minute;
+  const lastDay = new Date(Date.UTC(Number(parts.year), Number(parts.month) + maxAdvanceMonths, 0)).getUTCDate();
+  const future = new Date(Date.UTC(Number(parts.year), Number(parts.month) - 1 + maxAdvanceMonths, Math.min(Number(parts.day), lastDay)));
+  return { today, now, maxDate: future.toISOString().slice(0, 10) };
 };
-
-/** 서버가 있는 곳의 지금 시각(HH:MM). 오늘 예약이 지난 시간대인지 막는 기준. */
-const nowTimeKey = () => {
-  const now = new Date();
-  return `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-};
-
-/** 오늘부터 maxAdvanceMonths 뒤까지 예약 가능한 가장 늦은 날짜(YYYY-MM-DD). */
-const maxBookableDateKey = () => {
-  const now = new Date();
-  const future = new Date(now.getFullYear(), now.getMonth() + maxAdvanceMonths, now.getDate());
-  return `${future.getFullYear()}-${String(future.getMonth() + 1).padStart(2, "0")}-${String(future.getDate()).padStart(2, "0")}`;
-};
+const requestIdentity = (req) => ssoEnabled
+  ? { sso: true, ownerId: req.user.oid, ownerEmail: req.user.email } : undefined;
 
 /** 토·일 여부. 화면에서 막더라도 최종 판정은 서버가 한다. */
 const isWeekend = (value) => {
@@ -109,6 +111,7 @@ function validateCommon(body) {
 }
 
 function validateCreate(body) {
+  const limits = bookingLimits();
   const { error, value } = validateCommon(body);
   if (error) return { error };
 
@@ -118,9 +121,9 @@ function validateCreate(body) {
   if (dates.length > MAX_REPEAT) return { error: `반복 예약은 한 번에 ${MAX_REPEAT}건까지 가능합니다.` };
   if (!dates.every(isRealDate)) return { error: "날짜 형식이 올바르지 않습니다. (YYYY-MM-DD)" };
   if (!allowWeekends && dates.some(isWeekend)) return { error: "주말에는 예약할 수 없습니다." };
-  if (dates.some((date) => date < todayKey())) return { error: "지난 날짜에는 예약할 수 없습니다." };
-  if (dates.includes(todayKey()) && value.start < nowTimeKey()) return { error: "이미 지난 시간에는 예약할 수 없습니다." };
-  if (dates.some((date) => date > maxBookableDateKey())) {
+  if (dates.some((date) => date < limits.today)) return { error: "지난 날짜에는 예약할 수 없습니다." };
+  if (dates.includes(limits.today) && value.start < limits.now) return { error: "이미 지난 시간에는 예약할 수 없습니다." };
+  if (dates.some((date) => date > limits.maxDate)) {
     return { error: `예약은 오늘부터 ${maxAdvanceMonths}개월 뒤까지만 가능합니다.` };
   }
 
@@ -164,14 +167,14 @@ app.get("/api/bookings", (req, res) => {
   // 문자열이라 isRealDate가 걸러 준다. 그냥 두면 깨진 값이 조용히
   // "필터 없음"으로 취급돼 예약 전체가 나간다.
   if (from || to) {
-    if (!isRealDate(from) || !isRealDate(to)) {
-      res.status(400).json({ error: "from/to 날짜 형식이 올바르지 않습니다." });
+    if (!isRealDate(from) || !isRealDate(to) || from > to) {
+      res.status(400).json({ error: "from/to 날짜 형식 또는 순서가 올바르지 않습니다." });
       return;
     }
-    res.json({ bookings: listBookings({ from, to }) });
+    res.json({ bookings: listBookings({ from, to, identity: requestIdentity(req) }) });
     return;
   }
-  res.json({ bookings: listBookings() });
+  res.json({ bookings: listBookings({ identity: requestIdentity(req) }) });
 });
 
 app.post("/api/bookings", (req, res) => {
@@ -182,7 +185,11 @@ app.post("/api/bookings", (req, res) => {
     res.status(400).json({ error });
     return;
   }
-  if (ssoEnabled) value.ownerEmail = req.user.email;
+  if (ssoEnabled) {
+    value.ownerEmail = req.user.email;
+    value.ownerId = req.user.oid;
+    value.identity = requestIdentity(req);
+  }
 
   const result = createBookings(value);
   if (!result.ok) {
@@ -218,9 +225,9 @@ app.patch("/api/bookings/:id", (req, res) => {
   }
   const result = updateBooking(
     req.params.id,
-    ssoEnabled ? { owner: req.user.name, ownerEmail: req.user.email } : { owner },
+    ssoEnabled ? requestIdentity(req) : { owner },
     value,
-    { today: todayKey() },
+    bookingLimits(),
   );
   if (result.ok) {
     res.json({ booking: result.booking });
@@ -232,6 +239,14 @@ app.patch("/api/bookings/:id", (req, res) => {
   }
   if (result.reason === "past") {
     res.status(400).json({ error: "지난 예약은 수정할 수 없습니다." });
+    return;
+  }
+  if (result.reason === "past-time") {
+    res.status(400).json({ error: "이미 지난 시간으로 예약을 옮기거나 늘릴 수 없습니다." });
+    return;
+  }
+  if (result.reason === "too-far") {
+    res.status(400).json({ error: "예약은 오늘부터 " + maxAdvanceMonths + "개월 뒤까지만 가능합니다." });
     return;
   }
   if (result.reason === "conflict") {
@@ -249,8 +264,8 @@ app.delete("/api/bookings/:id", (req, res) => {
   }
   const result = deleteBooking(
     req.params.id,
-    ssoEnabled ? { owner: req.user.name, ownerEmail: req.user.email } : { owner },
-    { today: todayKey() },
+    ssoEnabled ? requestIdentity(req) : { owner },
+    bookingLimits(),
   );
   if (result.ok) {
     res.status(204).end();
@@ -296,7 +311,16 @@ app.use((req, res, next) => {
   });
 });
 
-app.use((error, _req, res, _next) => {
+app.use((error, _req, res, next) => {
+  if (res.headersSent) { next(error); return; }
+  if (error.type === "entity.parse.failed" || error.type === "request.size.invalid" || error.type === "request.aborted") {
+    res.status(400).json({ error: "요청 JSON 형식이 올바르지 않습니다." });
+    return;
+  }
+  if (error.type === "entity.too.large") {
+    res.status(413).json({ error: "요청 크기가 허용 한도(64KB)를 초과했습니다." });
+    return;
+  }
   console.error("[error]", error);
   res.status(500).json({ error: "서버 내부 오류가 발생했습니다." });
 });

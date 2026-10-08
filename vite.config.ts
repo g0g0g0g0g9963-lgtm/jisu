@@ -17,10 +17,12 @@ export default defineConfig({
     emptyOutDir: true,
   },
   server: {
+    host: "127.0.0.1",
     port: 5173,
     // 로컬 개발 시 API는 별도 프로세스(npm run dev:api)로 띄운다.
     proxy: {
-      "/api": "http://127.0.0.1:3000",
+      "/api": process.env.API_PROXY_TARGET ?? "http://127.0.0.1:3000",
+      "/auth": process.env.API_PROXY_TARGET ?? "http://127.0.0.1:3000",
     },
   },
 });

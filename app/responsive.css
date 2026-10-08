@@ -61,7 +61,7 @@
     flex: 1 1 0%; min-height: 0;
   }
   .app-shell .weekly-board .daily-timeline {
-    grid-template-columns: 52px repeat(4, minmax(164px, 1fr));
+    grid-template-columns: 52px repeat(var(--room-count, 4), minmax(164px, 1fr));
   }
   .app-shell .weekly-board .weekly-room-board {
     grid-template-columns: 140px repeat(5, minmax(138px, 1fr));
@@ -113,6 +113,57 @@
 }
 
 /* Custom time pickers need the same required-input cue as native fields. */
+/* Show the exact selected interval for mouse and touch, including non-preset lengths. */
+.timeline-drag-selection .timeline-drag-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  max-width: calc(100% - 12px);
+  padding: 6px 9px;
+  border-radius: 8px;
+  line-height: 1.2;
+}
+.timeline-drag-selection .timeline-drag-label > strong {
+  font-size: 12px;
+  font-weight: 800;
+}
+.daily-timeline .timeline-draft > b {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 3px 6px;
+}
+.daily-timeline .timeline-draft-duration {
+  font-size: 12px;
+  font-weight: 800;
+}
+
+/* Five 12F columns must show each English name rather than the same ellipsis. */
+.app-shell .schedule-design-cards .daily-timeline[data-floor="12"] .daily-room-title > strong {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  overflow-wrap: normal;
+  word-break: normal;
+  font-size: 14px;
+  line-height: 1.12;
+}
+.app-shell .schedule-design-cards .daily-timeline[data-floor="12"] .daily-room-head {
+  gap: 3px;
+}
+
+/* English 12F names stay inside the existing floor-plan room cards. */
+.map-zone .floor-12 .map-room > strong {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: normal;
+  word-break: normal;
+  text-wrap: balance;
+  font-size: clamp(11px, 0.9vw, 13px);
+  line-height: 1.2;
+}
+
 .booking-panel .booking-fields label.needs-input > .time-picker-toggle {
   border-color: #e68da3;
   box-shadow: inset 0 0 0 1px #e68da3;

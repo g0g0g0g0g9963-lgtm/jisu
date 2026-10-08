@@ -923,6 +923,12 @@ button {
   top: 62%;
   left: 18.8%;
 }
+.map-12-w {
+  width: 18%;
+  height: 57%;
+  top: 33%;
+  left: 80%;
+}
 .floor-12 .map-room {
   padding: 6px;
 }
@@ -1101,7 +1107,7 @@ button {
   display: grid;
 }
 .week-timeline.daily-timeline {
-  grid-template-columns: 44px repeat(4, minmax(0, 1fr));
+  grid-template-columns: 44px repeat(var(--room-count, 4), minmax(0, 1fr));
   position: relative;
 }
 .week-timeline.daily-timeline > .current-time-line-all {
@@ -2557,7 +2563,7 @@ footer strong {
     margin-top: 10px;
   }
   .week-timeline.daily-timeline {
-    grid-template-columns: 68px repeat(4, minmax(0, 1fr));
+    grid-template-columns: 68px repeat(var(--room-count, 4), minmax(0, 1fr));
   }
   .time-axis,
   .timeline-day,
@@ -3851,7 +3857,7 @@ footer strong {
     border: 1px solid #dbe1ea;
     border-radius: 10px;
     flex: 1;
-    grid-template-rows: 56px repeat(4, minmax(0, 1fr));
+    grid-template-rows: 56px repeat(var(--room-count, 4), minmax(0, 1fr));
     grid-template-columns: 210px repeat(5, minmax(0, 1fr));
     min-height: 0;
     margin-top: 0;

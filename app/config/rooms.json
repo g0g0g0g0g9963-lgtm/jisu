@@ -49,6 +49,40 @@
     "mapClass": "map-9-c4"
   },
   {
+    "id": "12-r1",
+    "floor": 12,
+    "name": "Conference Room 1",
+    "capacity": 6,
+    "location": "출입구 왼쪽, 창가 쪽",
+    "equipment": [
+      "모니터",
+      "화이트보드"
+    ],
+    "mapClass": "map-12-r1"
+  },
+  {
+    "id": "12-r2",
+    "floor": 12,
+    "name": "Conference Room 2",
+    "capacity": 4,
+    "location": "Conference Room 1 왼쪽",
+    "equipment": [
+      "화이트보드"
+    ],
+    "mapClass": "map-12-r2"
+  },
+  {
+    "id": "12-r3",
+    "floor": 12,
+    "name": "Conference Room 3",
+    "capacity": 4,
+    "location": "서쪽 휴게실 옆",
+    "equipment": [
+      "모니터"
+    ],
+    "mapClass": "map-12-r3"
+  },
+  {
     "id": "12-big",
     "floor": 12,
     "name": "대회의실",
@@ -61,37 +95,15 @@
     "mapClass": "map-12-big"
   },
   {
-    "id": "12-r1",
+    "id": "12-w",
     "floor": 12,
-    "name": "회의실 1",
-    "capacity": 6,
-    "location": "출입구 왼쪽, 창가 쪽",
+    "name": "W Room",
+    "capacity": 16,
+    "location": "12층 배치도 오른쪽",
     "equipment": [
-      "모니터",
-      "화이트보드"
+      "글라스보드",
+      "대형 모니터"
     ],
-    "mapClass": "map-12-r1"
-  },
-  {
-    "id": "12-r2",
-    "floor": 12,
-    "name": "회의실 2",
-    "capacity": 4,
-    "location": "회의실 1 왼쪽",
-    "equipment": [
-      "화이트보드"
-    ],
-    "mapClass": "map-12-r2"
-  },
-  {
-    "id": "12-r3",
-    "floor": 12,
-    "name": "회의실 3",
-    "capacity": 4,
-    "location": "서쪽 휴게실 옆",
-    "equipment": [
-      "모니터"
-    ],
-    "mapClass": "map-12-r3"
+    "mapClass": "map-12-w"
   }
 ]

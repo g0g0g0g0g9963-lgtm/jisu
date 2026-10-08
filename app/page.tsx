@@ -1007,9 +1007,7 @@ export default function Home() {
 
   const statusOf = (room: Room) => roomStatuses.get(room.id) ?? UNKNOWN_STATUS;
 
-  const floorRooms = rooms
-    .filter((room) => room.floor === floor)
-    .sort((a, b) => Number(b.id === "12-big") - Number(a.id === "12-big"));
+  const floorRooms = rooms.filter((room) => room.floor === floor);
   const filteredRooms = floorRooms.filter((room) => {
     const haystack = `${room.name} ${formatCapacity(room.capacity)} ${room.location} ${room.equipment.join(" ")}`.toLowerCase();
     return haystack.includes(query.toLowerCase());
@@ -1056,7 +1054,7 @@ export default function Home() {
     || a.room.capacity - b.room.capacity), [bookings, date, end, floor, slotIsBookable, start]);
 
   // 선택 팝업은 상태가 바뀌어도 위치가 움직이지 않게 설정 파일의 고정 순서를 쓴다.
-  // 9층은 1–4, 12층은 대회의실 다음 1–3 순서로 rooms.json에 정의돼 있다.
+  // 층별 회의실 순서는 rooms.json에서 관리한다. 예약 ID와 표시 순서는 독립적이다.
   const roomPickerChoices = useMemo(() => [...roomChoices].sort((a, b) => (
     rooms.findIndex((room) => room.id === a.room.id) - rooms.findIndex((room) => room.id === b.room.id)
   )), [roomChoices]);
@@ -2132,7 +2130,7 @@ export default function Home() {
                     말인지 알기 어려웠다. */}
               </div>
 
-              {scheduleView === "day" && <div className="week-timeline daily-timeline" ref={dailyGridRef}>
+              {scheduleView === "day" && <div className="week-timeline daily-timeline" data-floor={floor} ref={dailyGridRef} style={{ "--room-count": floorRooms.length } as CSSProperties}>
                 <div className="time-axis">
                   <span className="axis-corner">TIME</span>
                   <div className="time-axis-body">
@@ -2196,7 +2194,10 @@ export default function Home() {
                           const height = ((minutesOf(selection.end) - minutesOf(selection.start)) / (timelineEnd - timelineStart)) * 100;
                           return (
                             <span className="timeline-drag-selection" style={{ top: `${top}%`, height: `${height}%` }} aria-hidden="true">
-                              {slotDrag?.pointerType === "touch" && <b className="timeline-drag-label">{selection.start}–{selection.end}</b>}
+                              <b className="timeline-drag-label">
+                                <span>{selection.start}–{selection.end}</span>
+                                <strong>총 {spokenDuration(minutesOf(selection.end) - minutesOf(selection.start))}</strong>
+                              </b>
                             </span>
                           );
                         })()}
@@ -2207,7 +2208,7 @@ export default function Home() {
                           const height = Math.max(((minutesOf(end) - minutesOf(start)) / (timelineEnd - timelineStart)) * 100, 6.5);
                           return (
                             <span className="timeline-draft" style={{ top: `${top}%`, height: `${height}%` }}>
-                              <b>작성 중</b>
+                              <b>작성 중 <strong className="timeline-draft-duration">총 {spokenDuration(minutesOf(end) - minutesOf(start))}</strong></b>
                               <em>{start}–{end} · 오른쪽에서 이어서</em>
                             </span>
                           );
@@ -2247,7 +2248,7 @@ export default function Home() {
                   );
                 })}
               </div>}
-              {scheduleView === "week" && <div className="weekly-room-board" aria-label={`${floor}층 회의실별 주간 예약 현황`}>
+              {scheduleView === "week" && <div className="weekly-room-board" aria-label={`${floor}층 회의실별 주간 예약 현황`} style={{ "--room-count": floorRooms.length } as CSSProperties}>
                 <div className="weekly-room-head weekly-room-corner">회의실</div>
                 {weekDays.map((day) => (
                   <button type="button" className={`weekly-room-head ${day === date ? "active" : ""}`} key={day} aria-pressed={day === date} onClick={() => setDate(day)}>

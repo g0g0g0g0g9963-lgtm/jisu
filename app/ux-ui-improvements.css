@@ -78,16 +78,6 @@
   flex: none;
   min-width: 38px;
 }
-/* On a wide single-row header the room card still ends at ~216px.
-   Reserve enough shared height for both brand rules to sit below it.
-   End alignment keeps the date and controls close to the rule, not stranded
-   at the top of a taller header. Narrow two-row content may grow naturally. */
-@media (min-width: 1001px) {
-  .app-shell:not(.booking-panel-collapsed) .workspace .map-panel .weekly-board .weekly-heading.schedule-hero {
-    min-height: 176px;
-    align-items: end;
-  }
-}
 @media (min-width: 1001px) and (max-width: 1439px) {
   .app-shell .workspace .map-panel .weekly-board .weekly-heading.schedule-hero {
     grid-template-columns: auto minmax(184px, 1fr) auto;
@@ -109,7 +99,7 @@
   .app-shell .schedule-hero .schedule-floor-switch button { min-width: 0; padding-inline: 9px; }
 }
 
-/* Both brand rules share one thickness and a measured desktop Y coordinate. */
+/* Keep the blue schedule divider; the quick-booking panel has no red rule. */
 .app-shell .workspace .map-panel .weekly-board .weekly-heading.schedule-hero::after {
   content: "";
   display: block;
@@ -127,63 +117,6 @@
   pointer-events: none;
 }
 .app-shell > .booking-panel:not(.is-collapsed) { background-image: none; }
-@media (min-width: 1001px) {
-  .app-shell > .booking-panel:not(.is-collapsed)::before {
-    content: "";
-    position: absolute;
-    inset: var(--brand-rule-y, var(--rule-abs)) var(--booking-balanced-inset, 24px) auto;
-    height: var(--brand-rule-thickness);
-    z-index: 3;
-    background: linear-gradient(90deg, #d9163a14 0%, #d9163a60 48%, #d9163a 100%);
-    animation: none;
-    pointer-events: none;
-  }
-}
-
-/* Filter controls are a real toolbar, not overlapping calendar decorations. */
-.room-filters {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: end;
-  gap: 10px 12px;
-  flex: none;
-  margin: 0 0 14px;
-  padding: 12px;
-  background: #f8fafc;
-  border: 1px solid #dfe5ed;
-  border-radius: 9px;
-}
-.room-filter-field { display: grid; gap: 5px; flex: 1 1 145px; min-width: 0; }
-.room-filter-field:first-child { flex: 2 1 210px; }
-.room-filter-field > span { color: #5f6b7a; font-size: 12px; font-weight: 600; }
-.room-filter-field input,
-.room-filter-field select {
-  width: 100%;
-  min-width: 0;
-  min-height: 40px;
-  padding: 0 10px;
-  border: 1px solid #cfd7e2;
-  border-radius: 7px;
-  background: #fff;
-  color: #17223a;
-  font: inherit;
-  font-size: 13px;
-}
-.room-filter-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  min-height: 40px;
-  padding: 0 10px;
-  color: #334155;
-  border: 1px solid #cfd7e2;
-  border-radius: 7px;
-  background: #fff;
-  font-size: 13px;
-  cursor: pointer;
-}
-.room-filter-toggle input { width: 16px; height: 16px; margin: 0; accent-color: var(--selected); }
-.room-filter-result { align-self: center; color: #5f6b7a; font-size: 12px; line-height: 1.5; }
 
 /* Five rooms retain readable column widths on laptops; only the board scrolls. */
 .app-shell .weekly-board .daily-timeline {
@@ -489,7 +422,6 @@
 }
 .booking-room-section {
   box-sizing: border-box;
-  min-height: var(--room-section-min-height, auto);
   flex: none;
   width: 100%;
   padding: 0;
@@ -588,12 +520,9 @@
   outline-offset: 3px;
 }
 @media (max-width: 1000px) {
-  .room-filters { padding: 10px; gap: 10px; margin-inline: 4px; }
-  .room-filter-field { flex-basis: 130px; }
   .app-shell .weekly-board .daily-timeline { grid-template-columns: 52px repeat(var(--room-count, 4), minmax(176px, 1fr)); }
   .app-shell .weekly-board .weekly-room-board { grid-template-columns: 170px repeat(5, minmax(160px, 1fr)); }
   .app-shell > .booking-panel:not(.is-collapsed) { width: calc(100% - 16px); max-width: 430px; margin-left: auto; }
-  .app-shell .booking-panel .booking-room-section { min-height: 0 !important; }
   .app-shell .booking-panel .booking-selection-summary { padding: 10px 12px; }
 }
 @media (prefers-reduced-motion: reduce) {

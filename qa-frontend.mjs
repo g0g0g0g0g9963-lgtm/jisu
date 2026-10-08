@@ -28,7 +28,7 @@ const nodesForClass=name=>jsxNodes.filter(node=>hasClass(node,name));
 const nodeContent=node=>node.parent.getText(ast);
 function context(overrides={}){
  const c={authReady:true,mutationBusy:false,submitting:false,selectedTimeConflict:false,timeNeedsPick:false,REQUIRED_FIELDS:[{key:'owner',id:'owner-input',value:'QA User'},{key:'team',id:'team-input',value:'QA Team'}],officeTeams:[{name:'QA Team'}],owner:'QA User',myBookingOwner:'QA User',currentUser:null,team:'QA Team',purpose:'QA',attendees:[],selected:{id:'qa-room',name:'QA room'},start:'10:00',end:'11:00',today:'2026-10-08',date:'2026-10-12',nowMinutes:615,reservationDates:['2026-10-12'],conflictDates:[],bookingDefaults:lib.bookingDefaults,minutesOf:dt.minutesOf,formatDateLabel:dt.formatDateLabel,formatMinutes:dt.formatMinutes,addMinutes:dt.addMinutes,findConflictingDates:lib.findConflictingDates,bookings:[],startTimeOptions:['10:00','11:00','12:00'],lastSelectableTime:'18:00',allDay:false,draftKey:'original-draft',latestDraftKey:{current:'original-draft'},slot:{date:'2026-10-12',start:'10:00',end:'11:00'},roomById:()=>({name:'QA room'}),useCallback:f=>f,useMemo:f=>f(),document:{getElementById:()=>({focus(){}}),querySelector:()=>({scrollTo(){}})},window:{requestAnimationFrame:f=>f()},...overrides};
- Object.assign(c,{bookingBlockReason:'',syncError:'',selectedId:'qa-room',keyboardSelection:null,timePickerOpen:null,selectionFeedback:'',query:'',capacityFilter:'',equipmentFilter:'',availableOnly:false,describeRoomSlotAvailability:roomLib.describeRoomSlotAvailability,formatCapacity:roomLib.formatCapacity,...overrides});
+ Object.assign(c,{bookingBlockReason:'',syncError:'',selectedId:'qa-room',keyboardSelection:null,timePickerOpen:null,selectionFeedback:'',describeRoomSlotAvailability:roomLib.describeRoomSlotAvailability,formatCapacity:roomLib.formatCapacity,...overrides});
  c.selected={floor:9,...c.selected};
  if(!overrides.roomById)c.roomById=()=>({id:'qa-room',floor:9,name:'QA room'});
  c.state={};c.calls={refresh:0,post:0,patch:0,delete:0,focus:0,flash:0};
@@ -110,13 +110,6 @@ try{
  const weeklyEvents=nodesForClass('weekly-room-event');
  check('UX-WEEK-LIST','Weekly bookings are normal-flow list items, not overlapping absolute-time rectangles',nodesForClass('weekly-booking-list').length===1&&weeklyEvents.length===1&&!attr(weeklyEvents[0],'style'));
  check('UX-WEEK-CONTENT','Every weekly booking retains owner, end time, and department',weeklyEvents.length===1&&['booking.owner','booking.end','teamOf(booking)'].every(text=>nodeContent(weeklyEvents[0]).includes(text)));
- check('UX-DAY-FILTER','Daily timeline uses the filtered room collection',nodesForClass('daily-timeline').some(node=>nodeContent(node).includes('filteredRooms.map')));
- check('UX-WEEK-FILTER','Weekly board uses the same filtered room collection',nodesForClass('weekly-room-board').some(node=>nodeContent(node).includes('filteredRooms.map')));
- const filterRooms=[{id:'small',floor:9,name:'Small',capacity:4,location:'East',equipment:['Screen']},{id:'large',floor:9,name:'Large',capacity:10,location:'West',equipment:['Projector','Screen']},{id:'booked',floor:9,name:'Booked',capacity:16,location:'West',equipment:['Projector']}];
- c=context({floorRooms:filterRooms,capacityFilter:'6',equipmentFilter:'Projector',availableOnly:true,slotIsBookable:id=>id!=='booked'});
- check('UX-FILTER-INTERSECTION','Capacity, equipment and selected-slot availability filters intersect',equal(fn('filteredRooms',c).map(room=>room.id),['large']));
- c=context({floorRooms:filterRooms,query:'  LARGE  '});check('UX-FILTER-TEXT','Search ignores case and surrounding whitespace',equal(fn('filteredRooms',c).map(room=>room.id),['large']));
- c=context({floorRooms:filterRooms,availableOnly:true,syncError:'Synthetic offline',slotIsBookable:()=>true});check('UX-FILTER-STALE','Available-only filter never promises availability while sync is disconnected',fn('filteredRooms',c).length===0);
  const pickerOptions=[0,1,2].map(index=>({focus(){c.document.activeElement=this;c.state.pickerFocusedIndex=index;},scrollIntoView(){}}));
  c=context({timePickerOpen:'start'});c.document.activeElement=pickerOptions[0];c.closeTimePicker=()=>fn('closeTimePicker',c)();
  const pickerEvent=key=>({key,currentTarget:{querySelectorAll:()=>pickerOptions},preventDefault(){},stopPropagation(){}});

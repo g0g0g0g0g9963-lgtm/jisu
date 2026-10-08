@@ -725,11 +725,6 @@ export default function Home() {
   const [floor, setFloor] = useState<number>(floors[0]);
   const [selectedId, setSelectedId] = useState(rooms[0].id);
   const [scheduleView, setScheduleView] = useState<"week" | "day">("day");
-  const [query, setQuery] = useState("");
-  const [capacityFilter, setCapacityFilter] = useState("");
-  const [equipmentFilter, setEquipmentFilter] = useState("");
-  const [availableOnly, setAvailableOnly] = useState(false);
-  const equipmentOptions = useMemo(() => [...new Set(rooms.flatMap((room) => room.equipment))], []);
   const [duration, setDuration] = useState(bookingDefaults.defaultDurationMinutes);
   const [slot, setSlot] = useState<SlotForm>(() =>
     nearestAvailableSlot(clock, bookingDefaults.defaultDurationMinutes),
@@ -812,8 +807,6 @@ export default function Home() {
   const [keyboardSelection, setKeyboardSelection] = useState<SlotSelection | null>(null);
   const [selectionFeedback, setSelectionFeedback] = useState("");
   const [extraDetailsOpen, setExtraDetailsOpen] = useState(false);
-  const [brandRuleY, setBrandRuleY] = useState<number | null>(null);
-  const [roomSectionMinHeight, setRoomSectionMinHeight] = useState<number | null>(null);
   const pendingTouchDrag = useRef<PendingTouchDrag | null>(null);
   // 주간 화면 더블클릭은 일간 드래그와 달리 시간을 정한 적이 없다.
   // 회의실·날짜만 고르고, 시간은 빠른 예약 창에서 직접 고르게 한다.
@@ -1077,13 +1070,6 @@ export default function Home() {
   const roomPickerChoices = useMemo(() => [...roomChoices].sort((a, b) => (
     rooms.findIndex((room) => room.id === a.room.id) - rooms.findIndex((room) => room.id === b.room.id)
   )), [roomChoices]);
-  const filteredRooms = floorRooms.filter((room) => {
-    const haystack = `${room.name} ${room.floor}층 ${formatCapacity(room.capacity)} ${room.location} ${room.equipment.join(" ")}`.toLowerCase();
-    return haystack.includes(query.trim().toLowerCase())
-      && (!capacityFilter || room.capacity >= Number(capacityFilter))
-      && (!equipmentFilter || room.equipment.includes(equipmentFilter))
-      && (!availableOnly || (!syncError && slotIsBookable(room.id, start, end)));
-  });
 
   const availableStartOptions = useMemo(() => {
     // 프리셋(1/2/4시간)에 없는 길이(드래그로 잡은 30분·90분 등)도 실제 길이 그대로 써야 한다.
@@ -1192,30 +1178,7 @@ export default function Home() {
     const observer = new ResizeObserver(measure);
     observer.observe(grid);
     return () => observer.disconnect();
-  }, [scheduleView, floor, filteredRooms.length, query, capacityFilter, equipmentFilter, availableOnly]);
-
-  // 양쪽 띠는 날짜 영역의 실제 높이를 함께 사용한다.
-  useLayoutEffect(() => {
-    const hero = document.querySelector<HTMLElement>(".schedule-hero");
-    const panel = document.querySelector<HTMLElement>(".booking-panel");
-    if (!hero || !panel) return;
-    const measure = () => {
-      const blueY = hero.getBoundingClientRect().bottom - 3;
-      const next = blueY - panel.getBoundingClientRect().top;
-      setBrandRuleY((current) => current !== null && Math.abs(current - next) < .5 ? current : next);
-      const section = panel.querySelector<HTMLElement>(".booking-room-section");
-      if (section && !panel.classList.contains("is-collapsed")) {
-        const minHeight = Math.max(0, blueY - section.getBoundingClientRect().top + 20);
-        setRoomSectionMinHeight((current) => current !== null && Math.abs(current - minHeight) < .5 ? current : minHeight);
-      }
-    };
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(hero);
-    observer.observe(panel);
-    window.addEventListener("resize", measure);
-    return () => { observer.disconnect(); window.removeEventListener("resize", measure); };
-  }, [scheduleView, bookingPanelOpen, showMap]);
+  }, [scheduleView, floor, floorRooms.length]);
 
   useEffect(() => { setKeyboardSelection(null); setSelectionFeedback(""); }, [date, floor, scheduleView]);
 
@@ -2059,10 +2022,6 @@ export default function Home() {
           </button>
           <button type="button" aria-label="다음 날짜" onClick={() => setDate(moveDate(date, 1))}>›</button>
         </div>
-        <label className="search-box">
-          <span aria-hidden="true">⌕</span>
-          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="회의실, 인원, 장비 검색" />
-        </label>
         <div className="availability-summary">
           <span>{floor}층</span>
           <strong>{availableCount}</strong>
@@ -2099,11 +2058,11 @@ export default function Home() {
         <aside className="room-list-panel">
           <div className="section-heading">
             <div><p>ROOMS</p><h2>{floor}층 회의실</h2></div>
-            <span>{filteredRooms.length}개</span>
+            <span>{floorRooms.length}개</span>
           </div>
           <p className="section-help">이름 또는 오른쪽 배치도에서 회의실을 선택하세요.</p>
           <div className="room-list">
-            {filteredRooms.map((room) => {
+            {floorRooms.map((room) => {
               const status = statusOf(room);
               return (
                 <div className="room-card-wrap" key={room.id}>
@@ -2137,7 +2096,6 @@ export default function Home() {
                 </div>
               );
             })}
-            {filteredRooms.length === 0 && <div className="empty-search">조건에 맞는 회의실이 없어요.</div>}
           </div>
           <div className="legend"><span><i className="available" />사용 가능</span><span><i className="occupied" />사용 중</span><span><i className="soon" />곧 예약</span></div>
         </aside>
@@ -2243,17 +2201,8 @@ export default function Home() {
                     말인지 알기 어려웠다. */}
               </div>
 
-              <section className="room-filters" aria-label="회의실 탐색 필터">
-                <label className="room-filter-field"><span>회의실 검색</span><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="회의실명 또는 위치" /></label>
-                <label className="room-filter-field"><span>참석 인원</span><input type="number" min="1" step="1" value={capacityFilter} onChange={(event) => { const value = event.target.value; if (value === "" || (Number.isInteger(Number(value)) && Number(value) >= 1)) setCapacityFilter(value); }} placeholder="전체 인원" /></label>
-                <label className="room-filter-field"><span>필요한 장비</span><select value={equipmentFilter} onChange={(event) => setEquipmentFilter(event.target.value)}><option value="">모든 장비</option>{equipmentOptions.map((item) => <option value={item} key={item}>{item}</option>)}</select></label>
-                <label className="room-filter-toggle"><input type="checkbox" checked={availableOnly} onChange={(event) => setAvailableOnly(event.target.checked)} />선택 시간 예약 가능</label>
-                <span className="room-filter-result" role="status">{floor}층 {filteredRooms.length}/{floorRooms.length}개 · {formatDateLabel(date)} {start}–{end}{repeatWeekly ? ` · 반복 ${reservationDates.length}일 기준` : ""}</span>
-                {(query || capacityFilter || equipmentFilter || availableOnly) && <button type="button" className="room-filter-reset" onClick={() => { setQuery(""); setCapacityFilter(""); setEquipmentFilter(""); setAvailableOnly(false); }}>초기화</button>}
-              </section>
               {selectionFeedback && <p className="schedule-selection-feedback" role="status">{selectionFeedback}</p>}
-              {filteredRooms.length === 0 && <div className="empty-search room-filter-empty"><p>조건에 맞는 회의실이 없습니다. 인원·장비 조건을 줄이거나 다른 시간과 층을 확인해 주세요.</p><button type="button" onClick={() => { setQuery(""); setCapacityFilter(""); setEquipmentFilter(""); setAvailableOnly(false); }}>필터 초기화</button></div>}
-              {scheduleView === "day" && filteredRooms.length > 0 && <div className="week-timeline daily-timeline" data-floor={floor} ref={dailyGridRef} style={{ "--room-count": filteredRooms.length } as CSSProperties}>
+              {scheduleView === "day" && floorRooms.length > 0 && <div className="week-timeline daily-timeline" data-floor={floor} ref={dailyGridRef} style={{ "--room-count": floorRooms.length } as CSSProperties}>
                 <div className="time-axis">
                   <span className="axis-corner">TIME</span>
                   <div className="time-axis-body">
@@ -2275,7 +2224,7 @@ export default function Home() {
                     }}
                   />
                 )}
-                {filteredRooms.map((room) => {
+                {floorRooms.map((room) => {
                   const dailyBookings = layoutOverlappingBookings(
                     bookings.filter((booking) => booking.roomId === room.id && booking.date === date),
                   );
@@ -2373,7 +2322,7 @@ export default function Home() {
                   );
                 })}
               </div>}
-              {scheduleView === "week" && filteredRooms.length > 0 && <div className="weekly-room-board" aria-label={`${floor}층 회의실별 주간 예약 현황, 예약은 시간 순서로 표시`} style={{ "--room-count": filteredRooms.length } as CSSProperties}>
+              {scheduleView === "week" && floorRooms.length > 0 && <div className="weekly-room-board" aria-label={`${floor}층 회의실별 주간 예약 현황, 예약은 시간 순서로 표시`} style={{ "--room-count": floorRooms.length } as CSSProperties}>
                 <div className="weekly-room-head weekly-room-corner">회의실</div>
                 {weekDays.map((day) => (
                   <button type="button" className={`weekly-room-head ${day === date ? "active" : ""}`} key={day} aria-pressed={day === date} onClick={() => setDate(day)}>
@@ -2381,7 +2330,7 @@ export default function Home() {
                     {day === date && <span className="daily-room-selected-icon"><SelectedRoomIcon /></span>}
                   </button>
                 ))}
-                {filteredRooms.map((room) => {
+                {floorRooms.map((room) => {
                   const status = statusOf(room);
                   return (
                     <div className="weekly-room-row" key={room.id}>
@@ -2445,7 +2394,7 @@ export default function Home() {
 
       {/* 빠른 예약은 작업 영역 밖으로 뺀다. 화면 맨 위부터 아래까지 한 칸으로
           쓰려면 상단바·작업영역과 형제여야 격자에 자리를 잡을 수 있다. */}
-      <aside className={`booking-panel ${bookingPanelOpen ? "" : "is-collapsed"} ${filledNotice ? "just-filled" : ""}`} id="quick-booking" style={{ "--brand-rule-y": brandRuleY === null ? undefined : `${brandRuleY}px`, "--room-section-min-height": roomSectionMinHeight === null ? undefined : `${roomSectionMinHeight}px` } as CSSProperties}>
+      <aside className={`booking-panel ${bookingPanelOpen ? "" : "is-collapsed"} ${filledNotice ? "just-filled" : ""}`} id="quick-booking">
         <button
           type="button"
           className="booking-panel-rail"

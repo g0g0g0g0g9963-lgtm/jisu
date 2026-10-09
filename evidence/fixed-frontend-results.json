@@ -1,9 +1,9 @@
 {
-  "testedAt": "2026-10-08T07:28:41.866Z",
+  "testedAt": "2026-10-09T12:06:02.097Z",
   "method": "Actual TypeScript AST handlers executed in isolated VM; state setters captured separately to preserve React closure semantics; not browser end-to-end",
   "counts": {
-    "total": 48,
-    "pass": 48,
+    "total": 82,
+    "pass": 82,
     "fail": 0
   },
   "results": [
@@ -100,6 +100,116 @@
     {
       "id": "SUBMIT-VALID",
       "title": "Valid future draft reaches preview",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-SUBMIT-EARLY-BLOCK",
+      "title": "Known invalid slot is blocked before confirmation and disables CTA",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-WEEK-PAST",
+      "title": "Past weekly date does not open a booking draft",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-WEEK-CLOSED",
+      "title": "Closed same-day weekly date does not open a booking draft",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-KEYBOARD-PREVIEW",
+      "title": "Arrow moves only the timeline preview without committing or changing focus",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-KEYBOARD-REPEAT",
+      "title": "A second arrow continues from the existing preview",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-KEYBOARD-COMMIT",
+      "title": "Enter commits the preview and opens the booking panel once",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-KEYBOARD-ESCAPE",
+      "title": "Escape clears only the preview without opening or erasing a form draft",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-KEYBOARD-CHILD",
+      "title": "Reservation-button key events do not also select a parent timeline slot",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-SLOT-PAST",
+      "title": "Past daily selection stays blocked without the removed timeline notice",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-SLOT-CONFLICT",
+      "title": "Conflicting daily selection gives feedback without replacing the form draft",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-FLOOR-IDENTITY",
+      "title": "Same-name rooms retain distinct floor information",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-FLOOR-MARKUP-reserve-button-room",
+      "title": "Floor-aware room identity is rendered in reserve-button-room",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-FLOOR-MARKUP-booking-confirm-summary",
+      "title": "Floor-aware room identity is rendered in booking-confirm-summary",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-FLOOR-MARKUP-my-booking-room",
+      "title": "Floor-aware room identity is rendered in my-booking-room",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-WEEK-LIST",
+      "title": "Weekly bookings are normal-flow list items, not overlapping absolute-time rectangles",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-WEEK-CONTENT",
+      "title": "Every weekly booking retains owner, end time, and department",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-TIME-ARROW",
+      "title": "Time listbox ArrowDown focuses the next option",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-TIME-END",
+      "title": "Time listbox End focuses the final option",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-TIME-HOME",
+      "title": "Time listbox Home focuses the first option",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-TIME-ESCAPE",
+      "title": "Time listbox Escape closes and restores trigger focus",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-REPEAT-PARTIAL-BLOCK",
+      "title": "Partial repeat conflicts do not block the free-date confirmation path",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-REPEAT-ALL-BLOCK",
+      "title": "All-date repeat conflict has an immediate blocking reason",
       "status": "PASS"
     },
     {
@@ -288,8 +398,68 @@
       "status": "PASS"
     },
     {
+      "id": "UX-SEND-RECHECK-expired",
+      "title": "Final send rechecks the slot before dispatch: expired",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-SEND-RECHECK-new-conflict",
+      "title": "Final send rechecks the slot before dispatch: new-conflict",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-SEND-RECHECK-disconnected",
+      "title": "Final send rechecks the slot before dispatch: disconnected",
+      "status": "PASS"
+    },
+    {
       "id": "EARLY-END-BOUNDARY",
       "title": "Exact slot early-end uses current boundary",
+      "status": "PASS"
+    },
+    {
+      "id": "EARLY-END-NO-TIME",
+      "title": "No remaining reducible time is not submitted",
+      "status": "PASS"
+    },
+    {
+      "id": "EARLY-END-RECONFIRM",
+      "title": "Changed boundary requires explicit review before save",
+      "status": "PASS"
+    },
+    {
+      "id": "EARLY-END-ACTUAL",
+      "title": "Completion uses the server-confirmed end time",
+      "status": "PASS"
+    },
+    {
+      "id": "RECOVERY-SNAPSHOT",
+      "title": "Unknown write result preserves a separate submitted snapshot and releases busy",
+      "status": "PASS"
+    },
+    {
+      "id": "RECOVERY-NO-RESEND",
+      "title": "Unknown result blocks another create until lookup",
+      "status": "PASS"
+    },
+    {
+      "id": "RECOVERY-LOOKUP",
+      "title": "Result button only reads the submitted date range and opens my bookings",
+      "status": "PASS"
+    },
+    {
+      "id": "RECOVERY-NAMESAKE",
+      "title": "Namesake reservation is not reported as own success",
+      "status": "PASS"
+    },
+    {
+      "id": "RECOVERY-RETRYABLE",
+      "title": "Failed lookup preserves recovery and enables another read",
+      "status": "PASS"
+    },
+    {
+      "id": "RECOVERY-LATE-READ",
+      "title": "Superseded lookup cannot overwrite newer list state",
       "status": "PASS"
     }
   ]

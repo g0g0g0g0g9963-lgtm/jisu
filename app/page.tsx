@@ -3052,19 +3052,22 @@ export default function Home() {
         </div>
       </aside>
       {submitPreviewDates && <div className="edit-backdrop booking-confirm-backdrop" role="presentation" onMouseDown={() => setSubmitPreviewDates(null)}>
-        <section ref={submitPreviewDialogRef} className="early-dialog booking-confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="booking-confirm-title" onMouseDown={(event) => event.stopPropagation()}>
-          <h2 id="booking-confirm-title">예약 내용을 확인해 주세요</h2>
-          <p>아래 내용으로 예약을 진행합니다.</p>
-          <div className="early-summary booking-confirm-summary">
-            <b>{roomIdentity(selected)}</b>
-            <span>{formatDateLabel(submitPreviewDates[0])} · {start}–{end}</span>
-            <span>{spokenDuration(minutesOf(end) - minutesOf(start))}{submitPreviewDates.length > 1 ? ` · ${submitPreviewDates.length}회` : ""}</span>
-            {purpose.trim() && <span>{purpose.trim()}</span>}
+        <section ref={submitPreviewDialogRef} className="booking-confirm-dialog booking-confirm-clean" role="dialog" aria-modal="true" aria-labelledby="booking-confirm-title" aria-describedby="booking-confirm-description" onMouseDown={(event) => event.stopPropagation()}>
+          <button type="button" className="booking-confirm-close" aria-label="예약 확인창 닫기" onClick={() => setSubmitPreviewDates(null)}><CloseIcon /></button>
+          <h2 id="booking-confirm-title">이 내용으로 예약할까요?</h2>
+          <p id="booking-confirm-description">회의실과 시간을 한 번 더 확인해 주세요.</p>
+          <div className="booking-confirm-summary" role="group" aria-label={roomIdentity(selected)}>
+            <div className="booking-confirm-room"><strong>{selected.name}</strong><span className="booking-confirm-floor">{selected.floor}F</span></div>
+            <div className="booking-confirm-details">
+              <div className="booking-confirm-detail"><CalendarIcon /><time dateTime={submitPreviewDates[0]}>{formatDateLabel(submitPreviewDates[0])}</time>{submitPreviewDates.length > 1 && <span className="booking-confirm-duration">총 {submitPreviewDates.length}회</span>}</div>
+              <div className="booking-confirm-detail"><ClockIcon /><span className="booking-confirm-time"><time>{start}</time> — <time>{end}</time></span><span className="booking-confirm-duration">{spokenDuration(minutesOf(end) - minutesOf(start))}</span></div>
+            </div>
+            {purpose.trim() && <div className="booking-confirm-purpose"><span>회의 목적</span><p>{purpose.trim()}</p></div>}
             {submitPreviewDates.length > 1 && <details className="booking-confirm-dates"><summary>{submitPreviewDates.length}회 예약 날짜 확인</summary><ul>{submitPreviewDates.map((day) => <li key={day}>{formatDateLabel(day)}</li>)}</ul></details>}
           </div>
-          <div className="early-foot">
+          <div className="booking-confirm-actions">
             <button type="button" onClick={() => setSubmitPreviewDates(null)}>수정하기</button>
-            <button type="button" className="early-go" disabled={submitting} onClick={() => sendBooking(submitPreviewDates)}>{submitting ? "예약하는 중…" : "예약하기"}</button>
+            <button type="button" className="booking-confirm-submit" disabled={submitting} onClick={() => sendBooking(submitPreviewDates)}>{submitting ? "예약하는 중…" : "예약하기"}</button>
           </div>
         </section>
       </div>}

@@ -1,0 +1,106 @@
+<div id="booking-confirmation-design">
+  <style>
+    #booking-confirmation-design .bc-stage { min-height: 500px; padding: 62px 16px 24px; box-sizing: border-box; display: grid; place-items: center; }
+    #booking-confirmation-design .bc-dialog { --bc-paper: light-dark(#ffffff,#1c283b); --bc-ink: light-dark(#17243d,#edf2fa); --bc-muted: light-dark(#68778e,#a8b8ce); --bc-rule: light-dark(#e6ebf2,#354358); --bc-soft: light-dark(#edf2f8,#2b3b52); --bc-red: light-dark(#d70c39,#f47793); --bc-red-ink: light-dark(#ffffff,#29151d); --bc-navy: light-dark(#213551,#d5e1f3); --bc-navy-ink: light-dark(#ffffff,#19273c); --bc-shadow: light-dark(#17243d15,#00000035); --bc-button-height: 48px; color: var(--bc-ink); background: var(--bc-paper); border: 1px solid var(--bc-rule); border-radius: 18px; box-shadow: 0 12px 32px var(--bc-shadow); width: 100%; max-width: 438px; padding: 28px; box-sizing: border-box; font-family: "Pretendard","Malgun Gothic","Segoe UI",sans-serif; }
+    #booking-confirmation-design .bc-dialog * { box-sizing: border-box; }
+    #booking-confirmation-design .bc-dialog h2 { margin: 0; color: var(--bc-ink); font-size: 21px; line-height: 1.45; letter-spacing: -.04em; font-weight: 750; }
+    #booking-confirmation-design .bc-subtitle { margin: 6px 0 0; color: var(--bc-muted); font-size: 13px; line-height: 1.6; }
+    #booking-confirmation-design .bc-room { margin-top: 26px; }
+    #booking-confirmation-design .bc-room-top { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    #booking-confirmation-design .bc-room-name { color: var(--bc-ink); font-size: 18px; line-height: 1.45; letter-spacing: -.025em; font-weight: 700; }
+    #booking-confirmation-design .bc-floor { display: inline-flex; align-items: center; justify-content: center; min-height: 24px; padding: 3px 7px; border-radius: 5px; color: var(--bc-navy); background: var(--bc-soft); font-size: 11px; line-height: 1; font-weight: 700; }
+    #booking-confirmation-design .bc-details { margin: 20px 0 0; border-top: 1px solid var(--bc-rule); padding-top: 18px; display: grid; gap: 14px; }
+    #booking-confirmation-design .bc-detail { display: flex; align-items: center; gap: 12px; min-width: 0; font-size: 14px; line-height: 1.5; color: var(--bc-ink); }
+    #booking-confirmation-design .bc-detail svg { width: 17px; height: 17px; flex: none; color: var(--bc-muted); }
+    #booking-confirmation-design .bc-detail time { font-variant-numeric: tabular-nums; }
+    #booking-confirmation-design .bc-duration { margin-left: auto; color: var(--bc-muted); font-size: 12px; white-space: nowrap; }
+    #booking-confirmation-design .bc-actions { display: grid; grid-template-columns: 112px minmax(0,1fr); gap: 10px; margin-top: 26px; }
+    #booking-confirmation-design .bc-actions button { min-height: var(--bc-button-height); padding: 10px 16px; font: inherit; font-size: 14px; line-height: 1.3; font-weight: 650; border: 0; border-radius: 9px; color: var(--bc-muted); background: var(--bc-soft); }
+    #booking-confirmation-design .bc-actions .bc-submit { color: var(--bc-red-ink); background: var(--bc-red); }
+    #booking-confirmation-design .bc-actions button:hover { filter: brightness(.96); }
+    #booking-confirmation-design .bc-feedback { margin: 12px 0 0; color: var(--bc-muted); font-size: 12px; line-height: 1.5; }
+    #booking-confirmation-design .bc-feedback:empty { display: none; }
+    #booking-confirmation-design .bc-time-focus { text-align: center; }
+    #booking-confirmation-design .bc-time-focus h2 { font-size: 18px; }
+    #booking-confirmation-design .bc-date { margin: 24px 0 12px; color: var(--bc-muted); font-size: 14px; line-height: 1.5; }
+    #booking-confirmation-design .bc-time-range { display: flex; justify-content: center; align-items: center; gap: 18px; color: var(--bc-ink); }
+    #booking-confirmation-design .bc-time-range time { font-size: 34px; line-height: 1.15; font-weight: 650; letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
+    #booking-confirmation-design .bc-time-range svg { width: 20px; height: 20px; color: var(--bc-red); flex: none; }
+    #booking-confirmation-design .bc-total { display: inline-block; margin-top: 12px; color: var(--bc-muted); font-size: 12px; line-height: 1.5; }
+    #booking-confirmation-design .bc-time-focus .bc-room-top { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--bc-rule); justify-content: center; }
+    #booking-confirmation-design .bc-time-focus .bc-room-name { font-size: 16px; }
+    #booking-confirmation-design .bc-time-focus .bc-actions { grid-template-columns: 1fr 1.5fr; }
+    #booking-confirmation-design .bc-time-focus .bc-edit { background: transparent; }
+    #booking-confirmation-design .bc-compact { max-width: 418px; padding: 24px; }
+    #booking-confirmation-design .bc-compact h2 { font-size: 19px; }
+    #booking-confirmation-design .bc-list { display: grid; gap: 15px; margin: 24px 0 0; padding: 0; }
+    #booking-confirmation-design .bc-list > div { display: grid; grid-template-columns: 50px minmax(0,1fr); gap: 20px; align-items: baseline; }
+    #booking-confirmation-design .bc-list dt { font-size: 12px; line-height: 1.5; color: var(--bc-muted); }
+    #booking-confirmation-design .bc-list dd { margin: 0; font-size: 14px; line-height: 1.5; color: var(--bc-ink); text-align: right; font-weight: 550; }
+    #booking-confirmation-design .bc-list dd small { display: block; margin-top: 4px; font-size: 12px; font-weight: 400; color: var(--bc-muted); }
+    #booking-confirmation-design .bc-compact .bc-actions { grid-template-columns: 1fr 1fr; padding-top: 20px; margin-top: 20px; border-top: 1px solid var(--bc-rule); }
+    #booking-confirmation-design .bc-compact .bc-submit { color: var(--bc-navy-ink); background: var(--bc-navy); }
+    #booking-confirmation-design .bc-compact .bc-edit { background: transparent; }
+    @media(max-width: 480px) { #booking-confirmation-design .bc-stage { padding-left: 10px; padding-right: 10px; } #booking-confirmation-design .bc-dialog { padding: 22px; } #booking-confirmation-design .bc-detail { flex-wrap: wrap; gap: 8px; } #booking-confirmation-design .bc-time-range { gap: 12px; } #booking-confirmation-design .bc-time-range time { font-size: 30px; } #booking-confirmation-design .bc-actions { grid-template-columns: 1fr 1.3fr; } }
+  </style>
+  <div class="viz-carousel viz-dotted-background" aria-label="예약 확인창 디자인 비교" data-previous-label="이전 시안" data-next-label="다음 시안">
+    <section data-variant="클린 요약">
+      <div class="bc-stage">
+        <section class="bc-dialog bc-clean" aria-label="클린 요약 예약 확인창">
+          <h2>이 내용으로 예약할까요?</h2>
+          <p class="bc-subtitle">회의실과 시간을 한 번 더 확인해 주세요.</p>
+          <div class="bc-room"><div class="bc-room-top"><span class="bc-room-name">Conference Room 3</span><span class="bc-floor">9F</span></div></div>
+          <div class="bc-details">
+            <div class="bc-detail"><i data-lucide="calendar-days" aria-hidden="true"></i><time datetime="2026-10-09">10월 9일 금요일</time></div>
+            <div class="bc-detail"><i data-lucide="clock-3" aria-hidden="true"></i><time>21:00 — 22:30</time><span class="bc-duration">1시간 30분</span></div>
+          </div>
+          <div class="bc-actions"><button class="bc-edit cursor-interaction" type="button">수정하기</button><button class="bc-submit cursor-interaction" type="button">예약하기</button></div>
+          <p class="bc-feedback" role="status"></p>
+        </section>
+      </div>
+    </section>
+    <section data-variant="타임 포커스" hidden>
+      <div class="bc-stage">
+        <section class="bc-dialog bc-time-focus" aria-label="시간 중심 예약 확인창">
+          <h2>예약 내용을 확인해 주세요</h2>
+          <p class="bc-date">10월 9일 금요일</p>
+          <div class="bc-time-range"><time>21:00</time><i data-lucide="arrow-right" aria-hidden="true"></i><time>22:30</time></div>
+          <span class="bc-total">총 1시간 30분</span>
+          <div class="bc-room-top"><span class="bc-floor">9F</span><span class="bc-room-name">Conference Room 3</span></div>
+          <div class="bc-actions"><button class="bc-edit cursor-interaction" type="button">수정하기</button><button class="bc-submit cursor-interaction" type="button">예약하기</button></div>
+          <p class="bc-feedback" role="status"></p>
+        </section>
+      </div>
+    </section>
+    <section data-variant="컴팩트 리스트" hidden>
+      <div class="bc-stage">
+        <section class="bc-dialog bc-compact" aria-label="간결한 목록형 예약 확인창">
+          <h2>예약 내용 확인</h2>
+          <dl class="bc-list">
+            <div><dt>회의실</dt><dd>Conference Room 3<small>9층</small></dd></div>
+            <div><dt>날짜</dt><dd>10월 9일 금요일</dd></div>
+            <div><dt>시간</dt><dd><time>21:00 — 22:30</time><small>총 1시간 30분</small></dd></div>
+          </dl>
+          <div class="bc-actions"><button class="bc-edit cursor-interaction" type="button">수정하기</button><button class="bc-submit cursor-interaction" type="button">예약하기</button></div>
+          <p class="bc-feedback" role="status"></p>
+        </section>
+      </div>
+    </section>
+  </div>
+  <script>
+    (() => {
+      const root = document.getElementById('booking-confirmation-design');
+      root.querySelectorAll('.bc-dialog').forEach(dialog => {
+        const feedback = dialog.querySelector('.bc-feedback');
+        dialog.querySelector('.bc-submit').addEventListener('click', () => { feedback.textContent = '시안 미리보기입니다. 실제 예약은 생성되지 않아요.'; });
+        dialog.querySelector('.bc-edit').addEventListener('click', () => { feedback.textContent = '실제 화면에서는 입력 내용을 유지하고 수정으로 돌아갑니다.'; });
+        if (globalThis.Tweak) {
+          const settings = { radius: 18, height: 48 };
+          const tweak = new Tweak({container: dialog, onChange: () => { dialog.style.borderRadius = `${settings.radius}px`; dialog.style.setProperty('--bc-button-height', `${settings.height}px`); }});
+          tweak.addSlider(settings, 'radius', {label:'모서리 둥글기', min:10, max:24, unit:'px'});
+          tweak.addSlider(settings, 'height', {label:'버튼 높이', min:44, max:56, unit:'px'});
+        }
+      });
+    })();
+  </script>
+</div>

@@ -28,7 +28,7 @@ try {
   await page.locator('.booking-extra-details > summary').click();
   await page.locator('#purpose-input').fill('QA delayed write');
   async function pick(start,end) { await page.locator('#start-time-select').click(); await page.getByRole('option',{name:start,exact:true}).click(); await page.locator('#end-time-select').click(); await page.getByRole('option',{name:end,exact:true}).click(); }
-  async function submit() { await page.locator('#reserve-button').click(); await page.getByRole('dialog',{name:'예약 내용을 확인해 주세요'}).getByRole('button',{name:'예약하기',exact:true}).click(); }
+  async function submit() { await page.locator('#reserve-button').click(); await page.getByRole('dialog',{name:'이 내용으로 예약할까요?'}).getByRole('button',{name:'예약하기',exact:true}).click(); }
   await pick('14:00','15:00');
   let writes=0, held;
   const hold = async route => { if(route.request().method()==='POST') { writes++; held=route; } else await route.continue(); };

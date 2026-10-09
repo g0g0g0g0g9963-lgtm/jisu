@@ -37,7 +37,7 @@
 .my-bookings-clean .my-booking-room strong { font-size: 15px; font-weight: 700; line-height: 1.5; overflow-wrap: anywhere; }
 .my-bookings-clean .my-booking-room .booking-confirm-floor { padding: 0 0 0 7px; border: 0; border-left: 1px solid var(--confirm-rule); font-size: 12px; border-radius: 0; color: var(--confirm-muted); background: transparent; }
 .my-bookings-clean .my-booking-date, .my-bookings-clean .my-booking-time { white-space: nowrap; font-variant-numeric: tabular-nums; font-size: 15px; font-weight: 650; }
-.my-bookings-clean .my-booking-duration, .my-bookings-clean .my-booking-retained { display: block; margin-top: 4px; color: var(--confirm-muted); font-size: 12px; line-height: 1.4; }
+.my-bookings-clean .my-booking-retained { display: block; margin-top: 4px; color: var(--confirm-muted); font-size: 12px; line-height: 1.4; }
 .my-bookings-clean .my-booking-row .my-booking-badge { display: inline-flex; align-items: center; gap: 6px; margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent; color: var(--confirm-muted); font-size: 12px; font-weight: 500; line-height: 1.5; white-space: nowrap; }
 .my-bookings-clean .my-booking-row:not(.is-past) .my-booking-badge { background: transparent; color: var(--confirm-muted); font-weight: 500; }
 .my-bookings-clean .my-booking-row:not(.is-past) .my-booking-badge.running { color: var(--confirm-ink); background: transparent; font-weight: 700; }

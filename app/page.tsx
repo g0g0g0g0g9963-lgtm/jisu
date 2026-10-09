@@ -3072,7 +3072,7 @@ export default function Home() {
                       <td>{upcoming && <label className="my-booking-pick"><input type="checkbox" checked={picked} onChange={toggle} disabled={mutationBusy || !authReady}
                         aria-label={`${roomIdentity(room)} ${booking.date} ${booking.start} 예약 선택`} /></label>}</td>
                       <td className="my-booking-date"><time dateTime={booking.date}>{formatDateLabel(booking.date)}</time></td>
-                      <td><span className="my-booking-time">{booking.start}–{booking.end}</span><small className="my-booking-duration">{spokenDuration(minutesOf(booking.end) - minutesOf(booking.start))}</small></td>
+                      <td><span className="my-booking-time">{booking.start}–{booking.end}</span></td>
                       <td><div className="my-booking-room" aria-label={roomIdentity(roomById(booking.roomId))}>
                           <strong>{room?.name ?? "회의실"}</strong>{room && <span className="booking-confirm-floor">{room.floor}F</span>}
                         </div></td>

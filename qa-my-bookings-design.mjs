@@ -71,6 +71,7 @@ try {
   check('close receives initial focus',await dialog.getByRole('button',{name:'내 예약 닫기'}).evaluate(el=>el===document.activeElement));
   await dialog.getByLabel('예약자 이름',{exact:true}).fill('QA Single'); await listRows.waitFor();
   check('single booking uses compact table row with room and time',await dialog.locator('table.my-bookings-list').count()===1&&await listRows.count()===1&&(await listRows.locator('.my-booking-room').textContent()).includes('Conference Room 3')&&/21:30.*23:00/.test(await listRows.textContent()));
+  check('reservation time range remains without a duration subtitle',await dialog.locator('.my-booking-duration').count()===0&&(await listRows.locator('.my-booking-time').textContent())==='21:30–23:00'&&!(await listRows.textContent()).includes('1시간 30분'));
   check('active row exposes selection edit delete without standalone early-end',await listRows.getByRole('checkbox',{name:/예약 선택$/}).count()===1&&await listRows.locator('.edit-booking').textContent()==='수정'&&await listRows.locator('.delete-booking').textContent()==='삭제'&&await dialog.getByRole('button',{name:/일찍 끝내기/}).count()===0);
   check('selection deletion starts disabled',await toolbarDelete.isDisabled()&&(await toolbarDelete.textContent()).includes('선택 삭제'));
   check('disabled selection deletion uses a neutral surface',await toolbarDelete.evaluate(el=>{const s=getComputedStyle(el);return s.backgroundColor==='rgb(248, 250, 252)'&&s.color==='rgb(82, 98, 122)';}));
@@ -88,7 +89,7 @@ try {
   check('unnecessary header subtitle is removed',await dialog.locator('.my-bookings-dialog-head p').count()===0);
   check('date time and room use readable 15px semibold text',await listRows.locator('.my-booking-date,.my-booking-time,.my-booking-room strong').evaluateAll(nodes=>nodes.length===3&&nodes.every(el=>{const s=getComputedStyle(el);return parseFloat(s.fontSize)>=15&&Number(s.fontWeight)>=600;})));
   check('purpose text is at least 14px',await listRows.locator('.my-booking-purpose').evaluate(el=>parseFloat(getComputedStyle(el).fontSize)>=14));
-  check('duration floor department and history text are at least 12px',await dialog.locator('.my-booking-duration,.booking-confirm-floor,.my-booking-department,.my-bookings-history-range').evaluateAll(nodes=>nodes.length>=4&&nodes.every(el=>parseFloat(getComputedStyle(el).fontSize)>=12)));
+  check('floor department and history text are at least 12px',await dialog.locator('.booking-confirm-floor,.my-booking-department,.my-bookings-history-range').evaluateAll(nodes=>nodes.length>=3&&nodes.every(el=>parseFloat(getComputedStyle(el).fontSize)>=12)));
   check('column labels use clear 13px semibold text',await dialog.locator('.my-bookings-list th').evaluateAll(nodes=>nodes.length===7&&nodes.every(el=>{const s=getComputedStyle(el);return parseFloat(s.fontSize)>=13&&Number(s.fontWeight)>=600;})));
   check('anonymous name search uses one compact horizontal line',await dialog.locator('.my-bookings-search').evaluate(el=>{const label=el.querySelector('span').getBoundingClientRect(),input=el.querySelector('input').getBoundingClientRect();return input.left>=label.right&&Math.abs((label.top+label.height/2)-(input.top+input.height/2))<=3&&input.width<=181&&input.height<=37;}));
   for(const [width,height] of [[1440,960],[1280,720],[1366,768]]){

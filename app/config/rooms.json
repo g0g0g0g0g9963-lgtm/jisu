@@ -49,6 +49,30 @@
     "mapClass": "map-9-c4"
   },
   {
+    "id": "12-big",
+    "floor": 12,
+    "name": "대회의실",
+    "capacity": 16,
+    "location": "서쪽 하단, 문서보관실 옆",
+    "equipment": [
+      "글라스보드",
+      "대형 모니터"
+    ],
+    "mapClass": "map-12-big"
+  },
+  {
+    "id": "12-w",
+    "floor": 12,
+    "name": "W Room",
+    "capacity": 16,
+    "location": "12층 배치도 오른쪽",
+    "equipment": [
+      "글라스보드",
+      "대형 모니터"
+    ],
+    "mapClass": "map-12-w"
+  },
+  {
     "id": "12-r1",
     "floor": 12,
     "name": "Conference Room 1",
@@ -81,29 +105,5 @@
       "모니터"
     ],
     "mapClass": "map-12-r3"
-  },
-  {
-    "id": "12-big",
-    "floor": 12,
-    "name": "대회의실",
-    "capacity": 16,
-    "location": "서쪽 하단, 문서보관실 옆",
-    "equipment": [
-      "글라스보드",
-      "대형 모니터"
-    ],
-    "mapClass": "map-12-big"
-  },
-  {
-    "id": "12-w",
-    "floor": 12,
-    "name": "W Room",
-    "capacity": 16,
-    "location": "12층 배치도 오른쪽",
-    "equipment": [
-      "글라스보드",
-      "대형 모니터"
-    ],
-    "mapClass": "map-12-w"
   }
 ]

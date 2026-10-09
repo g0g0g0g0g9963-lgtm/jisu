@@ -14,22 +14,32 @@
 .app-shell .weekly-board .daily-timeline-toolbar { padding: 8px 0; }
 .daily-timeline-toolbar > span { font-variant-numeric: tabular-nums; }
 .daily-timeline-toolbar small { margin-left: 8px; font-size: 12px; }
-.daily-timeline-toolbar > button {
+.daily-timeline-toolbar > .current-time-control {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 8px;
   border: 1px solid #dce3ee;
-  border-radius: 7px;
+  border-radius: 10px;
   background: #fff;
   color: #304b78;
-  padding: 6px 12px;
-  min-height: 32px;
+  padding: 6px 11px;
+  min-height: 34px;
   font: inherit;
+  white-space: nowrap;
+  box-shadow: 0 1px 3px #1c304407;
   cursor: pointer;
 }
-.daily-timeline-toolbar > button:hover { background: #f0f4fa; }
-.daily-timeline-toolbar > button:disabled { opacity: 0.55; cursor: wait; }
+.daily-timeline-toolbar > .current-time-control:hover { background: #f0f4fa; border-color: #b8c6d9; }
+.daily-timeline-toolbar > .current-time-control:focus-visible { outline: 2px solid #304b78; outline-offset: 3px; }
+.daily-timeline-toolbar > .current-time-control:disabled { opacity: 0.55; cursor: wait; }
+.current-time-control > svg { width: 20px; height: 20px; flex: none; }
+.current-time-control > span { color: #5a6c87; font-size: 12px; font-weight: 500; }
+.current-time-control > time { color: #223653; font-size: 15px; font-weight: 650; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
 .app-shell .weekly-board .daily-timeline-footer { padding: 8px 0 3px; flex-wrap: wrap; }
 .app-shell .weekly-board .daily-timeline.timeline-full-day {
   --timeline-head-height: 72px;
-  --timeline-top-gap: 42px;
+  --timeline-top-gap: 24px;
   flex: 1 1 0%;
   min-height: 0 !important;
   height: auto !important;
@@ -62,12 +72,19 @@
   margin: 0;
   padding: 0;
   background-color: #fafbfd;
-  background-image:
-    repeating-linear-gradient(to bottom, #dce4ef 0 1px, transparent 1px var(--timeline-hour-height)),
-    repeating-linear-gradient(to bottom, #edf1f7 0 1px, transparent 1px var(--timeline-slot-height));
+  background-image: none;
   background-size: auto;
   border-top: 0;
   border-bottom: 1px solid #dce4ef;
+}
+.app-shell .schedule-design-cards .daily-timeline.timeline-full-day .time-axis-body {
+  background-color: #f8fafc;
+  border-bottom: 0;
+}
+.app-shell .schedule-design-cards .daily-timeline.timeline-full-day .timeline-day-body {
+  background-image:
+    repeating-linear-gradient(to bottom, #dce4ef 0 1px, transparent 1px var(--timeline-hour-height)),
+    repeating-linear-gradient(to bottom, #edf1f7 0 1px, transparent 1px var(--timeline-slot-height));
 }
 .app-shell .schedule-design-cards .daily-timeline.timeline-full-day .timeline-day-body::before { display: none; }
 .app-shell .schedule-design-cards .daily-timeline.timeline-full-day .daily-room-head,
@@ -87,58 +104,31 @@
   width: auto;
   text-align: right;
   transform: translateY(-50%);
+  color: #334766;
+  font-size: 15px;
+  font-weight: 650;
+  line-height: 1.25;
   font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
 }
 .app-shell .schedule-design-cards .daily-timeline.timeline-full-day > .current-time-line-all {
   height: 1px !important;
-  background: #ef123b;
+  background: #d3093573;
   z-index: 1;
   right: auto;
   pointer-events: none;
 }
-.app-shell .schedule-design-cards .daily-timeline.timeline-full-day > .current-time-floating {
-  position: absolute;
-  z-index: 10;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  width: max-content;
-  padding: 6px 12px;
-  border: 0;
-  border-radius: 999px;
-  background: #d30935;
-  color: #fff;
-  font-size: 14px;
-  font-weight: 800;
-  line-height: 1.2;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-  transform: translate(-50%, calc(-100% - 9px));
-  box-shadow: 0 2px 6px #9b15342b;
-  pointer-events: none;
-}
-.current-time-floating > small { color: inherit; font-size: 11px; font-weight: 700; }
-.current-time-floating > time { color: inherit; font: inherit; }
-.current-time-floating::before {
+.app-shell .schedule-design-cards .daily-timeline.timeline-full-day > .current-time-line-all::before {
   content: "";
   position: absolute;
-  top: 100%;
-  left: 50%;
-  width: 1px;
-  height: 9px;
-  background: #d30935;
-}
-.current-time-floating::after {
-  content: "";
-  position: absolute;
-  top: calc(100% + 7px);
-  left: calc(50% - 2px);
+  top: -2px;
+  left: 0;
   width: 5px;
   height: 5px;
   border-radius: 50%;
   background: #d30935;
 }
-@media (pointer: coarse) { .daily-timeline-toolbar > button { min-height: 44px; } }
+@media (pointer: coarse) { .daily-timeline-toolbar > .current-time-control { min-height: 44px; } }
 @media (max-width: 600px) {
   .app-shell .weekly-board .daily-timeline-toolbar,
   .app-shell .weekly-board .daily-timeline-footer { padding-left: 4px; padding-right: 4px; font-size: 11px; }

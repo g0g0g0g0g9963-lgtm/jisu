@@ -1145,7 +1145,7 @@ export default function Home() {
     : null;
   const showCurrentTime = currentTimePercent !== null && (scheduleView === "week" ? weekDays.includes(today) : date === today);
 
-  // 선과 중앙 플로팅 시각은 같은 시간 좌표를 사용한다. 스크롤한 상태에서도
+  // 현재 시각 안내선을 시간표 좌표에 맞춘다. 스크롤한 상태에서도
   // 재측정 값이 흔들리지 않도록 뷰포트 좌표를 스크롤 콘텐츠 좌표로 바꾼다.
   const dailyGridRef = useRef<HTMLDivElement | null>(null);
   const dailyInitialScrollKey = useRef<string | null>(null);
@@ -2261,7 +2261,21 @@ export default function Home() {
               {scheduleView === "day" && floorRooms.length > 0 && <>
               <div className="daily-timeline-toolbar">
                 <span>{formatMinutes(timelineStart)}–{formatMinutes(timelineEnd)} <small>24시간 보기</small></span>
-                <button type="button" onClick={jumpToCurrentTime} disabled={nowMinutes === null} aria-label="오늘 현재 시간으로 이동">현재 시간</button>
+                <button
+                  type="button"
+                  className="current-time-control"
+                  onClick={jumpToCurrentTime}
+                  disabled={nowMinutes === null}
+                  aria-label={nowMinutes === null ? "현재 시각 불러오는 중" : `현재 ${formatMinutes(nowMinutes)}, 오늘 현재 시간으로 이동`}
+                  title="오늘 현재 시간으로 이동"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="8.25" />
+                    <path d="M12 7.5v4.8l3.2 2" />
+                  </svg>
+                  <span>현재</span>
+                  <time dateTime={nowMinutes === null ? undefined : formatMinutes(nowMinutes)}>{nowMinutes === null ? "--:--" : formatMinutes(nowMinutes)}</time>
+                </button>
               </div>
               <div className="week-timeline daily-timeline timeline-full-day" data-floor={floor} ref={dailyGridRef} role="region" aria-label="24시간 일간 시간표, 위아래로 스크롤" tabIndex={0} style={{ "--room-count": floorRooms.length, "--timeline-hour-height": `${siteConfig.timeline.hourHeightPx}px`, "--timeline-slot-height": `${siteConfig.timeline.hourHeightPx * bookingDefaults.slotMinutes / 60}px`, "--timeline-body-height": `${(timelineEnd - timelineStart) / 60 * siteConfig.timeline.hourHeightPx}px` } as CSSProperties}>
                 <div className="time-axis">
@@ -2270,24 +2284,17 @@ export default function Home() {
                     {timelineHours.map((hour) => <time key={hour} style={{ top: `${((hour * 60 - timelineStart) / (timelineEnd - timelineStart)) * 100}%` }}>{String(hour).padStart(2, "0")}:00</time>)}
                   </div>
                 </div>
-                {/* 선은 카드 아래, 시각 라벨은 별도 레이어로 선 중앙 위에 표시한다. */}
+                {/* 시각은 툴바에 표시하고, 예약 영역에는 카드 아래의 가는 안내선만 둔다. */}
                 {showCurrentTime && currentTimePercent !== null && dailyGridMetrics && (
                   <span
                     className="current-time-line current-time-line-all"
+                    aria-hidden="true"
                     style={{
                       left: dailyGridMetrics.left,
                       width: dailyGridMetrics.width,
                       top: dailyGridMetrics.bodyTop + (currentTimePercent / 100) * dailyGridMetrics.bodyHeight,
                     }}
                   />
-                )}
-                {showCurrentTime && nowMinutes !== null && currentTimePercent !== null && dailyGridMetrics && (
-                  <strong className="current-time-floating" style={{
-                    left: dailyGridMetrics.left + dailyGridMetrics.width / 2,
-                    top: dailyGridMetrics.bodyTop + currentTimePercent / 100 * dailyGridMetrics.bodyHeight,
-                  }} aria-label={`현재 시각 ${formatMinutes(nowMinutes)}`}>
-                    <small>현재</small><time>{formatMinutes(nowMinutes)}</time>
-                  </strong>
                 )}
                 {floorRooms.map((room) => {
                   const dailyBookings = layoutOverlappingBookings(

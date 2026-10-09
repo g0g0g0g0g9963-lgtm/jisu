@@ -1,0 +1,186 @@
+{
+  "testedAt": "2026-10-09T01:59:13.890Z",
+  "method": "Actual TypeScript utilities and AST-extracted page callbacks executed in isolated VM; synthetic geometry, no browser rendering or database",
+  "counts": {
+    "total": 35,
+    "pass": 35,
+    "fail": 0
+  },
+  "results": [
+    {
+      "id": "DAY-BOUNDS",
+      "title": "Booking and timeline cover the entire selected day",
+      "status": "PASS"
+    },
+    {
+      "id": "OPTION-COUNT",
+      "title": "30-minute full day has 49 boundary labels and 48 start slots",
+      "status": "PASS"
+    },
+    {
+      "id": "OPTION-SPACING",
+      "title": "Every selectable boundary is exactly 30 minutes apart",
+      "status": "PASS"
+    },
+    {
+      "id": "HOUR-LABELS",
+      "title": "Hourly scale includes 00:00 and the 24:00 closing boundary",
+      "status": "PASS"
+    },
+    {
+      "id": "ALL-SLOTS-VALID",
+      "title": "Every one of the 48 same-day half-hour intervals is bookable",
+      "status": "PASS"
+    },
+    {
+      "id": "ALL-DAY-VALID",
+      "title": "Configured all-day range is a valid 24-hour reservation",
+      "status": "PASS"
+    },
+    {
+      "id": "INVALID-24:00-24:30",
+      "title": "Reject invalid start/end boundary 24:00-24:30",
+      "status": "PASS"
+    },
+    {
+      "id": "INVALID-24:00-24:00",
+      "title": "Reject invalid start/end boundary 24:00-24:00",
+      "status": "PASS"
+    },
+    {
+      "id": "INVALID-23:30-24:30",
+      "title": "Reject invalid start/end boundary 23:30-24:30",
+      "status": "PASS"
+    },
+    {
+      "id": "INVALID-23:30-00:00",
+      "title": "Reject invalid start/end boundary 23:30-00:00",
+      "status": "PASS"
+    },
+    {
+      "id": "INVALID-23:30-24:01",
+      "title": "Reject invalid start/end boundary 23:30-24:01",
+      "status": "PASS"
+    },
+    {
+      "id": "INVALID-0:00-01:00",
+      "title": "Reject invalid start/end boundary 0:00-01:00",
+      "status": "PASS"
+    },
+    {
+      "id": "ALIGNMENT",
+      "title": "Expanded day preserves slot alignment validation",
+      "status": "PASS"
+    },
+    {
+      "id": "MIDNIGHT-CONFLICT",
+      "title": "Midnight endpoint participates in overlapping reservation checks",
+      "status": "PASS"
+    },
+    {
+      "id": "MIDNIGHT-ADJACENT",
+      "title": "A reservation ending at the next reservation start does not overlap",
+      "status": "PASS"
+    },
+    {
+      "id": "DATE-ISOLATION",
+      "title": "Previous date midnight endpoint does not block the next date",
+      "status": "PASS"
+    },
+    {
+      "id": "ROOM-LATE-STATUS",
+      "title": "A late reservation remains occupied until the midnight endpoint",
+      "status": "PASS"
+    },
+    {
+      "id": "ROOM-EARLY-STATUS",
+      "title": "Unbooked room is available at midnight",
+      "status": "PASS"
+    },
+    {
+      "id": "MIDNIGHT-FORMAT",
+      "title": "Midnight endpoint retains 24:00 and an explicit spoken next-day label",
+      "status": "PASS"
+    },
+    {
+      "id": "CLOCK-2026-10-07T15:00:00Z",
+      "title": "Office date/minutes are correct across the Korean midnight boundary",
+      "status": "PASS"
+    },
+    {
+      "id": "CLOCK-2026-10-08T03:00:00Z",
+      "title": "Office date/minutes are correct across the Korean midnight boundary",
+      "status": "PASS"
+    },
+    {
+      "id": "CLOCK-2026-10-08T14:59:00Z",
+      "title": "Office date/minutes are correct across the Korean midnight boundary",
+      "status": "PASS"
+    },
+    {
+      "id": "CLOCK-2026-10-08T15:00:00Z",
+      "title": "Office date/minutes are correct across the Korean midnight boundary",
+      "status": "PASS"
+    },
+    {
+      "id": "LATEST-HALF-HOUR",
+      "title": "Late-day 30-minute default ends at midnight",
+      "status": "PASS"
+    },
+    {
+      "id": "SCROLL-00",
+      "title": "Midnight scroll clamps to the top",
+      "status": "PASS"
+    },
+    {
+      "id": "SCROLL-12",
+      "title": "Midday current time lands at 40 percent of usable body viewport",
+      "status": "PASS"
+    },
+    {
+      "id": "SCROLL-2359",
+      "title": "Late-night scroll clamps at the bottom while keeping the time visible",
+      "status": "PASS"
+    },
+    {
+      "id": "REDUCED-MOTION",
+      "title": "Current-time navigation respects reduced motion preference",
+      "status": "PASS"
+    },
+    {
+      "id": "INITIAL-ONCE",
+      "title": "Clock updates preserve the manual scroll after first entry",
+      "status": "PASS"
+    },
+    {
+      "id": "FLOOR-RECENTER",
+      "title": "Floor change repositions the full-day timeline once",
+      "status": "PASS"
+    },
+    {
+      "id": "OTHER-DATE-FOCUS",
+      "title": "Other dates use the configured focus hour",
+      "status": "PASS"
+    },
+    {
+      "id": "RETURN-DAY",
+      "title": "Returning from weekly view reinitializes daily scroll",
+      "status": "PASS"
+    },
+    {
+      "id": "JUMP-TODAY-REPEAT",
+      "title": "Repeated current-time action works when already on today",
+      "status": "PASS"
+    },
+    {
+      "id": "JUMP-FROM-OTHER-DATE",
+      "title": "Current-time action selects today from another date",
+      "status": "PASS"
+    },
+    {
+      "id": "METRICS-SCROLLED",
+      "title": "Measured content geometry is stable after horizontal and vertical scroll",
+      "status": "PASS"
+    }
+  ]
+}

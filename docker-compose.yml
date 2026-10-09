@@ -34,7 +34,20 @@ services:
       MS_TENANT_ID: ${MS_TENANT_ID:-}
       MS_CLIENT_ID: ${MS_CLIENT_ID:-}
       MS_CLIENT_SECRET: ${MS_CLIENT_SECRET:-}
+      MICROSOFT_TOKEN_KEY: ${MICROSOFT_TOKEN_KEY:-}
+      OUTLOOK_REMINDER_MINUTES: ${OUTLOOK_REMINDER_MINUTES:-10}
       APP_BASE_URL: ${APP_BASE_URL:-}
+      ADMIN_MS_EMAIL: ${ADMIN_MS_EMAIL:-}
+      ADMIN_MS_OBJECT_ID: ${ADMIN_MS_OBJECT_ID:-}
+      # Configure an existing private persistent path inside the container.
+      # /app/data/backups is local-only; it does NOT replace an offsite backup.
+      BACKUP_DIR: ${BACKUP_DIR:-}
+      BACKUP_INTERVAL_MINUTES: ${BACKUP_INTERVAL_MINUTES:-0}
+      BACKUP_MAX_FILES: ${BACKUP_MAX_FILES:-168}
+      OPS_PRIMARY_CONTACT: ${OPS_PRIMARY_CONTACT:-}
+      OPS_SECONDARY_CONTACT: ${OPS_SECONDARY_CONTACT:-}
+      OPS_SLOW_REQUEST_MS: ${OPS_SLOW_REQUEST_MS:-2000}
+      OPS_DISK_WARNING_PERCENT: ${OPS_DISK_WARNING_PERCENT:-20}
     volumes:
       # 예약 DB(bookings.sqlite). 컨테이너를 지워도 데이터는 남는다.
       # ⚠️ 이 폴더는 uid 1000 소유여야 한다. chown -R jinkyu.kim을 여기에 돌리지 말 것.

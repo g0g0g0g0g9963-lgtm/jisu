@@ -1,0 +1,41 @@
+.booking-panel .room-favorite { display:grid; place-items:center; flex:0 0 36px; width:36px; min-width:36px; height:36px; min-height:36px; padding:8px; border:1px solid #dfe6ef; border-radius:9px; background:#fff; color:#63748d; }
+.booking-panel .room-favorite.is-favorite { color:#a56800; background:#fff8e7; border-color:#e9c77b; }
+.booking-panel .room-picker-options .room-picker-row .room-favorite.is-favorite { color:#a56800; background:#fff8e7; }
+.room-favorite svg { width:19px; height:19px; }
+.room-favorite:focus-visible,.favorite-shortcuts button:focus-visible,.employee-results button:focus-visible { outline:2px solid #2355a5; outline-offset:2px; }
+.booking-panel .room-picker-options .room-picker-row { display:grid; grid-template-columns:minmax(0,1fr) 36px 36px; gap:4px; }
+.booking-panel .room-picker-options .room-picker-row > button:first-child { padding-right:6px; }
+.booking-panel .room-picker-options .room-picker-row .room-favorite,.booking-panel .room-picker-options .room-picker-row .room-picker-row-map { position:static; transform:none; width:36px; height:36px; min-height:36px; margin:0; }
+.favorite-shortcuts { padding:10px 12px; border-bottom:1px solid #dfe6ef; background:#fffcf5; display:flex; flex-wrap:wrap; gap:6px; }
+.favorite-shortcuts > small { flex-basis:100%; color:#84621e; font-weight:700; }
+.booking-panel .favorite-shortcuts button { width:auto; padding:7px 9px; min-height:34px; border:1px solid #ecdbb4; background:#fff; border-radius:7px; font-size:12px; color:#253a56; }
+.favorites-hint,.convenience-hint { margin:5px 0 8px; color:#5c6f87; font-size:12px; line-height:1.6; overflow-wrap:anywhere; }
+.favorites-hint { padding:0 8px; }
+.employee-picker { margin:14px 0; padding-top:8px; border-top:1px solid #e0e7ef; }
+.employee-chips { display:grid; gap:5px; margin-bottom:7px; }
+.employee-chip { display:flex; align-items:center; gap:6px; padding:8px 10px; background:#edf4fc; border:1px solid #d5e2f3; border-radius:8px; }
+.employee-chip > span { flex:1; min-width:0; }
+.employee-chip b,.employee-chip small,.employee-results b,.employee-results small { display:block; overflow-wrap:anywhere; }
+.employee-chip b { font-size:13px; }
+.employee-chip small { color:#526782; font-size:11px; margin-top:3px; }
+.booking-panel .employee-chip button { width:32px; height:32px; padding:0; background:transparent; color:#365174; font-size:22px; border:0; }
+.employee-results { max-height:210px; overflow:auto; margin-top:4px; }
+.booking-panel .employee-results button { width:100%; padding:10px; min-height:52px; text-align:left; background:#fff; border:1px solid #dde5ef; border-radius:6px; margin:2px 0; line-height:1.5; }
+.employee-results button[aria-selected="true"] { background:#edf4fc; }
+.employee-results b { font-size:13px; color:#1a2e4c; }
+.employee-results small { font-size:12px; color:#58708e; }
+.microsoft-panel { margin:12px 0; border:1px solid #d7e2ef; border-radius:12px; padding:12px; background:#f3f7fd; color:#25405e; font-size:12px; line-height:1.65; }
+.microsoft-panel.connected { background:#f1f9f6; border-color:#c9e4d8; }
+.microsoft-panel-title { display:flex; align-items:center; flex-wrap:wrap; gap:6px; }
+.microsoft-panel-title svg { width:20px; height:20px; }
+.microsoft-panel-title strong { font-size:13px; }
+.microsoft-panel-title span { margin-left:auto; font-size:10px; font-weight:700; background:white; border:1px solid #d7e2ef; border-radius:20px; padding:1px 7px; }
+.microsoft-panel p { margin:7px 0; }
+.microsoft-panel a { display:inline-block; color:#1a5191; font-weight:700; text-decoration:underline; text-underline-offset:3px; padding:4px 0; }
+.microsoft-panel small { display:block; color:#526d78; font-size:11px; }
+.microsoft-panel summary { cursor:pointer; font-weight:600; padding:8px 0; }
+.microsoft-panel ul { margin:0; padding:0; list-style:none; }
+.microsoft-panel li { padding:7px 0; border-top:1px solid #d6e3e1; overflow-wrap:anywhere; }
+.microsoft-panel li span,.microsoft-panel li b { display:block; }
+.booking-panel .microsoft-panel button { padding:7px 10px; border:1px solid #b7cdcf; border-radius:6px; background:#fff; font-size:12px; color:#25405e; }
+.booking-attendee-detail { margin-top:5px; font-size:11px; line-height:1.5; overflow-wrap:anywhere; }

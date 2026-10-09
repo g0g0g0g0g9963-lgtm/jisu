@@ -28,8 +28,10 @@ const nodesForClass=name=>jsxNodes.filter(node=>hasClass(node,name));
 const nodeContent=node=>node.parent.getText(ast);
 function context(overrides={}){
  const c={authReady:true,mutationBusy:false,submitting:false,selectedTimeConflict:false,timeNeedsPick:false,REQUIRED_FIELDS:[{key:'owner',id:'owner-input',value:'QA User'},{key:'team',id:'team-input',value:'QA Team'}],officeTeams:[{name:'QA Team'}],owner:'QA User',myBookingOwner:'QA User',currentUser:null,team:'QA Team',purpose:'QA',attendees:[],selected:{id:'qa-room',name:'QA room'},start:'10:00',end:'11:00',today:'2026-10-08',date:'2026-10-12',nowMinutes:615,reservationDates:['2026-10-12'],conflictDates:[],bookingDefaults:lib.bookingDefaults,minutesOf:dt.minutesOf,formatDateLabel:dt.formatDateLabel,formatMinutes:dt.formatMinutes,addMinutes:dt.addMinutes,findConflictingDates:lib.findConflictingDates,bookings:[],startTimeOptions:['10:00','11:00','12:00'],lastSelectableTime:lib.bookingDefaults.closingTime,allDay:false,draftKey:'original-draft',latestDraftKey:{current:'original-draft'},slot:{date:'2026-10-12',start:'10:00',end:'11:00'},roomById:()=>({name:'QA room'}),useCallback:f=>f,useMemo:f=>f(),document:{getElementById:()=>({focus(){}}),querySelector:()=>({scrollTo(){}})},window:{requestAnimationFrame:f=>f()},...overrides};
- Object.assign(c,{bookingBlockReason:'',syncError:'',selectedId:'qa-room',keyboardSelection:null,timePickerOpen:null,selectionFeedback:'',describeRoomSlotAvailability:roomLib.describeRoomSlotAvailability,formatCapacity:roomLib.formatCapacity,...overrides});
+ Object.assign(c,{bookingBlockReason:'',syncError:'',selectedId:'qa-room',keyboardSelection:null,timePickerOpen:null,selectionFeedback:'',bookingRecovery:null,checkingBookingResult:false,refreshSeq:{current:0},earlyEndDisplayTime:'10:30',officeMinutesOfDay:()=>615,todayKey:()=> '2026-10-12',describeRoomSlotAvailability:roomLib.describeRoomSlotAvailability,formatCapacity:roomLib.formatCapacity,...overrides});
  c.selected={floor:9,...c.selected};
+ c.attendeeAccounts=overrides.attendeeAccounts??[];
+ c.setAttendeeAccounts=value=>{c.state.attendeeAccounts=value;c.attendeeAccounts=value;};
  if(!overrides.roomById)c.roomById=()=>({id:'qa-room',floor:9,name:'QA room'});
  c.state={};c.calls={refresh:0,post:0,patch:0,delete:0,focus:0,flash:0};
  if(!overrides.document)c.document={activeElement:null,getElementById:id=>({focus(){c.calls.focus++;c.state.focusedId=id;}}),querySelector:()=>({scrollTo(){}})};
@@ -38,7 +40,7 @@ function context(overrides={}){
  c.flashFilled=(title,detail)=>{c.calls.flash++;c.state.filledNotice={title,detail};};
  c.applySlotSelection=selection=>fn('applySlotSelection',c)(selection);
  c.refreshBookings=overrides.refreshBookings??(async()=>{c.calls.refresh++;});
- for(const f of ['Notice','MissingField','TeamOpen','RepeatAsk','SubmitPreviewDates','SelectedId','DraftActive','BookingPanelOpen','RoomPickerOpen','TimeNeedsPick','EditBusy','EarlyEndBusy','CancelBusy','Submitting','CancelSelection','SyncError','Toast','EditDraft','EditNotice','EarlyEndNotice','EarlyEnd','EditConfirmDelete','MyBookingOwner','Purpose','Attendees','AttendeeDraft','Slot','Date','AllDay','Duration','KeyboardSelection','SelectionFeedback','TimePickerOpen']){
+ for(const f of ['Notice','MissingField','TeamOpen','RepeatAsk','SubmitPreviewDates','SelectedId','DraftActive','BookingPanelOpen','RoomPickerOpen','TimeNeedsPick','EditBusy','EarlyEndBusy','CancelBusy','Submitting','CancelSelection','SyncError','Toast','EditDraft','EditNotice','EarlyEndNotice','EarlyEnd','EditConfirmDelete','MyBookingOwner','Purpose','Attendees','AttendeeDraft','Slot','Date','AllDay','Duration','KeyboardSelection','SelectionFeedback','TimePickerOpen','BookingRecovery','CheckingBookingResult','Bookings','MyBookingsOpen','EarlyEndReviewTime']){
   const key=f[0].toLowerCase()+f.slice(1);
   c['set'+f]=v=>{c.state[key]=typeof v==='function'?v(c.state[key]??c[key]):v;};
  }
@@ -158,6 +160,25 @@ try{
   check('UX-SEND-RECHECK-'+id,'Final send rechecks the slot before dispatch: '+id,c.calls.post===0&&!!c.state.notice&&c.state.submitPreviewDates===null);
  }
  c=context({nowMinutes:630});check('EARLY-END-BOUNDARY','Exact slot early-end uses current boundary',fn('earlyEndTime',c)({...one,date:'2026-10-08',start:'09:00',end:'11:00'})==='10:30');
+ c=context({earlyEnd:one,earlyEndDisplayTime:'10:30',earlyEndTime:()=> '11:00'});c.patchBookingRequest=async()=>{c.calls.patch++;return{ok:true};};await fn('confirmEarlyEnd',c)();
+ check('EARLY-END-NO-TIME','No remaining reducible time is not submitted',c.calls.patch===0&&!!c.state.earlyEndNotice);
+ c=context({earlyEnd:{...one,end:'12:00'},earlyEndDisplayTime:'10:30',earlyEndTime:()=> '11:00'});c.patchBookingRequest=async()=>{c.calls.patch++;return{ok:true};};await fn('confirmEarlyEnd',c)();
+ check('EARLY-END-RECONFIRM','Changed boundary requires explicit review before save',c.calls.patch===0&&c.state.earlyEndReviewTime==='11:00'&&c.state.earlyEndNotice.includes('11:00'));
+ c=context({earlyEnd:one,earlyEndTime:()=> '10:30'});c.patchBookingRequest=async()=>({ok:true,booking:{...one,end:'10:30'}});await fn('confirmEarlyEnd',c)();
+ check('EARLY-END-ACTUAL','Completion uses the server-confirmed end time',c.state.toast?.text==='회의가 단축되었습니다.'&&c.state.toast?.time==='10:30부터 예약 가능');
+ const recovery={owner:'QA User',roomId:'qa-room',dates:['2026-10-12'],start:'10:00',end:'11:00',timedOut:true};
+ c=context();c.postBookings=async()=>{c.calls.post++;throw vm.runInContext("Object.assign(new Error('Timed out'),{name:'TimeoutError'})",c);};await fn('sendBooking',c)(['2026-10-12']);
+ check('RECOVERY-SNAPSHOT','Unknown write result preserves a separate submitted snapshot and releases busy',c.calls.post===1&&c.state.submitting===false&&equal(c.state.bookingRecovery,recovery)&&!('purpose' in c.state));
+ c=context({bookingRecovery:recovery});c.postBookings=async()=>{c.calls.post++;return{ok:true};};await fn('sendBooking',c)(recovery.dates);
+ check('RECOVERY-NO-RESEND','Unknown result blocks another create until lookup',c.calls.post===0&&vm.runInContext(disabled,c)===true);
+ c=context({bookingRecovery:recovery});let requestedRange;c.fetchBookings=async range=>{requestedRange=range;return[one];};await fn('checkBookingResult',c)();
+ check('RECOVERY-LOOKUP','Result button only reads the submitted date range and opens my bookings',equal(requestedRange,{from:'2026-10-12',to:'2026-10-12'})&&c.state.myBookingsOpen===true&&c.state.bookingRecovery===null&&c.state.checkingBookingResult===false&&c.state.notice.includes('1건')&&c.calls.post===0);
+ c=context({bookingRecovery:recovery,currentUser:{name:'QA User'}});c.fetchBookings=async()=>[{...one,isMine:false}];await fn('checkBookingResult',c)();
+ check('RECOVERY-NAMESAKE','Namesake reservation is not reported as own success',c.state.notice.includes('내 예약이 없습니다')&&!c.state.notice.includes('1건'));
+ c=context({bookingRecovery:recovery});c.fetchBookings=async()=>{throw Error('still offline');};await fn('checkBookingResult',c)();
+ check('RECOVERY-RETRYABLE','Failed lookup preserves recovery and enables another read',!('bookingRecovery' in c.state)&&c.state.checkingBookingResult===false&&!!c.state.notice&&c.calls.post===0);
+ c=context({bookingRecovery:recovery});c.fetchBookings=async()=>{c.refreshSeq.current++;return[one];};await fn('checkBookingResult',c)();
+ check('RECOVERY-LATE-READ','Superseded lookup cannot overwrite newer list state',!('bookings' in c.state)&&!('bookingRecovery' in c.state)&&c.state.checkingBookingResult===false);
 }catch(e){check('FRONTEND-HARNESS','Frontend harness completion',false,{error:String(e),stack:e.stack});}
 const out={testedAt:new Date().toISOString(),method:'Actual TypeScript AST handlers executed in isolated VM; state setters captured separately to preserve React closure semantics; not browser end-to-end',counts:{total:results.length,pass:results.filter(x=>x.status==='PASS').length,fail:results.filter(x=>x.status==='FAIL').length},results};
 fs.mkdirSync(path.join(root,'evidence'),{recursive:true});fs.writeFileSync(path.join(root,'evidence','fixed-frontend-results.json'),JSON.stringify(out,null,2));console.log('SUMMARY '+JSON.stringify(out.counts));process.exitCode=out.counts.fail?1:0;

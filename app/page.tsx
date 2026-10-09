@@ -3,9 +3,11 @@
 import { CSSProperties, FocusEvent as ReactFocusEvent, FormEvent, KeyboardEvent as ReactKeyboardEvent, PointerEvent as ReactPointerEvent, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import siteConfig from "./config/site.json";
 import officeTeams from "./config/teams.json";
+import { EmployeePicker, FavoriteButton, MicrosoftPanel, useFavorites } from "./convenience";
 import { type CurrentUser, deleteBookingRequest, fetchBookings, fetchMe, patchBookingRequest, postBookings } from "./lib/api";
 import {
   type Booking,
+  type Employee,
   bookingDefaults,
   expandRepeatDates,
   findConflictingDates,
@@ -151,6 +153,13 @@ function ChevronIcon({ direction }: { direction: "prev" | "next" }) {
       />
     </svg>
   );
+}
+
+function ClockIcon() {
+  return <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+    <circle cx="12" cy="12" r="8.25" stroke="currentColor" strokeWidth="1.6" />
+    <path d="M12 7.5v4.8l3.2 2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>;
 }
 
 /** 빠른예약 패널 전용 이중 꺾쇠. */
@@ -737,6 +746,7 @@ export default function Home() {
   const [teamActiveIndex, setTeamActiveIndex] = useState(0);
   const [purpose, setPurpose] = useState("");
   const [attendees, setAttendees] = useState<string[]>([]);
+  const [attendeeAccounts, setAttendeeAccounts] = useState<Employee[]>([]);
   const [attendeeDraft, setAttendeeDraft] = useState("");
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [notice, setNotice] = useState("");
@@ -745,9 +755,12 @@ export default function Home() {
   const [bellArrival, setBellArrival] = useState(false);
   const [syncError, setSyncError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [bookingRecovery, setBookingRecovery] = useState<{ owner: string; roomId: string; dates: string[]; start: string; end: string; timedOut: boolean } | null>(null);
+  const [checkingBookingResult, setCheckingBookingResult] = useState(false);
   // SSO 모드에서는 로그인 계정이 예약자다. null이면 익명 모드(이름 직접 입력).
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const [authReady, setAuthReady] = useState(false);
+  const favorites = useFavorites(currentUser, authReady);
   const [authError, setAuthError] = useState("");
   const [showMap, setShowMap] = useState(false);
   const [allDay, setAllDay] = useState(false);
@@ -787,6 +800,7 @@ export default function Home() {
   const [earlyEnd, setEarlyEnd] = useState<Booking | null>(null);
   const [earlyEndBusy, setEarlyEndBusy] = useState(false);
   const [earlyEndNotice, setEarlyEndNotice] = useState("");
+  const [earlyEndReviewTime, setEarlyEndReviewTime] = useState<string | null>(null);
   // 표에서 값을 가져온 뒤 아직 예약하기를 누르지 않은 상태. 표의 점선 블록과
   // 패널의 '작성 중' 딱지를 띄우는 근거가 된다. 예약이 끝나면 내린다.
   const [draftActive, setDraftActive] = useState(false);
@@ -849,7 +863,7 @@ export default function Home() {
   const { date, start, end } = slot;
   const mutationBusy = submitting || editBusy || earlyEndBusy || cancelBusy;
   // 응답을 기다리며 다음 예약을 작성했다면 완료 처리가 새 입력을 지우지 않는다.
-  const draftKey = JSON.stringify([selectedId, slot, owner, team, purpose, attendees, attendeeDraft,
+  const draftKey = JSON.stringify([selectedId, slot, owner, team, purpose, attendees, attendeeAccounts, attendeeDraft,
     repeatWeekly, repeatEnd, repeatWeekends, allDay, timeNeedsPick]);
   const latestDraftKey = useRef(draftKey);
   latestDraftKey.current = draftKey;
@@ -1388,10 +1402,10 @@ export default function Home() {
    * 조기 종료. 지금 시각을 예약 슬롯 단위(30분)로 올림해 종료 시간으로 삼는다.
    * 그래야 비워진 시간이 다른 사람의 시작 시간 선택지에 그대로 나타난다.
    */
-  const earlyEndTime = (booking: Booking): string => {
-    if (nowMinutes === null) return booking.end;
+  const earlyEndTime = (booking: Booking, atMinutes = nowMinutes): string => {
+    if (atMinutes === null) return booking.end;
     const { slotMinutes } = bookingDefaults;
-    const rounded = Math.ceil(nowMinutes / slotMinutes) * slotMinutes;
+    const rounded = Math.ceil(atMinutes / slotMinutes) * slotMinutes;
     // 시작 직후에 눌러도 최소 한 슬롯은 남기고, 원래 종료 시간을 넘지는 않는다.
     const floor = minutesOf(booking.start) + slotMinutes;
     return formatMinutes(Math.min(Math.max(rounded, floor), minutesOf(booking.end)));
@@ -1403,10 +1417,27 @@ export default function Home() {
     && minutesOf(booking.start) <= nowMinutes && nowMinutes < minutesOf(booking.end);
 
   const editingBooking = editDraft ? bookings.find((booking) => booking.id === editDraft.id) ?? null : null;
+  const earlyEndDisplayTime = earlyEnd ? earlyEndReviewTime ?? earlyEndTime(earlyEnd) : "";
+  const openEarlyEnd = (booking: Booking) => {
+    setEarlyEndNotice("");
+    setEarlyEndReviewTime(null);
+    setEarlyEnd(booking);
+  };
 
   const confirmEarlyEnd = async () => {
     if (!earlyEnd || mutationBusy || !authReady) return;
-    const nextEnd = earlyEndTime(earlyEnd);
+    const actionTime = new Date();
+    const nextEnd = earlyEndTime(earlyEnd, officeMinutesOfDay(actionTime));
+    if (earlyEnd.date !== todayKey(actionTime) || minutesOf(nextEnd) >= minutesOf(earlyEnd.end)) {
+      setEarlyEndNotice("이제 줄일 수 있는 예약 시간이 없습니다. 최신 예약 내역을 확인해 주세요.");
+      void refreshBookings();
+      return;
+    }
+    if (nextEnd !== earlyEndDisplayTime) {
+      setEarlyEndReviewTime(nextEnd);
+      setEarlyEndNotice(`시간이 지나 종료 가능 시각이 ${nextEnd}(으)로 바뀌었습니다. 아래 시각을 확인한 후 다시 눌러 주세요.`);
+      return;
+    }
     setEarlyEndBusy(true);
     setEarlyEndNotice("");
     try {
@@ -1427,9 +1458,9 @@ export default function Home() {
       setEarlyEnd(null);
       setEditDraft(null);
       setToast({
-        text: "회의를 끝냈습니다.",
+        text: "회의가 단축되었습니다.",
         detail: roomIdentity(roomById(earlyEnd.roomId)),
-        time: `${nextEnd}부터 예약 가능`,
+        time: `${result.booking?.end ?? nextEnd}부터 예약 가능`,
       });
     } catch {
       setEarlyEndNotice("종료 결과를 확인하지 못했습니다. 예약 목록을 확인한 뒤 다시 시도해 주세요.");
@@ -1577,7 +1608,7 @@ export default function Home() {
     if (!name) return;
     setAttendeeDraft("");
     setAttendees((list) => (
-      list.includes(name) || list.length >= bookingDefaults.maxAttendees ? list : [...list, name]
+      list.includes(name) || list.length + attendeeAccounts.length >= bookingDefaults.maxAttendees ? list : [...list, name]
     ));
   };
 
@@ -1870,6 +1901,7 @@ export default function Home() {
   const submitReservation = async (event: FormEvent) => {
     event.preventDefault();
     if (mutationBusy || !authReady) return;
+    if (bookingRecovery) { void checkBookingResult(); return; }
     if (timeNeedsPick) {
       setNotice("시작 또는 종료 시간을 직접 선택해 주세요.");
       document.getElementById("start-time-select")?.focus({ preventScroll: true });
@@ -1930,7 +1962,7 @@ export default function Home() {
 
   /** 실제로 서버에 보내는 부분. '겹치는 날만 빼고' 보낼 때도 같은 길을 쓴다. */
   const sendBooking = async (dates: string[]) => {
-    if (mutationBusy || !authReady || dates.length === 0 || timeNeedsPick) return;
+    if (mutationBusy || !authReady || dates.length === 0 || timeNeedsPick || bookingRecovery) return;
     // 확인 중 시간 경과·새 예약도 재검증한다. 최종 동시 예약 판정은 서버가 수행한다.
     const invalidSlot = dates.map((day) => describeRoomSlotAvailability(bookings.filter((booking) => booking.roomId === selected.id), day, start, end, { today, nowMinutes })).find((item) => !item.available);
     if (invalidSlot || syncError) { setSubmitPreviewDates(null); setNotice(syncError || invalidSlot?.nextLabel || "예약 상태를 확인해 다시 선택해 주세요."); return; }
@@ -1950,12 +1982,13 @@ export default function Home() {
         team: teamName,
         purpose: purpose.trim(),
         attendees,
+        attendeeIds: attendeeAccounts.map(employee => employee.id),
       });
 
       if (!result.ok) {
         // 동시에 다른 사람이 먼저 잡았을 수 있다. 서버 판정을 보여주고 최신 상태로 맞춘다.
         setNotice(result.message);
-        await refreshBookings();
+        void refreshBookings();
         return;
       }
 
@@ -1965,6 +1998,7 @@ export default function Home() {
         setTimeNeedsPick(false);
         setPurpose("");
         setAttendees([]);
+        setAttendeeAccounts([]);
         setAttendeeDraft("");
       }
       setMyBookingOwner(ownerName);
@@ -2002,12 +2036,47 @@ export default function Home() {
       if (draftUnchanged && !allDay && nextStart) {
         setSlot((current) => ({ ...current, start: nextStart, end: addMinutes(nextStart, durationMinutes) }));
       }
-      await refreshBookings();
-    } catch {
-      setNotice("예약 결과를 확인하지 못했습니다. 예약 목록을 확인한 뒤 다시 시도해 주세요. 입력 내용은 유지했습니다.");
-      await refreshBookings();
+      void refreshBookings();
+    } catch (error) {
+      setBookingRecovery({ owner: ownerName, roomId: selected.id, dates: [...dates], start, end, timedOut: error instanceof Error && error.name === "TimeoutError" });
+      setNotice("예약 결과를 확인하지 못했습니다. 이미 저장됐을 수 있으니 예약 결과 확인을 눌러 주세요. 입력 내용은 유지했습니다.");
+      // 목록 갱신이 늦어져도 저장 버튼의 대기 시간을 더 늘리지 않는다.
+      void refreshBookings();
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  /** 조회만 수행한다. 응답 유실을 실패로 단정하거나 예약을 자동 재전송하지 않는다. */
+  const checkBookingResult = async () => {
+    if (!bookingRecovery || checkingBookingResult || !authReady) return;
+    const snapshot = bookingRecovery;
+    const dates = [...snapshot.dates].sort();
+    const range = { from: dates[0], to: dates[dates.length - 1] };
+    const seq = ++refreshSeq.current;
+    setCheckingBookingResult(true);
+    setNotice("");
+    try {
+      const data = await fetchBookings(range);
+      if (seq !== refreshSeq.current) {
+        setNotice("최신 예약 내역을 동기화하고 있어요. 잠시 후 예약 결과를 다시 확인해 주세요.");
+        return;
+      }
+      setBookings((current) => [...current.filter((booking) => booking.date < range.from || booking.date > range.to), ...data]);
+      setSyncError("");
+      const matched = data.filter((booking) => booking.roomId === snapshot.roomId && snapshot.dates.includes(booking.date)
+        && booking.start === snapshot.start && booking.end === snapshot.end
+        && (currentUser ? booking.isMine === true : booking.owner === snapshot.owner));
+      setMyBookingOwner(snapshot.owner);
+      setMyBookingsOpen(true);
+      setBookingRecovery(null);
+      setNotice(matched.length
+        ? `선택한 시간의 내 예약 ${matched.length}건을 찾았습니다. 내 예약에서 내용을 확인해 주세요.`
+        : "조회 시점에는 선택한 시간의 내 예약이 없습니다. 늦게 반영될 수 있으니 다시 예약하기 전 내 예약을 확인해 주세요.");
+    } catch {
+      setNotice("아직 예약 내역을 불러오지 못했습니다. 입력 내용은 보관 중이며, 예약은 다시 전송하지 않았습니다.");
+    } finally {
+      setCheckingBookingResult(false);
     }
   };
 
@@ -2034,6 +2103,7 @@ export default function Home() {
           {/* 시계와 날짜는 뺐다. 보고 있는 날짜가 왼쪽에 크게 있고,
               현재 시각은 일정표의 빨간 선이 알려 준다. */}
           <nav className="header-nav" aria-label="사용자 메뉴">
+            {currentUser?.isAdmin === true && <a className="header-nav-item" href="/admin">관리자</a>}
             <a className="header-nav-item" href="/회의실예약_매뉴얼.pdf" target="_blank" rel="noopener noreferrer">이용가이드</a>
             <span className="header-bookings-wrap">
               <button
@@ -2546,6 +2616,11 @@ export default function Home() {
               <i aria-hidden="true" />
             </button>
             {roomPickerOpen && <div className="room-picker-options room-picker-popover" role="dialog" aria-label="회의실 선택" onPointerDown={(event) => event.stopPropagation()}>
+              <div className="favorite-shortcuts">
+                <small>즐겨찾기 {currentUser ? "· 내 계정에 저장" : "· 이 브라우저에 저장"}</small>
+                {favorites.ids.length ? rooms.filter(room => favorites.ids.includes(room.id)).map(room => <button type="button" key={room.id} onClick={() => selectRoom(room)}>{room.floor}층 · {room.name}</button>) : <span className="convenience-hint">별을 눌러 자주 쓰는 회의실을 모아보세요.</span>}
+              </div>
+              {favorites.message && <p className="favorites-hint" role="status">{favorites.message}</p>}
               {floors.map((item) => (
                 <div className="room-picker-floor-group" key={item}>
                   <small>{item}F</small>
@@ -2558,6 +2633,7 @@ export default function Home() {
                         <span className="room-picker-name"><span className={`status-dot ${status.status}`} /><strong>{room.name}</strong></span>
                         <em>{room.floor}층 · {formatCapacity(room.capacity)} · {room.equipment.join(" · ")}</em>
                       </button>
+                      <FavoriteButton roomId={room.id} active={favorites.ids.includes(room.id)} disabled={!favorites.loaded || favorites.pending.includes(room.id)} onClick={() => void favorites.toggle(room.id)} />
                       <button
                         type="button"
                         className="room-picker-row-map"
@@ -2826,7 +2902,7 @@ export default function Home() {
             </div>
 
             <details className="booking-extra-details" open={extraDetailsOpen} onToggle={(event) => setExtraDetailsOpen(event.currentTarget.open)}>
-            <summary>추가 정보 <span>(선택){purpose.trim() || attendees.length ? " · 입력됨" : ""}</span></summary>
+            <summary>추가 정보 <span>(선택){purpose.trim() || attendees.length || attendeeAccounts.length ? " · 입력됨" : ""}</span></summary>
             <label>
               <span className="field-label">회의 목적</span>
               <input
@@ -2839,6 +2915,8 @@ export default function Home() {
             </label>
 
             {/* 참석자는 선택 항목이라 평소에는 접어 두고 누를 때만 펼친다. */}
+            {currentUser && <EmployeePicker value={attendeeAccounts} onChange={setAttendeeAccounts} limit={bookingDefaults.maxAttendees-attendees.length} />}
+            {currentUser && <p className="convenience-hint">아래 이름 직접 입력은 외부 참석자용입니다. 직원은 위 검색 결과에서 선택해 주세요.</p>}
             {attendeesOpen || attendees.length > 0 ? (
               <div className="attendee-field">
                 {/* 정원을 넘어도 막지 않는다. 의자를 더 가져올 수 있으니 사실만 알린다. */}
@@ -2860,7 +2938,7 @@ export default function Home() {
                     placeholder={attendees.length ? "" : "이름 입력 후 Enter"}
                   />
                 </div>
-                <p className="attendee-count">{attendees.length}명 · {formatCapacity(selected.capacity)}</p>
+                <p className="attendee-count">총 {attendees.length + attendeeAccounts.length}명 · {formatCapacity(selected.capacity)}</p>
               </div>
             ) : (
               <button type="button" className="attendee-add" onClick={() => revealAfterExpand(".attendee-field", () => setAttendeesOpen(true))}>
@@ -2868,6 +2946,7 @@ export default function Home() {
               </button>
             )}
             </details>
+            {currentUser && <MicrosoftPanel bookings={bookings} />}
 
             </section>
 
@@ -2875,15 +2954,21 @@ export default function Home() {
             </div>
 
             <div className="booking-submit">
-            <div className={`booking-selection-summary${selectedTimeConflict ? " is-conflict" : ""}`} data-availability={timeNeedsPick ? "unknown" : selectedTimeConflict ? "conflict" : bookingBlockReason ? "closed" : "available"}>
+            {!bookingRecovery && <div className={`booking-selection-summary${selectedTimeConflict ? " is-conflict" : ""}`} data-availability={timeNeedsPick ? "unknown" : selectedTimeConflict ? "conflict" : bookingBlockReason ? "closed" : "available"}>
               <strong>{roomIdentity(selected)}</strong>
               <span>{formatDateLabel(date)} · {timeNeedsPick ? "시간을 선택해 주세요" : `${start}–${end} · 총 ${spokenDuration(minutesOf(end) - minutesOf(start))}`}</span>
               {repeatWeekly && <small>반복 {reservationDates.length}일{selectedTimeConflict ? ` · ${reservationDates.length - conflictDates.length}일 예약 가능` : ""}</small>}
               <small id="booking-selection-status" role="status">{timeNeedsPick ? "시작·종료 시간을 먼저 확인해 주세요." : bookingBlockReason || (selectedTimeConflict ? "일부 날짜에 예약이 겹칩니다. 가능한 날짜를 확인할 수 있습니다." : "선택 시간 예약 가능")}</small>
-            </div>
-            {notice && <div className={`notice ${notice.includes("완료") ? "success" : "error"}`}>{notice}</div>}
-            {selectedTimeConflict && !notice && <div className="notice error booking-conflict-notice"><b>이미 예약된 시간입니다.</b><span>다른 시간을 선택해 주세요.</span></div>}
-            {selectedTimeConflict && bookingAlternatives.length > 0 && <section className="booking-alternatives" aria-label="예약 가능한 대안">
+            </div>}
+            {bookingRecovery && <section className="booking-recovery" role="status" aria-live="polite" aria-busy={checkingBookingResult}>
+              <strong><ClockIcon />{bookingRecovery.timedOut ? "응답이 늦어지고 있어요" : "예약 결과를 확인해 주세요"}</strong>
+              <span>{roomIdentity(roomById(bookingRecovery.roomId))} · {bookingRecovery.start}–{bookingRecovery.end}</span>
+              {notice ? <p>{notice}</p> : <p>이미 저장됐을 수 있어요. 입력 내용은 그대로 보관했어요.</p>}
+              <button type="button" disabled={checkingBookingResult || !authReady} onClick={() => void checkBookingResult()}>{checkingBookingResult ? "예약 결과 확인 중…" : "예약 결과 확인"}</button>
+            </section>}
+            {notice && !bookingRecovery && <div className={`notice ${notice.includes("완료") || notice.includes("찾았습니다") ? "success" : "error"}`} role="status">{notice}</div>}
+            {!bookingRecovery && selectedTimeConflict && !notice && <div className="notice error booking-conflict-notice"><b>이미 예약된 시간입니다.</b><span>다른 시간을 선택해 주세요.</span></div>}
+            {!bookingRecovery && selectedTimeConflict && bookingAlternatives.length > 0 && <section className="booking-alternatives" aria-label="예약 가능한 대안">
               <b>대신 예약할 수 있어요</b>
               {bookingAlternatives.slice(0, alternativesExpanded ? bookingAlternatives.length : 2).map((alternative) => (
                 <button type="button" key={`${alternative.roomId}-${alternative.start}-${alternative.end}`} onClick={() => applyAlternative(alternative)}>
@@ -2896,7 +2981,7 @@ export default function Home() {
                 </button>
               )}
             </section>}
-            <button id="reserve-button" className="reserve-button" type="submit" aria-describedby="booking-selection-status" disabled={mutationBusy || !authReady || Boolean(bookingBlockReason)}>
+            {!bookingRecovery && <button id="reserve-button" className="reserve-button" type="submit" aria-describedby="booking-selection-status" disabled={mutationBusy || !authReady || Boolean(bookingBlockReason) || Boolean(bookingRecovery)}>
               <span className="reserve-button-meta">
                 <span className="reserve-button-room">{roomIdentity(selected)}</span>
                 {/* 반복 예약이면 몇 건이 만들어지는지 버튼이 직접 말해야 한다.
@@ -2906,9 +2991,9 @@ export default function Home() {
                 </span>
               </span>
               <strong className="reserve-button-action">
-                {submitting ? "저장 중…" : !authReady ? "로그인 확인 중…" : bookingBlockReason ? "예약 불가" : selectedTimeConflict && conflictDates.length < reservationDates.length ? "예약 가능한 날짜 확인" : "예약하기"}
+                {submitting ? "저장 중…" : bookingRecovery ? "예약 결과 확인 필요" : !authReady ? "로그인 확인 중…" : bookingBlockReason ? "예약 불가" : selectedTimeConflict && conflictDates.length < reservationDates.length ? "예약 가능한 날짜 확인" : "예약하기"}
               </strong>
-            </button>
+            </button>}
             </div>
           </form>
         </div>
@@ -2986,6 +3071,7 @@ export default function Home() {
                       <td className="my-booking-room">{roomIdentity(roomById(booking.roomId))}</td>
                       <td className="my-booking-team">
                         {booking.purpose} · {teamOf(booking)}
+                        {!!booking.attendeeAccounts?.length && <details className="booking-attendee-detail"><summary>직원 참석자 {booking.attendeeAccounts.length}명</summary>{booking.attendeeAccounts.map(employee => <div key={employee.id}>{employee.name} · {employee.email}</div>)}</details>}
                       </td>
                       <td><span className={`my-booking-badge ${isRunningNow(booking) ? "running" : ""}`}>
                         {isRunningNow(booking) ? "진행 중" : upcoming ? "예정" : "지난 예약"}
@@ -3004,7 +3090,7 @@ export default function Home() {
                               // 진행 중인 회의는 취소가 아니라 '지금 끝내기'가 필요한 동작이다.
                               // 단, 남은 시간이 30분 미만이면 끝내봤자 풀리는 시간이 없어 버튼을 두지 않는다.
                               minutesOf(earlyEndTime(booking)) < minutesOf(booking.end) && (
-                                <button type="button" className="end-now" onClick={() => { setEarlyEndNotice(""); setEarlyEnd(booking); }}>지금 끝내기</button>
+                                <button type="button" className="end-now" onClick={() => openEarlyEnd(booking)}>일찍 끝내기</button>
                               )
                             ) : (
                               // '예약 취소'는 곧바로 확인창을 연다. 예전에는 고르기 모드로
@@ -3093,8 +3179,8 @@ export default function Home() {
             {editingBooking && isRunningNow(editingBooking)
               && minutesOf(earlyEndTime(editingBooking)) < minutesOf(editingBooking.end) && (
               <div className="edit-running-action">
-                <span><b>현재 진행 중인 회의</b><em>일찍 끝내면 남은 시간이 바로 예약 가능해집니다.</em></span>
-                <button type="button" onClick={() => { setEarlyEndNotice(""); setEarlyEnd(editingBooking); }}>회의 일찍 끝내기</button>
+                <span><b>현재 진행 중인 회의</b><em>일찍 끝내면 {earlyEndTime(editingBooking)}부터 예약 가능합니다.</em></span>
+                <button type="button" onClick={() => openEarlyEnd(editingBooking)}>회의 일찍 끝내기</button>
               </div>
             )}
           </div>
@@ -3118,18 +3204,19 @@ export default function Home() {
       </div>}
       {earlyEnd && <div className="edit-backdrop" role="presentation" onMouseDown={() => { if (!earlyEndBusy) setEarlyEnd(null); }}>
         <section ref={earlyEndDialogRef} className="early-dialog" role="dialog" aria-modal="true" aria-labelledby="early-end-title" onMouseDown={(event) => event.stopPropagation()}>
-          <h2 id="early-end-title">지금 끝낼까요?</h2>
-          <p>남은 시간이 바로 풀려서 다른 사람이 예약할 수 있게 됩니다.</p>
+          <h2 id="early-end-title">회의를 일찍 끝낼까요?</h2>
+          <p>예약은 {bookingDefaults.slotMinutes}분 단위로 해제됩니다.</p>
           <div className="early-summary">
             <b>{roomIdentity(roomById(earlyEnd.roomId))} · {earlyEnd.purpose}</b>
-            <span>{earlyEnd.start}–{earlyEnd.end} → <em>{earlyEnd.start}–{earlyEndTime(earlyEnd)}</em></span>
-            <span className="early-free">{spokenDuration(minutesOf(earlyEnd.end) - minutesOf(earlyEndTime(earlyEnd)))} 다시 열립니다</span>
+            <span>{earlyEnd.start}–{earlyEnd.end} → <em>{earlyEnd.start}–{earlyEndDisplayTime}</em></span>
+            <strong className="early-available-at">{earlyEndDisplayTime}부터 예약 가능</strong>
+            <span className="early-free">남은 {spokenDuration(minutesOf(earlyEnd.end) - minutesOf(earlyEndDisplayTime))}이 해제됩니다</span>
           </div>
           {earlyEndNotice && <p className="edit-dialog-notice" role="alert">{earlyEndNotice}</p>}
           <div className="early-foot">
             <button type="button" disabled={earlyEndBusy} onClick={() => { if (!earlyEndBusy) setEarlyEnd(null); }}>그대로 두기</button>
-            <button type="button" className="early-go" disabled={mutationBusy || !authReady} onClick={confirmEarlyEnd}>
-              {earlyEndBusy ? "끝내는 중…" : "끝내기"}
+            <button type="button" className="early-go" disabled={mutationBusy || !authReady || earlyEndDisplayTime >= earlyEnd.end} onClick={confirmEarlyEnd}>
+              {earlyEndBusy ? "끝내는 중…" : `${earlyEndDisplayTime}에 종료`}
             </button>
           </div>
         </section>

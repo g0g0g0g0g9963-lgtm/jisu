@@ -12,6 +12,7 @@ import {
 } from "./datetime";
 import { publicHolidayOf } from "./holidays";
 
+export type Employee = { id: string; name: string; email: string };
 export type Booking = {
   id: string;
   roomId: string;
@@ -27,6 +28,7 @@ export type Booking = {
   purpose: string;
   /** 예약자 외 참석자. 옛 예약에는 없을 수 있다. */
   attendees?: string[];
+  attendeeAccounts?: Employee[];
 };
 
 /** "everyday"는 토·일까지 포함해 하루도 빠짐없이 잡는다. */

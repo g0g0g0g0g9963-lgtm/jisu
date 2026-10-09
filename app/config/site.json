@@ -1,5 +1,8 @@
 {
   "timeZone": "Asia/Seoul",
+  "network": {
+    "requestTimeoutMs": 15000
+  },
   "booking": {
     "openingTime": "00:00",
     "closingTime": "24:00",

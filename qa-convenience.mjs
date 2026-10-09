@@ -1,0 +1,108 @@
+import {spawn} from 'node:child_process';
+import {mkdirSync,readFileSync,writeFileSync} from 'node:fs';
+import {resolve,dirname} from 'node:path';
+import {pathToFileURL,fileURLToPath} from 'node:url';
+import {DatabaseSync} from 'node:sqlite';
+import crypto from 'node:crypto';
+import assert from 'node:assert/strict';
+import net from 'node:net';
+const root=dirname(fileURLToPath(import.meta.url)),run=resolve(root,'data-qa-convenience',String(Date.now()));mkdirSync(run,{recursive:true});
+const rooms=JSON.parse(readFileSync(resolve(root,'app/config/rooms.json'),'utf8'));
+const results=[],children=[];let browser,db;
+const check=(name,good)=>{assert.ok(good,name);results.push(name);console.log('PASS '+name);};
+const pause=ms=>new Promise(r=>setTimeout(r,ms));
+const socket=net.createServer();await new Promise(r=>socket.listen(0,'127.0.0.1',r));const port=socket.address().port;await new Promise(r=>socket.close(r));
+const base='http://127.0.0.1:'+port,key=crypto.randomBytes(32).toString('base64');
+const env={...process.env,NODE_ENV:'test',HOST:'127.0.0.1',PORT:String(port),DATA_DIR:run,CLIENT_DIR:resolve(root,'dist'),ALLOW_ANONYMOUS:'',SEED_DEMO:'0',SESSION_SECRET:'qa-only',
+ MS_TENANT_ID:'qa-tenant',MS_CLIENT_ID:'qa-client',MS_CLIENT_SECRET:'qa-only',APP_BASE_URL:base,MICROSOFT_TOKEN_KEY:key,ADMIN_MS_EMAIL:'',ADMIN_MS_OBJECT_ID:'',BACKUP_DIR:'',BACKUP_INTERVAL_MINUTES:'0'};
+async function start(){const child=spawn(process.execPath,['--import',pathToFileURL(resolve(root,'qa-convenience-preload.mjs')).href,'server/index.mjs'],{cwd:root,env,windowsHide:true,stdio:['ignore','pipe','pipe']});children.push(child);let logs='';child.stdout.on('data',x=>logs+=x);child.stderr.on('data',x=>logs+=x);for(let i=0;i<100;i++){if(child.exitCode!==null)throw Error(logs);try{if((await fetch(base+'/api/health')).ok)return child;}catch{}await pause(100);}throw Error(logs);}
+async function req(path,{cookie,method='GET',body,headers={}}={}){const r=await fetch(base+path,{method,redirect:'manual',headers:{...(cookie?{cookie}:{}),...(body!==undefined?{'content-type':'application/json'}:{}),...headers},...(body!==undefined?{body:JSON.stringify(body)}:{})});const text=await r.text();let json;try{json=JSON.parse(text);}catch{}return{status:r.status,headers:r.headers,json,text};}
+async function login(code,cookie,connecting=false){const begin=await req(connecting?'/auth/microsoft/connect':'/auth/login',{cookie});assert.equal(begin.status,302);const location=new URL(begin.headers.get('location')),state=location.searchParams.get('state');const jar=[cookie,begin.headers.getSetCookie()[0].split(';')[0]].filter(Boolean).join('; ');const end=await req('/auth/callback?state='+state+'&code='+code,{cookie:jar});return{...end,scopes:location.searchParams.get('scope'),cookie:end.headers.getSetCookie().find(x=>x.startsWith('bdo-session=')&&!x.startsWith('bdo-session=;'))?.split(';')[0]};}
+const action={'x-booking-action':'1'};
+const graph=()=>JSON.parse(readFileSync(resolve(run,'mock-graph.json'),'utf8'));
+async function until(fn,label){for(let i=0;i<120;i++){if(await fn())return;await pause(100);}throw Error('Timeout: '+label);}
+const future=new Date(Date.now()+7*86_400_000).toISOString().slice(0,10);
+const booking={roomId:rooms[0].id,dates:[future],start:'10:00',end:'11:00',owner:'FORGED NAME',team:'QA',purpose:'QA owner appointment',attendeeIds:['employee-one','employee-two'],attendees:[]};
+try{
+ let server=await start();db=new DatabaseSync(resolve(run,'bookings.sqlite'));db.exec('PRAGMA busy_timeout=5000');
+ check('guest private APIs require SSO',(await req('/api/favorites')).status===401&&(await req('/api/employees?q=a')).status===401);
+ let a=await login('alice'),b=await login('bob'),alice=a.cookie,bob=b.cookie;
+ check('basic login does not request calendar/directory permissions',a.scopes==='openid profile email');
+ check('local trusted employee fallback is explicit',(await req('/api/employees?q=QA',{cookie:alice})).json.source==='site');
+ check('favorites reject cross-origin',(await req('/api/favorites/'+rooms[0].id,{cookie:alice,method:'PUT',body:{favorite:true},headers:{...action,origin:'https://evil.invalid'}})).status===403);
+ check('favorites reject invalid room',(await req('/api/favorites/missing',{cookie:alice,method:'PUT',body:{favorite:true},headers:action})).status===400);
+ check('favorite saved',(await req('/api/favorites/'+rooms[0].id,{cookie:alice,method:'PUT',body:{favorite:true},headers:action})).status===200);
+ await req('/api/favorites/'+rooms[0].id,{cookie:alice,method:'PUT',body:{favorite:true},headers:action});
+ check('favorite PUT is idempotent and isolated by owner',(await req('/api/favorites',{cookie:alice})).json.roomIds.length===1&&(await req('/api/favorites',{cookie:bob})).json.roomIds.length===0);
+ check('connect is unavailable without current session',(await req('/auth/microsoft/connect')).status===403);
+ check('connect cannot switch to another employee',(await login('bob',alice,true)).status===401);
+ check('missing Graph consent is rejected',(await login('noConsent',alice,true)).status===401);
+ a=await login('expired',alice,true);alice=a.cookie;
+ check('incremental consent uses basic directory + own calendar',a.status===302&&a.scopes.includes('User.ReadBasic.All')&&a.scopes.includes('Calendars.ReadWrite')&&a.scopes.includes('offline_access')&&!a.scopes.includes('User.Read.All'));
+ const encrypted=db.prepare('SELECT encrypted_tokens FROM microsoft_connections').get().encrypted_tokens;
+ check('credentials encrypted at rest',!encrypted.includes('alice')&&!encrypted.includes('accessToken')&&encrypted.split('.').length===3);
+ const employees=(await req('/api/employees?q='+encodeURIComponent('김민수'),{cookie:alice})).json;
+ check('same-name staff have distinct email and ID',employees.source==='microsoft'&&employees.employees.length===2&&employees.employees[0].name===employees.employees[1].name&&employees.employees[0].id!==employees.employees[1].id&&employees.employees[0].email!==employees.employees[1].email);
+ check('expired access token refreshes securely',graph().refreshes===1);
+ check('forged unknown employee ID rejected',(await req('/api/bookings',{cookie:alice,method:'POST',body:{...booking,attendeeIds:['unknown']}})).status===400);
+ let r=await req('/api/bookings',{cookie:alice,method:'POST',body:booking});check('booking saves both same-name employee selections',r.status===201&&r.json.created[0].attendeeAccounts.length===2&&r.json.created[0].owner==='QA alice');const id=r.json.created[0].id;
+ check('booking and calendar job committed together',db.prepare('SELECT count(*) AS n FROM calendar_jobs WHERE booking_id=?').get(id).n===1);
+ check('participant email details hidden from other users',!(await req('/api/bookings',{cookie:bob})).json.bookings.find(b=>b.id===id).attendeeAccounts);
+ check('conflict does not create another calendar job',(await req('/api/bookings',{cookie:alice,method:'POST',body:booking})).status===409&&db.prepare('SELECT count(*) AS n FROM calendar_jobs').get().n===1);
+ await until(()=>db.prepare('SELECT status FROM calendar_jobs WHERE booking_id=?').get(id).status==='synced','initial calendar sync');
+ let event=graph().events[0];check('owner-only Outlook event and reminder',event.owner==='alice'&&!event.body.attendees&&!event.body.isOnlineMeeting&&event.body.isReminderOn===true&&event.body.reminderMinutesBeforeStart===10&&event.body.start.timeZone==='Asia/Seoul');
+ r=await req('/api/bookings/'+id,{cookie:alice,method:'PATCH',body:{...booking,date:future,end:'12:00',purpose:'QA changed',attendeeIds:undefined}});check('booking edit preserves staff IDs',r.status===200&&r.json.booking.attendeeAccounts.length===2);
+ await until(()=>graph().events[0].body.end.dateTime.endsWith('12:00:00'),'calendar edit');check('edit updates same Outlook event',graph().events.length===1&&graph().events[0].body.subject.startsWith('QA changed'));
+ check('another employee cannot edit booking/calendar',(await req('/api/bookings/'+id,{cookie:bob,method:'PATCH',body:{...booking,date:future,end:'13:00'}})).status===403);
+ await req('/api/bookings/'+id,{cookie:alice,method:'DELETE',body:{}});await until(()=>graph().events[0].deleted,'calendar cancellation');
+ check('cancelled booking removed and Outlook deleted',!(await req('/api/bookings',{cookie:alice})).json.bookings.some(b=>b.id===id)&&graph().events[0].deleted);
+ r=await req('/api/bookings',{cookie:alice,method:'POST',body:{...booking,purpose:'QA ambiguous'}});const ambiguous=r.json.created[0].id;
+ await until(()=>db.prepare('SELECT status FROM calendar_jobs WHERE booking_id=?').get(ambiguous).status==='retrying','ambiguous retry');
+ check('lost Outlook response does not lose booking',r.status===201&&graph().events.filter(e=>e.body.subject.startsWith('QA ambiguous')).length===1);
+ server.kill();await new Promise(resolve=>server.once('exit',resolve));db.prepare('UPDATE calendar_jobs SET next_attempt=0 WHERE booking_id=?').run(ambiguous);server=await start();
+ await until(()=>db.prepare('SELECT status FROM calendar_jobs WHERE booking_id=?').get(ambiguous).status==='synced','restart retry');
+ check('restart retries exact transaction without duplicate event',graph().events.filter(e=>e.body.subject.startsWith('QA ambiguous')).length===1&&graph().calls.filter(c=>c.method==='POST'&&c.body?.subject.startsWith('QA ambiguous')).length===2);
+ r=await req('/api/bookings/'+ambiguous,{cookie:alice,method:'PATCH',body:{...booking,date:future,purpose:'QA forbidden'}});await until(()=>db.prepare('SELECT status FROM calendar_jobs WHERE booking_id=?').get(ambiguous).status==='attention','permission failure');
+ check('Outlook permission failure keeps successful booking and exposes warning',r.status===200&&(await req('/api/microsoft/status',{cookie:alice})).json.jobs.some(j=>j.bookingId===ambiguous&&j.error==='permission_required'));
+ await req('/api/bookings/'+ambiguous,{cookie:alice,method:'DELETE',body:{}});await until(()=>graph().events[1].deleted,'cleanup before race');
+ r=await req('/api/bookings',{cookie:alice,method:'POST',body:{...booking,purpose:'QA slow'}});const slow=r.json.created[0].id;
+ await until(()=>graph().events.some(e=>e.body.subject.startsWith('QA slow')),'in flight create');
+ await req('/api/bookings/'+slow,{cookie:alice,method:'DELETE',body:{}});await until(()=>graph().events.find(e=>e.body.subject.startsWith('QA slow')).deleted,'race cancellation');
+ check('cancelling during creation does not orphan an Outlook event',db.prepare('SELECT status FROM calendar_jobs WHERE booking_id=?').get(slow).status==='synced');
+ r=await req('/api/bookings',{cookie:alice,method:'POST',body:{...booking,start:'23:00',end:'24:00',purpose:'QA midnight'}});const midnight=r.json.created[0].id;
+ await until(()=>db.prepare('SELECT status FROM calendar_jobs WHERE booking_id=?').get(midnight).status==='synced','midnight');
+ event=graph().events.find(e=>e.body.subject.startsWith('QA midnight'));check('24:00 becomes next-day midnight in business timezone',event.body.end.dateTime===new Date(Date.parse(future+'T00:00:00Z')+86_400_000).toISOString().slice(0,10)+'T00:00:00');
+ await req('/api/bookings/'+midnight,{cookie:alice,method:'PATCH',body:{...booking,date:future,start:'23:00',end:'24:00',purpose:'QA missing'}});await until(()=>db.prepare('SELECT error_code FROM calendar_jobs WHERE booking_id=?').get(midnight).error_code==='event_missing','deleted externally');
+ const eventCount=graph().events.length;await req('/api/microsoft/retry',{cookie:alice,method:'POST',body:{},headers:action});await pause(2200);
+ check('externally deleted calendar event is not silently recreated',graph().events.length===eventCount&&db.prepare('SELECT status FROM calendar_jobs WHERE booking_id=?').get(midnight).status==='attention');
+ check('calendar status includes only owner jobs',(await req('/api/microsoft/status',{cookie:bob})).json.jobs.length===0);
+ const reconnect=await login('alice');alice=reconnect.cookie;check('favorites survive session replacement',(await req('/api/favorites',{cookie:alice})).json.roomIds[0]===rooms[0].id);
+ if(process.env.QA_PLAYWRIGHT_MODULE&&process.env.QA_BROWSER){
+  const {chromium}=await import(pathToFileURL(process.env.QA_PLAYWRIGHT_MODULE));browser=await chromium.launch({executablePath:process.env.QA_BROWSER,headless:true});
+  const context=await browser.newContext({viewport:{width:1440,height:1100},timezoneId:'Asia/Seoul'});await context.addCookies([{name:'bdo-session',value:alice.split('=')[1],url:base}]);const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
+  await page.goto(base);await page.getByRole('button',{name:'빠른 예약 펼치기'}).click();await page.locator('.room-picker-toggle').click();
+  await page.getByRole('button',{name:`${rooms[1].floor}층 ${rooms[1].name} 즐겨찾기 추가`,exact:true}).click();await page.getByRole('button',{name:`${rooms[1].floor}층 ${rooms[1].name} 즐겨찾기 해제`,exact:true}).waitFor();
+  check('favorite star works in real browser',await page.locator('.favorite-shortcuts button').count()===2);await page.screenshot({path:resolve(run,'favorites-desktop.png'),fullPage:true});
+  await page.locator('.room-picker-toggle').click();await page.locator('.booking-extra-details > summary').click();
+  await page.locator('#employee-search').fill('김민수');await page.getByRole('option',{name:'김민수 minsu.one@example.invalid'}).click();await page.locator('#employee-search').fill('김민수');await page.getByRole('option',{name:'김민수 minsu.two@example.invalid'}).click();
+  check('same-name people render as separate email-labelled chips',await page.locator('.employee-chip').count()===2);await page.locator('.employee-picker').scrollIntoViewIfNeeded();await page.screenshot({path:resolve(run,'employees-desktop.png'),fullPage:true});
+  await page.locator('.microsoft-panel').scrollIntoViewIfNeeded();check('Outlook state and warning visible',await page.getByText('연결됨',{exact:true}).isVisible());await page.screenshot({path:resolve(run,'outlook-desktop.png'),fullPage:true});
+  await page.setViewportSize({width:390,height:844});await page.locator('.employee-picker').scrollIntoViewIfNeeded();await pause(200);check('mobile layout has no horizontal overflow',await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));await page.screenshot({path:resolve(run,'employees-mobile.png'),fullPage:true});
+  check('no browser runtime errors',errors.length===0);
+ }
+ const beforeAtomic=db.prepare('SELECT count(*) AS n FROM bookings').get().n;
+ db.exec("CREATE TRIGGER qa_outbox_failure BEFORE INSERT ON calendar_jobs BEGIN SELECT RAISE(ABORT,'synthetic outbox failure'); END;");
+ const atomic=await req('/api/bookings',{cookie:alice,method:'POST',body:{...booking,roomId:rooms[1].id}});
+ check('calendar outbox failure rolls back reservation instead of losing sync job',atomic.status===500&&db.prepare('SELECT count(*) AS n FROM bookings').get().n===beforeAtomic);
+ db.exec('DROP TRIGGER qa_outbox_failure');
+ check('disconnect requires same-origin action header',(await req('/api/microsoft/disconnect',{cookie:alice,method:'POST',body:{}})).status===403);
+ check('disconnect removes encrypted tokens',(await req('/api/microsoft/disconnect',{cookie:alice,method:'POST',body:{},headers:action})).status===200&&db.prepare('SELECT count(*) AS n FROM microsoft_connections').get().n===0);
+ check('disconnect preserves reservations and favorites',db.prepare('SELECT count(*) AS n FROM bookings').get().n===beforeAtomic&&(await req('/api/favorites',{cookie:alice})).json.roomIds.includes(rooms[0].id));
+ check('disconnected status is honest',(await req('/api/microsoft/status',{cookie:alice})).json.connected===false);
+ const countBeforeOffline=graph().events.length;
+ const offline=await req('/api/bookings',{cookie:alice,method:'POST',body:{...booking,roomId:rooms[1].id}});const offlineId=offline.json.created[0].id;
+ await until(()=>db.prepare('SELECT error_code FROM calendar_jobs WHERE booking_id=?').get(offlineId).error_code==='connect_required','disconnected queue');
+ check('disconnected booking stays saved without calling Outlook',offline.status===201&&graph().events.length===countBeforeOffline);
+ check('calendar-only retry requires connection',(await req('/api/microsoft/retry',{cookie:alice,method:'POST',body:{},headers:action})).status===409);
+ writeFileSync(resolve(run,'results.json'),JSON.stringify({passed:results.length,results},null,2));console.log('RESULT '+results.length+' passed; '+run);
+}finally{if(browser)await browser.close();if(db)db.close();for(const child of children)child.kill();}

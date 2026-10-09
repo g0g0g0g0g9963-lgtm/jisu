@@ -8168,6 +8168,52 @@ footer strong {
   color: #0f7a5f;
   font-weight: 700;
 }
+.early-summary .early-available-at {
+  color: var(--ink-1);
+  background: #eaf2ff;
+  border-radius: 7px;
+  padding: 9px 10px;
+  margin: 5px 0;
+  font-size: 18px;
+  font-variant-numeric: tabular-nums;
+}
+.booking-recovery {
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  margin: 0 0 10px;
+  border: 1px solid #bdcee7;
+  border-radius: 10px;
+  background: #edf4ff;
+  color: var(--ink-1);
+  text-align: left;
+}
+.booking-recovery > strong {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 14px;
+}
+.booking-recovery svg { width: 20px; height: 20px; flex-shrink: 0; }
+.booking-recovery > span, .booking-recovery > p, .booking-recovery > small {
+  margin: 0;
+  color: #3c506d;
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.booking-recovery > button {
+  min-height: 38px;
+  border: 0;
+  border-radius: 7px;
+  background: var(--ink-1);
+  color: #fff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.booking-recovery > button:disabled { opacity: .6; cursor: wait; }
 .early-foot {
   justify-content: flex-end;
   gap: 8px;

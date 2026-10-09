@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import { createSession, deleteSession, getSession, getMetaValue, setMetaValue } from "./db.mjs";
+import { microsoftConfigured, microsoftScopes, rememberEmployee, saveMicrosoftConnection } from "./microsoft.mjs";
 
 // Anonymous name-based access is an explicit, non-production development mode.
 const tenant = (process.env.MS_TENANT_ID ?? "").trim();
@@ -122,12 +123,17 @@ export function currentUser(req) {
 
 export function registerAuthRoutes(app) {
   if (!ssoEnabled) return;
-  app.get("/auth/login", (req, res) => {
+  app.get(["/auth/login", "/auth/microsoft/connect"], (req, res) => {
+    const connecting = req.path === "/auth/microsoft/connect";
+    const existingUser = connecting ? currentUser(req) : null;
+    if (connecting && (!existingUser || !microsoftConfigured)) {
+      res.status(403).type("text").send("회사 계정 로그인과 Microsoft 연동 설정이 필요합니다."); return;
+    }
     const state = crypto.randomBytes(16).toString("hex");
     const verifier = crypto.randomBytes(32).toString("base64url");
     const challenge = crypto.createHash("sha256").update(verifier).digest("base64url");
     const returnTo = safeReturnTo(req.query.returnTo);
-    const box = b64urlJson({ state, verifier, returnTo, expiresAt: Date.now() + 600_000 });
+    const box = b64urlJson({ state, verifier, returnTo, connectOid: existingUser?.oid, expiresAt: Date.now() + 600_000 });
     setCookie(res, STATE_COOKIE, `${box}.${sign(box)}`, 600);
     res.setHeader("Cache-Control", "no-store");
     const url = new URL(AUTHORIZE_URL);
@@ -135,7 +141,8 @@ export function registerAuthRoutes(app) {
     url.searchParams.set("response_type", "code");
     url.searchParams.set("redirect_uri", `${baseUrl}${REDIRECT_PATH}`);
     url.searchParams.set("response_mode", "query");
-    url.searchParams.set("scope", "openid profile email");
+    url.searchParams.set("scope", connecting ? microsoftScopes : "openid profile email");
+    if (connecting) url.searchParams.set("login_hint", existingUser.email);
     url.searchParams.set("state", state);
     url.searchParams.set("code_challenge", challenge);
     url.searchParams.set("code_challenge_method", "S256");
@@ -151,7 +158,7 @@ export function registerAuthRoutes(app) {
       if (!box || extra !== undefined || !equalSignature(signature, sign(box))) {
         throw new Error("로그인 상태 쿠키가 유효하지 않습니다.");
       }
-      const { state, verifier, returnTo, expiresAt } = JSON.parse(Buffer.from(box, "base64url").toString("utf8"));
+      const { state, verifier, returnTo, connectOid, expiresAt } = JSON.parse(Buffer.from(box, "base64url").toString("utf8"));
       // Validate state on both success and error callbacks before reading provider errors.
       if (typeof state !== "string" || !state || req.query.state !== state ||
           typeof verifier !== "string" || !verifier ||
@@ -176,6 +183,12 @@ export function registerAuthRoutes(app) {
         throw new Error(`토큰 교환 실패: ${tokens.error_description ?? tokenResponse.status}`);
       }
       const user = decodeIdToken(tokens.id_token);
+      if (connectOid) {
+        if (currentUser(req)?.oid !== connectOid || user.oid !== connectOid) throw Error("로그인한 본인의 Microsoft 계정으로 연결해 주세요.");
+        try { saveMicrosoftConnection(user.oid,tokens); }
+        catch { throw Error("직원 기본 정보 조회 및 본인 일정 권한 승인이 필요합니다. 전산 담당자에게 확인해 주세요."); }
+      }
+      rememberEmployee(user);
       const previousSid = parseCookies(req)[SESSION_COOKIE];
       if (previousSid) deleteSession(previousSid);
       const sid = createSession(user, SESSION_DAYS);

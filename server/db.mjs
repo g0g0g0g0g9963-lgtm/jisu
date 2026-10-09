@@ -1,12 +1,15 @@
 import crypto from "node:crypto";
 import { mkdirSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { DatabaseSync } from "node:sqlite";
+import { DatabaseSync, backup } from "node:sqlite";
 
 const dataDir = resolve(process.env.DATA_DIR ?? "./data");
+export const dataDirectory = dataDir;
 mkdirSync(dataDir, { recursive: true });
 
 const db = new DatabaseSync(join(dataDir, "bookings.sqlite"));
+// Shared connection keeps reservation changes and their calendar outbox atomic.
+export const database = db;
 
 db.exec("PRAGMA journal_mode = WAL");
 db.exec("PRAGMA busy_timeout = 5000");
@@ -42,6 +45,33 @@ if (!bookingColumns.includes("series_id")) {
 if (!bookingColumns.includes("attendees")) {
   db.exec("ALTER TABLE bookings ADD COLUMN attendees TEXT NOT NULL DEFAULT '[]'");
 }
+if (!bookingColumns.includes("attendee_accounts")) {
+  db.exec("ALTER TABLE bookings ADD COLUMN attendee_accounts TEXT NOT NULL DEFAULT '[]'");
+}
+db.exec(`CREATE TABLE IF NOT EXISTS calendar_jobs (
+  booking_id TEXT PRIMARY KEY, owner_id TEXT NOT NULL, desired_json TEXT,
+  version INTEGER NOT NULL DEFAULT 1, synced_version INTEGER NOT NULL DEFAULT 0,
+  event_id TEXT, transaction_id TEXT NOT NULL, first_payload TEXT,
+  status TEXT NOT NULL DEFAULT 'pending', attempts INTEGER NOT NULL DEFAULT 0,
+  next_attempt INTEGER NOT NULL DEFAULT 0, lease_token TEXT, lease_until INTEGER NOT NULL DEFAULT 0,
+  error_code TEXT NOT NULL DEFAULT '', updated_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_calendar_jobs_due ON calendar_jobs(status, next_attempt);
+CREATE INDEX IF NOT EXISTS idx_calendar_jobs_owner_updated ON calendar_jobs(owner_id,updated_at DESC);
+CREATE TABLE IF NOT EXISTS employees (id TEXT PRIMARY KEY, name TEXT NOT NULL, email TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS room_favorites (owner_id TEXT NOT NULL, room_id TEXT NOT NULL, PRIMARY KEY(owner_id,room_id));
+CREATE TABLE IF NOT EXISTS microsoft_connections (owner_id TEXT PRIMARY KEY, encrypted_tokens TEXT NOT NULL);`);
+
+const queueCalendar = (row, cancelled = false) => {
+  if (!row.owner_id) return;
+  // Calendar payload excludes participant details; this is an owner-only appointment.
+  const desired = cancelled ? null : JSON.stringify({ id: row.id, roomId: row.room_id,
+    date: row.date, start: row.start, end: row.end, purpose: row.purpose });
+  db.prepare(`INSERT INTO calendar_jobs(booking_id,owner_id,desired_json,transaction_id,updated_at)
+    VALUES(?,?,?,?,?) ON CONFLICT(booking_id) DO UPDATE SET desired_json=excluded.desired_json,
+    version=calendar_jobs.version+1,status='pending',attempts=0,next_attempt=0,error_code='',updated_at=excluded.updated_at`)
+    .run(row.id,row.owner_id,desired,crypto.randomUUID(),new Date().toISOString());
+};
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS sessions (
@@ -58,10 +88,10 @@ db.exec(`
 `);
 
 const selectAll = db.prepare(
-  "SELECT id, room_id, date, start, end, owner, owner_id, owner_email, series_id, team, purpose, attendees FROM bookings ORDER BY date, start",
+  "SELECT * FROM bookings ORDER BY date, start",
 );
 const selectRange = db.prepare(
-  "SELECT id, room_id, date, start, end, owner, owner_id, owner_email, series_id, team, purpose, attendees FROM bookings WHERE date >= ? AND date <= ? ORDER BY date, start",
+  "SELECT * FROM bookings WHERE date >= ? AND date <= ? ORDER BY date, start",
 );
 const selectOverlap = db.prepare(
   "SELECT id, room_id, date, start, end, owner FROM bookings WHERE room_id = ? AND date = ? AND start < ? AND end > ? LIMIT 1",
@@ -72,7 +102,7 @@ const selectOverlapExcept = db.prepare(
   "SELECT id, room_id, date, start, end, owner FROM bookings WHERE room_id = ? AND date = ? AND start < ? AND end > ? AND id <> ? LIMIT 1",
 );
 const selectFullById = db.prepare(
-  "SELECT id, room_id, date, start, end, owner, owner_id, owner_email, series_id, team, purpose, attendees FROM bookings WHERE id = ?",
+  "SELECT * FROM bookings WHERE id = ?",
 );
 const updateById = db.prepare(
   "UPDATE bookings SET room_id = ?, date = ?, start = ?, end = ?, team = ?, purpose = ?, attendees = ? WHERE id = ?",
@@ -89,6 +119,34 @@ const removeSession = db.prepare("DELETE FROM sessions WHERE sid = ?");
 const purgeSessions = db.prepare("DELETE FROM sessions WHERE expires_at < ?");
 const selectMeta = db.prepare("SELECT value FROM meta WHERE key = ?");
 const upsertMeta = db.prepare("INSERT INTO meta (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value");
+
+// Minimal audit data only: never persist tokens, meeting purpose text or attendee names.
+db.exec(`CREATE TABLE IF NOT EXISTS booking_audit (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  at TEXT NOT NULL, action TEXT NOT NULL, booking_id TEXT NOT NULL,
+  actor_id TEXT NOT NULL, actor_name TEXT NOT NULL,
+  before_json TEXT, after_json TEXT, changed_json TEXT NOT NULL
+)`);
+db.exec("CREATE INDEX IF NOT EXISTS idx_booking_audit_action_id ON booking_audit(action, id)");
+const auditInsert = db.prepare("INSERT INTO booking_audit(at, action, booking_id, actor_id, actor_name, before_json, after_json, changed_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+const auditSnapshot = (row) => row ? ({roomId:row.room_id, date:row.date, start:row.start, end:row.end}) : null;
+const writeAudit = (action, row, after, identity, changed = []) => auditInsert.run(
+  new Date().toISOString(), action, row.id, identity?.sso ? identity.ownerId : "development",
+  identity?.ownerName || row.owner || "개발용 사용자",
+  action === "create" ? null : JSON.stringify(auditSnapshot(row)),
+  after ? JSON.stringify(auditSnapshot(after)) : null, JSON.stringify(changed),
+);
+
+export function listAudit({ before = Number.MAX_SAFE_INTEGER, action = "", limit = 50 } = {}) {
+  const rows = db.prepare("SELECT * FROM booking_audit WHERE id < ? AND (? = '' OR action = ?) ORDER BY id DESC LIMIT ?").all(before, action, action, limit + 1);
+  const more = rows.length > limit;
+  const items = rows.slice(0, limit).map(row => ({id:row.id, at:row.at, action:row.action,
+    bookingId:row.booking_id, actorId:row.actor_id, actorName:row.actor_name,
+    before:JSON.parse(row.before_json || "null"), after:JSON.parse(row.after_json || "null"), changed:JSON.parse(row.changed_json)}));
+  return { items, nextCursor: more ? items.at(-1).id : null };
+}
+
+export const backupDatabase = (destination) => backup(db, destination);
 
 /** 참석자 칸은 JSON 배열 문자열이다. 옛 행이나 깨진 값이 와도 빈 배열로 돌려준다. */
 const parseAttendees = (value) => {
@@ -112,6 +170,8 @@ const toBooking = (row, identity) => ({
   team: row.team || undefined,
   purpose: row.purpose,
   attendees: parseAttendees(row.attendees),
+  // Email/IDs are visible only to the owner, not every viewer of the timetable.
+  ...(identity?.sso && isOwner(row, identity) ? { attendeeAccounts: JSON.parse(row.attendee_accounts || "[]") } : {}),
   seriesId: row.series_id || null,
   ...(identity?.sso ? { isMine: isOwner(row, identity) } : {}),
 });
@@ -131,7 +191,7 @@ export function countBookings() {
  * (프런트엔드도 같은 검사를 하지만, 두 사람이 동시에 누르는 경우의
  *  최종 판정은 반드시 서버가 한다.)
  */
-export function createBookings({ roomId, dates, start, end, owner, ownerId = "", ownerEmail = "", team = "", purpose, attendees = [], identity }) {
+export function createBookings({ roomId, dates, start, end, owner, ownerId = "", ownerEmail = "", team = "", purpose, attendees = [], attendeeAccounts = [], identity }) {
   const createdAt = new Date().toISOString();
   const attendeesJson = JSON.stringify(attendees);
   const seriesId = dates.length > 1 ? "series-" + crypto.randomUUID() : null;
@@ -155,8 +215,12 @@ export function createBookings({ roomId, dates, start, end, owner, ownerId = "",
     for (const date of dates) {
       const id = `bk-${crypto.randomUUID()}`;
       insertBooking.run(id, roomId, date, start, end, owner, ownerId, ownerEmail, seriesId, team, purpose, attendeesJson, createdAt);
+      db.prepare("UPDATE bookings SET attendee_accounts=? WHERE id=?").run(JSON.stringify(attendeeAccounts),id);
+      queueCalendar({id,room_id:roomId,date,start,end,owner_id:ownerId,purpose});
+      const auditRow = {id,room_id:roomId,date,start,end,owner};
+      writeAudit("create", auditRow, auditRow, identity);
       created.push(toBooking({ id, room_id: roomId, date, start, end, owner, owner_id: ownerId,
-        owner_email: ownerEmail, series_id: seriesId, team, purpose, attendees: attendeesJson }, identity));
+        owner_email: ownerEmail, series_id: seriesId, team, purpose, attendees: attendeesJson, attendee_accounts: JSON.stringify(attendeeAccounts) }, identity));
     }
     db.exec("COMMIT");
     return { ok: true, created };
@@ -181,13 +245,19 @@ const hasEnded = (row, today, now) => Boolean(today) &&
   (row.date < today || (row.date === today && Boolean(now) && row.end <= now));
 
 export function deleteBooking(id, identity = {}, { today = "", now = "" } = {}) {
-  const row = selectById.get(id);
+  const row = selectFullById.get(id);
   if (!row) return { ok: false, reason: "not-found" };
   if (!isOwner(row, identity)) return { ok: false, reason: "forbidden" };
   // 지난 예약은 취소할 수 없다. 화면에서도 그 버튼을 숨기지만, API를 직접
   // 불러도 막히도록 여기서도 확인한다.
   if (hasEnded(row, today, now)) return { ok: false, reason: "past" };
-  deleteById.run(id);
+  db.exec("BEGIN IMMEDIATE");
+  try {
+    deleteById.run(id);
+    queueCalendar(row, true);
+    writeAudit("cancel", row, null, identity);
+    db.exec("COMMIT");
+  } catch (error) { db.exec("ROLLBACK"); throw error; }
   return { ok: true };
 }
 
@@ -231,6 +301,14 @@ export function updateBooking(id, identity = {}, patch, { today = "", now = "", 
       patch.roomId, patch.date, patch.start, patch.end,
       team, purpose, JSON.stringify(attendees), id,
     );
+    const after = {...row,room_id:patch.roomId,date:patch.date,start:patch.start,end:patch.end,team,purpose,attendees:JSON.stringify(attendees)};
+    if (patch.attendeeAccounts !== undefined) {
+      after.attendee_accounts = JSON.stringify(patch.attendeeAccounts);
+      db.prepare("UPDATE bookings SET attendee_accounts=? WHERE id=?").run(after.attendee_accounts,id);
+    }
+    queueCalendar(after);
+    const changed = ["room_id","date","start","end","team","purpose","attendees","attendee_accounts"].filter(key => row[key] !== after[key]);
+    writeAudit("update", row, after, identity, changed);
     db.exec("COMMIT");
   } catch (error) {
     db.exec("ROLLBACK");
@@ -242,6 +320,7 @@ export function updateBooking(id, identity = {}, patch, { today = "", now = "", 
     booking: toBooking({
       ...row, ...patch, room_id: patch.roomId, team, purpose,
       attendees: JSON.stringify(attendees),
+      attendee_accounts: patch.attendeeAccounts === undefined ? row.attendee_accounts : JSON.stringify(patch.attendeeAccounts),
     }, identity),
   };
 }

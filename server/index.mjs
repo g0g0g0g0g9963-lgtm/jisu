@@ -4,8 +4,11 @@ import { fileURLToPath } from "node:url";
 import express from "express";
 import { registerAuthRoutes, ssoEnabled } from "./auth.mjs";
 import { ROOM_IDS, siteConfig } from "./config.mjs";
-import { countBookings, createBookings, deleteBooking, listBookings, updateBooking } from "./db.mjs";
+import { countBookings, createBookings, deleteBooking, listBookings, updateBooking, listAudit } from "./db.mjs";
+import { isAdminUser, requireAdmin } from "./admin-policy.mjs";
+import { initializeOperations, monitorRequests, operationsStatus, startBackup, startVerification, recordDatabaseError } from "./operations.mjs";
 import { seedDemoBookings } from "./seed.mjs";
+import { registerConvenienceRoutes, selectedEmployees, rememberEmployee } from "./microsoft.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const clientDir = resolve(process.env.CLIENT_DIR ?? join(here, "..", "dist"));
@@ -30,6 +33,11 @@ app.use(express.json({ limit: "64kb" }));
 
 // SSO가 켜져 있으면 /auth/* 라우트 + 로그인 강제 미들웨어가 여기서 걸린다.
 registerAuthRoutes(app);
+initializeOperations(clientDir);
+app.use(monitorRequests);
+registerConvenienceRoutes(app);
+app.use("/admin", requireAdmin);
+app.use("/api/admin", requireAdmin);
 console.log(ssoEnabled ? "[auth] Microsoft SSO 사용" : "[auth] 명시적으로 허용된 개발용 익명 모드");
 
 // ── 입력 검증 (운영 시간 규칙은 app/config/site.json에서 온다) ──
@@ -72,7 +80,7 @@ const bookingLimits = () => {
   return { today, now, maxDate: future.toISOString().slice(0, 10) };
 };
 const requestIdentity = (req) => ssoEnabled
-  ? { sso: true, ownerId: req.user.oid, ownerEmail: req.user.email } : undefined;
+  ? { sso: true, ownerId: req.user.oid, ownerEmail: req.user.email, ownerName: req.user.name } : undefined;
 
 /** 토·일 여부. 화면에서 막더라도 최종 판정은 서버가 한다. */
 const isWeekend = (value) => {
@@ -109,8 +117,12 @@ function validateCommon(body) {
   const attendees = [...new Set(rawAttendees.map((name) => trimmed(name).slice(0, maxAttendeeNameLength)))]
     .filter(Boolean)
     .slice(0, maxAttendees);
+  const attendeeAccounts = body?.attendeeIds === undefined ? undefined : selectedEmployees(body.attendeeIds);
+  if (attendeeAccounts === null || attendees.length + (attendeeAccounts?.length || 0) > maxAttendees) {
+    return { error: `직원 검색 결과에서 참석자를 다시 선택해 주세요. 최대 ${maxAttendees}명입니다.` };
+  }
 
-  return { value: { roomId, start, end, team, purpose, attendees } };
+  return { value: { roomId, start, end, team, purpose, attendees, attendeeAccounts } };
 }
 
 function validateCreate(body) {
@@ -160,7 +172,28 @@ app.get("/api/health", (_req, res) => {
 
 /** 현재 로그인 사용자. SSO가 꺼져 있으면 user: null → 프런트는 익명 모드로 동작. */
 app.get("/api/me", (req, res) => {
-  res.json({ user: ssoEnabled ? { name: req.user.name, email: req.user.email } : null });
+  if (ssoEnabled) rememberEmployee(req.user);
+  res.json({ user: ssoEnabled ? { name: req.user.name, email: req.user.email, isAdmin: isAdminUser(req.user) } : null });
+});
+
+app.get("/api/admin/status", (_req,res)=>res.json(operationsStatus()));
+app.get("/api/admin/audit", (req,res)=>{
+  const before=req.query.before===undefined?Number.MAX_SAFE_INTEGER:Number(req.query.before);
+  const action=typeof req.query.action==="string"?req.query.action:"";
+  if(!Number.isSafeInteger(before)||before<1||!["","create","update","cancel"].includes(action)) {
+    res.status(400).json({error:"이력 조회 조건을 확인해 주세요."}); return;
+  }
+  res.json(listAudit({before,action}));
+});
+// Custom header + strict origin check prevent cross-site privileged actions.
+app.post(["/api/admin/backups","/api/admin/verify-latest"],(req,res)=>{
+  const origin=req.get("origin");
+  const expected=new URL(process.env.APP_BASE_URL).origin;
+  if(req.get("x-admin-action")!=="1" || !req.is("application/json") || (origin&&origin!==expected)) {
+    res.status(403).json({error:"관리자 화면에서 다시 요청해 주세요."}); return;
+  }
+  const result=req.path.endsWith("/backups")?startBackup():startVerification();
+  res.status(result.ok?202:result.status).json(result.ok?{job:result.job}:{error:result.error});
 });
 
 app.get("/api/bookings", (req, res) => {
@@ -315,6 +348,7 @@ app.use((req, res, next) => {
 });
 
 app.use((error, _req, res, next) => {
+  recordDatabaseError(error);
   if (res.headersSent) { next(error); return; }
   if (error.type === "entity.parse.failed" || error.type === "request.size.invalid" || error.type === "request.aborted") {
     res.status(400).json({ error: "요청 JSON 형식이 올바르지 않습니다." });

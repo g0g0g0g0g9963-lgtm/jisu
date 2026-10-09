@@ -778,9 +778,9 @@ export default function Home() {
   }, [myBookingOwner, setMyBookingOwner]);
   /** 상단바에 쓸 이름. SSO로 들어왔으면 계정 이름, 아니면 예약할 때 쓴 이름. */
   const headerName = currentUser?.name ?? myBookingOwner;
-  // 취소는 여러 건을 골라 한 번에 한다. null이면 고르는 중이 아니다.
+  // 선택 삭제할 ID. null/빈 배열이면 선택된 예약이 없다.
   const [cancelSelection, setCancelSelection] = useState<string[] | null>(null);
-  // 취소는 되돌릴 수 없다. 누르는 즉시 지우지 말고 무엇이 사라지는지 먼저 보여준다.
+  // 예정 삭제 / 진행 중 남은 시간 해제의 결과를 먼저 확인한다.
   const [cancelAsk, setCancelAsk] = useState<string[] | null>(null);
   // 비어 있는 필수 칸. 브라우저가 그리는 흰 말풍선(required) 대신 우리가 표시한다.
   // 말풍선은 모양·문구를 바꿀 수 없고 화면 밖이면 보이지도 않는다.
@@ -788,11 +788,6 @@ export default function Home() {
   const [cancelBusy, setCancelBusy] = useState(false);
   // 참석자 칸은 선택 항목이라 접어 둔다.
   const [attendeesOpen, setAttendeesOpen] = useState(false);
-  // 조기 종료 확인 창에 띄울 예약.
-  const [earlyEnd, setEarlyEnd] = useState<Booking | null>(null);
-  const [earlyEndBusy, setEarlyEndBusy] = useState(false);
-  const [earlyEndNotice, setEarlyEndNotice] = useState("");
-  const [earlyEndReviewTime, setEarlyEndReviewTime] = useState<string | null>(null);
   // 표에서 값을 가져온 뒤 아직 예약하기를 누르지 않은 상태. 표의 점선 블록과
   // 패널의 '작성 중' 딱지를 띄우는 근거가 된다. 예약이 끝나면 내린다.
   const [draftActive, setDraftActive] = useState(false);
@@ -823,12 +818,11 @@ export default function Home() {
   const [timeNeedsPick, setTimeNeedsPick] = useState(false);
   const [submitPreviewDates, setSubmitPreviewDates] = useState<string[] | null>(null);
 
-  // 모달 여러 개가 겹칠 수 있어(예: 예약 수정 위에 조기 종료), 가장 위에 뜬
+  // 모달 여러 개가 겹칠 수 있어(예: 내 예약 위에 삭제 확인), 가장 위에 뜬
   // 것 하나만 Escape·Tab을 갖도록 우선순위를 매긴다. 겹칠 수 있는 목록이
   // 위에, 늘 단독으로 뜨는 것들이 아래에 온다.
   const topmostDialog = editConflict && editDraft ? "editConflict"
     : cancelAsk ? "cancelAsk"
-    : earlyEnd ? "earlyEnd"
     : repeatAsk ? "repeatAsk"
     : submitPreviewDates ? "submitPreviewDates"
     : editDraft ? "editDraft"
@@ -836,17 +830,15 @@ export default function Home() {
     : null;
 
   const cancelAskDialogRef = useRef<HTMLElement | null>(null);
-  const earlyEndDialogRef = useRef<HTMLElement | null>(null);
   const repeatAskDialogRef = useRef<HTMLElement | null>(null);
   const submitPreviewDialogRef = useRef<HTMLElement | null>(null);
   const editDraftDialogRef = useRef<HTMLElement | null>(null);
   const myBookingsDialogRef = useRef<HTMLElement | null>(null);
 
   useDialogFocus(cancelAskDialogRef, Boolean(cancelAsk), topmostDialog === "cancelAsk", () => setCancelAsk(null));
-  useDialogFocus(earlyEndDialogRef, Boolean(earlyEnd), topmostDialog === "earlyEnd", () => { if (!earlyEndBusy) setEarlyEnd(null); });
   useDialogFocus(repeatAskDialogRef, Boolean(repeatAsk), topmostDialog === "repeatAsk", () => setRepeatAsk(null));
   useDialogFocus(submitPreviewDialogRef, Boolean(submitPreviewDates), topmostDialog === "submitPreviewDates", () => setSubmitPreviewDates(null));
-  useDialogFocus(editDraftDialogRef, Boolean(editDraft), topmostDialog === "editDraft", () => { if (!editBusy && !earlyEndBusy) setEditDraft(null); });
+  useDialogFocus(editDraftDialogRef, Boolean(editDraft), topmostDialog === "editDraft", () => { if (!editBusy) setEditDraft(null); });
   useDialogFocus(myBookingsDialogRef, myBookingsOpen, topmostDialog === "myBookingsOpen", () => { setMyBookingsOpen(false); setCancelSelection(null); });
 
   const [monitorMode] = useState(() => {
@@ -855,7 +847,7 @@ export default function Home() {
   });
 
   const { date, start, end } = slot;
-  const mutationBusy = submitting || editBusy || earlyEndBusy || cancelBusy;
+  const mutationBusy = submitting || editBusy || cancelBusy;
   // 응답을 기다리며 다음 예약을 작성했다면 완료 처리가 새 입력을 지우지 않는다.
   const draftKey = JSON.stringify([selectedId, slot, owner, team, purpose, attendees, attendeeAccounts, attendeeDraft,
     repeatWeekly, repeatEnd, repeatWeekends, allDay, timeNeedsPick]);
@@ -985,7 +977,7 @@ export default function Home() {
     };
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
-      // submitPreviewDates·earlyEnd 등 다이얼로그는 useDialogFocus가 각자
+      // submitPreviewDates 등 다이얼로그는 useDialogFocus가 각자
       // Escape를 처리한다(겹쳤을 때 가장 위의 것 하나만 닫히게 하기 위함).
       // 여기서는 다이얼로그가 아닌 가벼운 팝오버만 정리한다.
       setRoomPickerOpen(false);
@@ -1315,12 +1307,13 @@ export default function Home() {
     typeof booking.isMine === "boolean" ? booking.isMine
       : currentUser === null && Boolean(myBookingOwner.trim()) && booking.owner === myBookingOwner.trim()
   ), [authReady, currentUser, myBookingOwner]);
-  const hasEnded = (booking: Booking) => booking.date < today
+  const hasEnded = (booking: Booking) => Boolean(booking.endedAt) || booking.date < today
     || (booking.date === today && nowMinutes !== null && minutesOf(booking.end) <= nowMinutes);
   const myBookings = useMemo(() => bookings
     .filter(isMyBooking)
     .sort((a, b) => `${a.date}${a.start}`.localeCompare(`${b.date}${b.start}`)), [bookings, isMyBooking]);
   const upcomingMyBookings = myBookings.filter((booking) => !hasEnded(booking));
+  const selectedBookingIds = (cancelSelection ?? []).filter((id) => upcomingMyBookings.some((booking) => booking.id === id));
   const pastBookingCutoff = oneCalendarMonthAgo(today);
   const pastMyBookings = myBookings
     .filter((booking) => hasEnded(booking) && booking.date >= pastBookingCutoff)
@@ -1371,13 +1364,19 @@ export default function Home() {
       if (failed.length) {
         const firstError = results.find((result) => result.status === "fulfilled" && !result.value.ok);
         const detail = firstError?.status === "fulfilled" && !firstError.value.ok
-          ? firstError.value.message : "연결이 끊겨 일부 취소 결과를 확인하지 못했습니다. 예약 목록을 확인해 주세요.";
-        setSyncError(`취소 확인 ${succeeded.length}건, 실패 또는 결과 미확인 ${failed.length}건. ${detail}`);
+          ? firstError.value.message : "연결이 끊겨 일부 삭제 결과를 확인하지 못했습니다. 예약 목록을 확인해 주세요.";
+        setSyncError(`처리 확인 ${succeeded.length}건, 실패 또는 결과 미확인 ${failed.length}건. ${detail}`);
       } else {
-        setToast({ text: `예약 ${succeeded.length}건을 취소했습니다.`, detail: "내 예약", time: "" });
+        const ended = results.flatMap((result) => result.status === "fulfilled" && result.value.ok && result.value.booking?.endedAt ? [result.value.booking] : []);
+        const deletedCount = succeeded.length - ended.length;
+        setToast({
+          text: ended.length ? `삭제 ${deletedCount}건 · 사용 기록 보존 ${ended.length}건` : `예약 ${deletedCount}건을 삭제했습니다.`,
+          detail: ended.length ? "종료한 예약은 지난 내역에서 확인할 수 있습니다." : "내 예약",
+          time: ended.length === 1 ? `${ended[0].end}부터 예약 가능` : "",
+        });
       }
     } catch {
-      setSyncError("취소 결과를 확인하지 못했습니다. 예약 목록을 확인한 뒤 다시 시도해 주세요.");
+      setSyncError("삭제 결과를 확인하지 못했습니다. 예약 목록을 확인한 뒤 다시 시도해 주세요.");
     } finally {
       setCancelBusy(false);
     }
@@ -1443,82 +1442,20 @@ export default function Home() {
     }
   };
 
-  /**
-   * 조기 종료. 지금 시각을 예약 슬롯 단위(30분)로 올림해 종료 시간으로 삼는다.
-   * 그래야 비워진 시간이 다른 사람의 시작 시간 선택지에 그대로 나타난다.
-   */
-  const earlyEndTime = (booking: Booking, atMinutes = nowMinutes): string => {
-    if (atMinutes === null) return booking.end;
-    const { slotMinutes } = bookingDefaults;
-    const rounded = Math.ceil(atMinutes / slotMinutes) * slotMinutes;
-    // 시작 직후에 눌러도 최소 한 슬롯은 남기고, 원래 종료 시간을 넘지는 않는다.
-    const floor = minutesOf(booking.start) + slotMinutes;
-    return formatMinutes(Math.min(Math.max(rounded, floor), minutesOf(booking.end)));
+  /** 삭제 시 해제 예상 시각. 확정 시각은 서버 응답으로 안내한다. */
+  const deletionReleaseTime = (booking: Booking, at = new Date()): string => {
+    const elapsed = officeMinutesOfDay(at) + at.getUTCSeconds() / 60 + at.getUTCMilliseconds() / 60000;
+    const first = minutesOf(bookingDefaults.openingTime);
+    const rounded = first + Math.ceil((elapsed - first) / bookingDefaults.slotMinutes) * bookingDefaults.slotMinutes;
+    return formatMinutes(Math.min(rounded, minutesOf(booking.end)));
   };
 
-  /** 지금 진행 중인 내 예약인가. 조기 종료 버튼은 이때만 뜬다. */
+  /** 종료 처리한 기록은 해제 경계 전에도 다시 수정/삭제할 수 없다. */
   const isRunningNow = (booking: Booking): boolean =>
-    isMyBooking(booking) && booking.date === today && nowMinutes !== null
+    !booking.endedAt && isMyBooking(booking) && booking.date === today && nowMinutes !== null
     && minutesOf(booking.start) <= nowMinutes && nowMinutes < minutesOf(booking.end);
 
   const editingBooking = editDraft ? bookings.find((booking) => booking.id === editDraft.id) ?? null : null;
-  const earlyEndDisplayTime = earlyEnd ? earlyEndReviewTime ?? earlyEndTime(earlyEnd) : "";
-  const openEarlyEnd = (booking: Booking) => {
-    setEarlyEndNotice("");
-    setEarlyEndReviewTime(null);
-    setEarlyEnd(booking);
-  };
-
-  const confirmEarlyEnd = async () => {
-    if (!earlyEnd || mutationBusy || !authReady) return;
-    const actionTime = new Date();
-    const nextEnd = earlyEndTime(earlyEnd, officeMinutesOfDay(actionTime));
-    if (earlyEnd.date !== todayKey(actionTime) || minutesOf(nextEnd) >= minutesOf(earlyEnd.end)) {
-      setEarlyEndNotice("이제 줄일 수 있는 예약 시간이 없습니다. 최신 예약 내역을 확인해 주세요.");
-      void refreshBookings();
-      return;
-    }
-    if (nextEnd !== earlyEndDisplayTime) {
-      setEarlyEndReviewTime(nextEnd);
-      setEarlyEndNotice(`시간이 지나 종료 가능 시각이 ${nextEnd}(으)로 바뀌었습니다. 아래 시각을 확인한 후 다시 눌러 주세요.`);
-      return;
-    }
-    setEarlyEndBusy(true);
-    setEarlyEndNotice("");
-    try {
-      const result = await patchBookingRequest(earlyEnd.id, {
-        expectedRevision: earlyEnd.revision,
-        roomId: earlyEnd.roomId,
-        date: earlyEnd.date,
-        start: earlyEnd.start,
-        end: nextEnd,
-        owner: currentUser?.name ?? earlyEnd.owner,
-        team: earlyEnd.team ?? "",
-        purpose: earlyEnd.purpose,
-      });
-      if (!result.ok) {
-        if (result.code === "booking-changed" && result.latest) {
-          setEarlyEnd(result.latest);
-          setEarlyEndReviewTime(null);
-        }
-        setEarlyEndNotice(result.message);
-        return;
-      }
-      await refreshBookings();
-      setEarlyEnd(null);
-      setEditDraft(null);
-      setToast({
-        text: "회의가 단축되었습니다.",
-        detail: roomIdentity(roomById(earlyEnd.roomId)),
-        time: `${result.booking?.end ?? nextEnd}부터 예약 가능`,
-      });
-    } catch {
-      setEarlyEndNotice("종료 결과를 확인하지 못했습니다. 예약 목록을 확인한 뒤 다시 시도해 주세요.");
-      await refreshBookings();
-    } finally {
-      setEarlyEndBusy(false);
-    }
-  };
 
   const deleteEditing = async () => {
     if (!editDraft || mutationBusy || !authReady) return;
@@ -1532,7 +1469,11 @@ export default function Home() {
       }
       await refreshBookings();
       setEditDraft(null);
-      setToast({ text: "예약을 삭제했습니다.", detail: roomIdentity(roomById(editDraft.roomId)), time: formatDateLabel(editDraft.date) });
+      setToast({
+        text: result.booking?.endedAt ? "남은 시간을 해제하고 사용 기록을 남겼습니다." : "예약을 삭제했습니다.",
+        detail: roomIdentity(roomById(editDraft.roomId)),
+        time: result.booking?.endedAt ? `${result.booking.end}부터 예약 가능` : formatDateLabel(editDraft.date),
+      });
     } catch {
       setEditNotice("삭제 결과를 확인하지 못했습니다. 예약 목록을 확인한 뒤 다시 시도해 주세요.");
       await refreshBookings();
@@ -3093,101 +3034,83 @@ export default function Home() {
           <div className="my-bookings-dialog-head"><div><h2 id="my-bookings-title">내 예약</h2><p>예약한 회의실과 시간을 한눈에 확인하세요.</p></div><button type="button" className="booking-confirm-close" onClick={() => { setMyBookingsOpen(false); setCancelSelection(null); }} aria-label="내 예약 닫기"><CloseIcon /></button></div>
           {authReady && !currentUser && <label className="my-bookings-search"><span>예약자 이름</span><input value={myBookingOwner} onChange={(event) => setMyBookingOwner(event.target.value)} placeholder="예약자 이름을 입력하세요" /></label>}
           <p className="my-bookings-summary">
-            <span>예정 예약 <b>{upcomingMyBookings.length}</b></span>
+            <span>진행·예정 예약 <b>{upcomingMyBookings.length}</b></span>
             <span>지난 예약 · 최근 1개월 <b>{pastMyBookings.length}</b></span>
             <span className="my-bookings-history-range">
-              지난 예약 조회: {pastBookingCutoff.replaceAll("-", ".")}–{moveDate(today, -1).replaceAll("-", ".")}
+              지난 예약 조회: {pastBookingCutoff.replaceAll("-", ".")}–{today.replaceAll("-", ".")}
             </span>
           </p>
-          {(cancelSelection !== null || upcomingMyBookings.length > 1) && <div className="my-bookings-list-tools">
-            {cancelSelection !== null && upcomingMyBookings.length > 0 ? (
-              <label className="my-booking-pick my-booking-pick-all">
-                <input type="checkbox" checked={cancelSelection.length === upcomingMyBookings.length}
-                  onChange={(event) => setCancelSelection(event.target.checked ? upcomingMyBookings.map((booking) => booking.id) : [])} />
-                <span>전체선택</span>
-              </label>
-            ) : upcomingMyBookings.length > 1 && (
-              <button type="button" className="pick-many" onClick={() => setCancelSelection([])}>선택해서 취소</button>
-            )}
-          </div>}
           <div className="my-bookings-list-wrap">
-            {myBookingRows.length ? <ul className="my-bookings-list" aria-label="내 예약 목록">
+            {myBookingRows.length ? <table className="my-bookings-list" aria-label="내 예약 목록">
+              <colgroup><col className="pick-col" /><col className="date-col" /><col className="time-col" /><col className="room-col" /><col /><col className="status-col" /><col className="actions-col" /></colgroup>
+              <thead><tr>
+                <th scope="col"><label className="my-booking-pick my-booking-pick-all"><input type="checkbox" aria-label="전체선택"
+                  disabled={!upcomingMyBookings.length || mutationBusy}
+                  checked={upcomingMyBookings.length > 0 && selectedBookingIds.length === upcomingMyBookings.length}
+                  ref={(input) => { if (input) input.indeterminate = selectedBookingIds.length > 0 && selectedBookingIds.length < upcomingMyBookings.length; }}
+                  onChange={(event) => setCancelSelection(event.target.checked ? upcomingMyBookings.map((booking) => booking.id) : [])} /></label></th>
+                <th scope="col">날짜</th><th scope="col">시간</th><th scope="col">회의실</th><th scope="col">회의 목적 · 본부</th><th scope="col">상태</th><th scope="col">관리</th>
+              </tr></thead><tbody>
                 {myBookingRows.map(({ booking, upcoming }) => {
                   const room = roomById(booking.roomId);
-                  const picking = cancelSelection !== null && upcoming;
-                  const picked = picking && cancelSelection.includes(booking.id);
+                  const picked = upcoming && selectedBookingIds.includes(booking.id);
                   const toggle = () => setCancelSelection((current) => {
                     const list = current ?? [];
                     return list.includes(booking.id) ? list.filter((id) => id !== booking.id) : [...list, booking.id];
                   });
                   return (
-                    <li key={booking.id} className={`my-booking-card${upcoming ? "" : " is-past"}${picked ? " is-picked" : ""}`}>
-                      <div className="my-booking-card-head">
-                        <div className="my-booking-room booking-confirm-room" aria-label={roomIdentity(roomById(booking.roomId))}>
+                    <tr key={booking.id} className={`my-booking-row${upcoming ? "" : " is-past"}${picked ? " is-picked" : ""}`}>
+                      <td>{upcoming && <label className="my-booking-pick"><input type="checkbox" checked={picked} onChange={toggle} disabled={mutationBusy || !authReady}
+                        aria-label={`${roomIdentity(room)} ${booking.date} ${booking.start} 예약 선택`} /></label>}</td>
+                      <td className="my-booking-date"><time dateTime={booking.date}>{formatDateLabel(booking.date)}</time></td>
+                      <td><span className="my-booking-time">{booking.start}–{booking.end}</span><small className="my-booking-duration">{spokenDuration(minutesOf(booking.end) - minutesOf(booking.start))}</small></td>
+                      <td><div className="my-booking-room" aria-label={roomIdentity(roomById(booking.roomId))}>
                           <strong>{room?.name ?? "회의실"}</strong>{room && <span className="booking-confirm-floor">{room.floor}F</span>}
-                        </div>
-                        <span className={`my-booking-badge ${isRunningNow(booking) ? "running" : ""}`}>
-                          {isRunningNow(booking) ? "진행 중" : upcoming ? "예정" : "지난 예약"}
-                        </span>
-                      </div>
-                      <div className="booking-confirm-details">
-                        <div className="booking-confirm-detail my-booking-date"><CalendarIcon /><time dateTime={booking.date}>{formatDateLabel(booking.date)}</time></div>
-                        <div className="booking-confirm-detail"><ClockIcon /><span className="booking-confirm-time my-booking-time"><time>{booking.start}</time> — <time>{booking.end}</time></span><span className="booking-confirm-duration">{spokenDuration(minutesOf(booking.end) - minutesOf(booking.start))}</span></div>
-                      </div>
-                      <div className="my-booking-team">
-                        {booking.purpose && <p className="my-booking-purpose">{booking.purpose}</p>}
-                        <p className="my-booking-department">{teamOf(booking)}</p>
+                        </div></td>
+                      <td className="my-booking-team">
+                        {booking.purpose && <p className="my-booking-purpose" title={booking.purpose}>{booking.purpose}</p>}
+                        <p className="my-booking-department" title={teamOf(booking)}>{teamOf(booking)}</p>
                         {!!booking.attendeeAccounts?.length && <details className="booking-attendee-detail"><summary>직원 참석자 {booking.attendeeAccounts.length}명</summary>{booking.attendeeAccounts.map(employee => <div key={employee.id}>{employee.name} · {employee.email}</div>)}</details>}
-                      </div>
+                      </td>
+                      <td><span className={`booking-status my-booking-badge ${isRunningNow(booking) ? "running" : ""}`}>
+                        {isRunningNow(booking) ? "진행 중" : upcoming ? "예정" : booking.endedAt ? "종료" : "지난 예약"}
+                      </span>{booking.endedAt && <small className="my-booking-retained">사용 기록 보존</small>}</td>
+                      <td>
                         {upcoming && (
                           <div className="my-booking-actions">
-                            {picking ? (
-                              <label className="my-booking-pick">
-                                <input type="checkbox" checked={picked} onChange={toggle} />
-                                {/* '취소함'은 이미 취소된 것처럼 읽힌다. 아직 고르기만 한 상태이므로
-                                    머리의 '전체선택'과 같은 말로 맞춘다. */}
-                                <span>{picked ? "선택됨" : "선택"}</span>
-                              </label>
-                            ) : (
-                              <>
                                 <button type="button" className="edit-booking" disabled={mutationBusy || !authReady} onClick={() => openEditor(booking)}>수정</button>
-                                {/* 삭제는 확인창을 거치며, 진행 중이어도 같은 경로로 제공한다. */}
-                                <button type="button" className="delete-booking" disabled={mutationBusy || !authReady} onClick={() => setCancelAsk([booking.id])}>예약 삭제</button>
-                                {isRunningNow(booking) && minutesOf(earlyEndTime(booking)) < minutesOf(booking.end) && (
-                                  <button type="button" className="end-now" disabled={mutationBusy || !authReady} onClick={() => openEarlyEnd(booking)}>일찍 끝내기</button>
-                                )}
-                              </>
-                            )}
+                                <button type="button" className="delete-booking" disabled={mutationBusy || !authReady} onClick={() => setCancelAsk([booking.id])}>삭제</button>
                           </div>
                         )}
-                    </li>
+                      </td>
+                    </tr>
                   );
                 })}
-            </ul> : <p className="my-bookings-empty" role="status">예약이 없습니다.</p>}
+              </tbody></table> : <p className="my-bookings-empty" role="status">예약이 없습니다.</p>}
           </div>
           {syncError && <p className="edit-dialog-notice" role="alert">{syncError}</p>}
-          {cancelSelection !== null && (() => {
-            const first = upcomingMyBookings.find((booking) => booking.id === cancelSelection[0]);
+          {upcomingMyBookings.length > 0 && (() => {
+            const first = upcomingMyBookings.find((booking) => booking.id === selectedBookingIds[0]);
             const series = first ? sameSeriesIds(first) : [];
-            const seriesLeft = series.filter((id) => !cancelSelection.includes(id));
+            const seriesLeft = series.filter((id) => !selectedBookingIds.includes(id));
             return (
-              <div className="my-bookings-cancelbar" role="group" aria-label="예약 취소">
-                <p><b>{cancelSelection.length}건</b> 선택했습니다. 취소할 예약을 더 고를 수 있어요.</p>
+              <div className="my-bookings-cancelbar" role="group" aria-label="선택 예약 삭제">
+                <p>{selectedBookingIds.length ? <><b>{selectedBookingIds.length}건</b> 선택</> : "삭제할 예약을 왼쪽에서 선택하세요."}</p>
                 <div>
                   {seriesLeft.length > 0 && (
-                    <button type="button" className="pick-series" onClick={() => setCancelSelection([...new Set([...cancelSelection, ...series])])}>
+                    <button type="button" className="pick-series" disabled={mutationBusy} onClick={() => setCancelSelection([...new Set([...selectedBookingIds, ...series])])}>
                       같은 반복 예약 {series.length}건 모두
                     </button>
                   )}
                   {/* 목록 위의 '전체선택' 체크박스가 같은 일을 하므로 여기서는 뺀다. */}
-                  <button type="button" onClick={() => setCancelSelection(null)}>선택 해제</button>
+                  {selectedBookingIds.length > 0 && <button type="button" disabled={mutationBusy} onClick={() => setCancelSelection(null)}>선택 해제</button>}
                   <button
                     type="button"
                     className="cancel-confirm"
-                    disabled={cancelSelection.length === 0 || cancelBusy}
-                    onClick={() => setCancelAsk(cancelSelection)}
+                    disabled={selectedBookingIds.length === 0 || mutationBusy || !authReady}
+                    onClick={() => setCancelAsk(selectedBookingIds)}
                   >
-                    {cancelBusy ? "취소하는 중…" : `${cancelSelection.length}건 취소하기`}
+                    {cancelBusy ? "삭제하는 중…" : selectedBookingIds.length ? `${selectedBookingIds.length}건 삭제` : "선택 삭제"}
                   </button>
                 </div>
               </div>
@@ -3195,13 +3118,13 @@ export default function Home() {
           })()}
         </section>
       </div>}
-      {editDraft && <div className="edit-backdrop" role="presentation" inert={editConflict} aria-hidden={editConflict || undefined} onMouseDown={() => { if (!editBusy && !earlyEndBusy && !editConflict) setEditDraft(null); }}>
+      {editDraft && <div className="edit-backdrop" role="presentation" inert={editConflict} aria-hidden={editConflict || undefined} onMouseDown={() => { if (!editBusy && !editConflict) setEditDraft(null); }}>
         <section ref={editDraftDialogRef} className="edit-dialog" role="dialog" aria-modal="true" aria-labelledby="edit-dialog-title" onMouseDown={(event) => event.stopPropagation()}>
           <div className="edit-dialog-head">
             <div><h2 id="edit-dialog-title">예약 수정</h2></div>
-            <button type="button" onClick={() => { if (!editBusy && !earlyEndBusy) setEditDraft(null); }} aria-label="예약 수정 닫기"><CloseIcon /></button>
+            <button type="button" onClick={() => { if (!editBusy) setEditDraft(null); }} aria-label="예약 수정 닫기"><CloseIcon /></button>
           </div>
-          <div className="edit-dialog-body" inert={editBusy || earlyEndBusy}>
+          <div className="edit-dialog-body" inert={editBusy}>
             <label>
               <span className="field-label">회의실</span>
               <select value={editDraft.roomId} onChange={(event) => setEditDraft({ ...editDraft, roomId: event.target.value })}>
@@ -3234,26 +3157,21 @@ export default function Home() {
               <span className="field-label">본부</span>
               <input value={editDraft.team} onChange={(event) => setEditDraft({ ...editDraft, team: event.target.value })} placeholder="본부를 입력하세요" />
             </label>
-            {editingBooking && isRunningNow(editingBooking)
-              && minutesOf(earlyEndTime(editingBooking)) < minutesOf(editingBooking.end) && (
-              <div className="edit-running-action">
-                <span><b>현재 진행 중인 회의</b><em>일찍 끝내면 {earlyEndTime(editingBooking)}부터 예약 가능합니다.</em></span>
-                <button type="button" onClick={() => openEarlyEnd(editingBooking)}>회의 일찍 끝내기</button>
-              </div>
-            )}
           </div>
           {editNotice && <p className="edit-dialog-notice">{editNotice}</p>}
           <div className="edit-dialog-foot">
             {editConfirmDelete ? (
               <>
-                <p>이 예약을 삭제할까요?</p>
-                <button type="button" disabled={editBusy || earlyEndBusy} onClick={() => setEditConfirmDelete(false)}>유지</button>
+                <p>{editingBooking && isRunningNow(editingBooking)
+                  ? `남은 시간만 해제할까요? 사용 기록은 남고, ${deletionReleaseTime(editingBooking)}부터 예약 가능합니다. 처리 시각에 따라 달라질 수 있습니다.`
+                  : "이 예약을 삭제할까요? 예정 예약은 삭제되고, 처리 시 이미 시작된 예약은 사용 기록을 남깁니다."}</p>
+                <button type="button" disabled={editBusy} onClick={() => setEditConfirmDelete(false)}>유지</button>
                 <button type="button" className="edit-delete" disabled={mutationBusy || !authReady} onClick={deleteEditing}>삭제하기</button>
               </>
             ) : (
               <>
-                <button type="button" className="edit-delete" disabled={editBusy || earlyEndBusy} onClick={() => setEditConfirmDelete(true)}>예약 삭제</button>
-                <button type="button" onClick={() => { if (!editBusy && !earlyEndBusy) setEditDraft(null); }}>닫기</button>
+                <button type="button" className="edit-delete" disabled={editBusy} onClick={() => setEditConfirmDelete(true)}>예약 삭제</button>
+                <button type="button" onClick={() => { if (!editBusy) setEditDraft(null); }}>닫기</button>
                 <button type="button" className="edit-save" disabled={mutationBusy || !authReady} onClick={saveEdit}>{editBusy ? "저장 중…" : "수정 저장"}</button>
               </>
             )}
@@ -3267,25 +3185,6 @@ export default function Home() {
         setEditNotice("최신 내용을 불러왔습니다. 확인 후 필요한 항목을 수정해 주세요.");
         void refreshBookings();
       }} />}
-      {earlyEnd && <div className="edit-backdrop" role="presentation" onMouseDown={() => { if (!earlyEndBusy) setEarlyEnd(null); }}>
-        <section ref={earlyEndDialogRef} className="early-dialog" role="dialog" aria-modal="true" aria-labelledby="early-end-title" onMouseDown={(event) => event.stopPropagation()}>
-          <h2 id="early-end-title">회의를 일찍 끝낼까요?</h2>
-          <p>예약은 {bookingDefaults.slotMinutes}분 단위로 해제됩니다.</p>
-          <div className="early-summary">
-            <b>{roomIdentity(roomById(earlyEnd.roomId))} · {earlyEnd.purpose}</b>
-            <span>{earlyEnd.start}–{earlyEnd.end} → <em>{earlyEnd.start}–{earlyEndDisplayTime}</em></span>
-            <strong className="early-available-at">{earlyEndDisplayTime}부터 예약 가능</strong>
-            <span className="early-free">남은 {spokenDuration(minutesOf(earlyEnd.end) - minutesOf(earlyEndDisplayTime))}이 해제됩니다</span>
-          </div>
-          {earlyEndNotice && <p className="edit-dialog-notice" role="alert">{earlyEndNotice}</p>}
-          <div className="early-foot">
-            <button type="button" disabled={earlyEndBusy} onClick={() => { if (!earlyEndBusy) setEarlyEnd(null); }}>그대로 두기</button>
-            <button type="button" className="early-go" disabled={mutationBusy || !authReady || earlyEndDisplayTime >= earlyEnd.end} onClick={confirmEarlyEnd}>
-              {earlyEndBusy ? "끝내는 중…" : `${earlyEndDisplayTime}에 종료`}
-            </button>
-          </div>
-        </section>
-      </div>}
       {repeatAsk && <div className="edit-backdrop" role="presentation" onMouseDown={() => setRepeatAsk(null)}>
         <section ref={repeatAskDialogRef} className="early-dialog" role="dialog" aria-modal="true" aria-labelledby="repeat-ask-title" onMouseDown={(event) => event.stopPropagation()}>
           <h2 id="repeat-ask-title">{repeatAsk.conflicts.length}일은 이미 차 있어요</h2>
@@ -3318,19 +3217,18 @@ export default function Home() {
       {/* 취소 확인. 취소는 되돌릴 수 없으므로 무엇이 사라지는지 한 건씩 보여 주고,
           같은 반복 예약 중 몇 건을 지우는지도 함께 말한다. */}
       {cancelAsk && (() => {
-        const picked = upcomingMyBookings.filter((booking) => cancelAsk.includes(booking.id));
-        if (picked.length === 0) return null;
+        const picked = myBookings.filter((booking) => cancelAsk.includes(booking.id));
         // 고른 예약이 모두 같은 반복 묶음일 때만 '반복 중 몇 건' 이야기를 한다.
         // 서로 다른 예약을 섞어 골랐다면 그 문장은 거짓이 된다.
-        const series = sameSeriesIds(picked[0]);
+        const series = picked[0] ? sameSeriesIds(picked[0]) : [];
         const oneSeries = picked.every((booking) => series.includes(booking.id));
         const partOfSeries = oneSeries && series.length > 1;
         const wholeSeries = partOfSeries && series.every((id) => cancelAsk.includes(id));
         return (
           <div className="edit-backdrop cancel-backdrop" role="presentation" onMouseDown={() => setCancelAsk(null)}>
             <section ref={cancelAskDialogRef} className="early-dialog cancel-dialog" role="dialog" aria-modal="true" aria-labelledby="cancel-ask-title" onMouseDown={(event) => event.stopPropagation()}>
-              <h2 id="cancel-ask-title">예약 {picked.length}건을 취소할까요?</h2>
-              <p>취소한 예약은 되돌릴 수 없습니다.</p>
+              <h2 id="cancel-ask-title">예약 {picked.length}건을 삭제할까요?</h2>
+              <p>예정 예약은 삭제되고, 진행 중 예약은 남은 시간만 해제됩니다. 사용 기록은 남습니다.</p>
               <div className="early-summary">
                 <span className="cancel-ask-list">
                   {picked.map((booking) => (
@@ -3338,27 +3236,31 @@ export default function Home() {
                       <b>{roomIdentity(roomById(booking.roomId))}</b>
                       {formatDateLabel(booking.date)} · {booking.start}–{booking.end}
                       <i>{booking.purpose}</i>
+                      <strong className="cancel-effect">{hasEnded(booking) ? "이미 종료되어 사용 기록을 보존합니다."
+                        : isRunningNow(booking) ? `사용 기록 보존 · ${deletionReleaseTime(booking)}부터 예약 가능` : "예정 예약 삭제"}</strong>
                     </em>
                   ))}
                 </span>
                 {partOfSeries && (
                   <span className="cancel-ask-series">
                     {wholeSeries
-                      ? `같은 반복 예약 ${series.length}건을 모두 취소합니다.`
-                      : `같은 반복 예약 ${series.length}건 중 ${picked.length}건만 취소합니다. 나머지 ${series.length - picked.length}건은 그대로 남습니다.`}
+                      ? `같은 반복 예약 ${series.length}건을 모두 선택했습니다.`
+                      : `같은 반복 예약 ${series.length}건 중 ${picked.length}건만 선택했습니다. 나머지 ${series.length - picked.length}건은 그대로 남습니다.`}
                   </span>
                 )}
               </div>
+              <p className="cancel-boundary-note">진행 중 예약은 {bookingDefaults.slotMinutes}분 단위로 해제됩니다. 실제 처리 시각에 따라 해제 시각이 달라질 수 있습니다.</p>
+              {!picked.length && <p role="status">선택한 예약이 더 이상 없습니다. 목록을 다시 확인해 주세요.</p>}
               <div className="early-foot">
                 {/* '그만두기'는 «예약을 그만둔다»로도 읽혀 취소 창에서 뜻이 뒤집힌다. */}
                 <button type="button" onClick={() => setCancelAsk(null)}>닫기</button>
                 <button
                   type="button"
                   className="cancel-go"
-                  disabled={cancelBusy}
-                  onClick={() => { setCancelAsk(null); cancelBookings(cancelAsk); }}
+                  disabled={mutationBusy || !authReady || !picked.some((booking) => !hasEnded(booking))}
+                  onClick={() => { setCancelAsk(null); cancelBookings(picked.filter((booking) => !hasEnded(booking)).map((booking) => booking.id)); }}
                 >
-                  {cancelBusy ? "취소하는 중…" : `${picked.length}건 취소하기`}
+                  {cancelBusy ? "삭제하는 중…" : `${picked.filter((booking) => !hasEnded(booking)).length}건 삭제하기`}
                 </button>
               </div>
             </section>

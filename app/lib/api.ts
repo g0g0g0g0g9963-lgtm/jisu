@@ -17,7 +17,7 @@ export type CreateBookingRequest = {
   attendeeIds?: string[];
 };
 
-export type ApiResult = { ok: true; booking?: Booking } | { ok: false; message: string; code?: "booking-changed"; latest?: Booking };
+export type ApiResult = { ok: true; booking?: Booking; action?: "deleted" | "ended" | "unchanged" } | { ok: false; message: string; code?: "booking-changed"; latest?: Booking };
 
 export type CurrentUser = { name: string; email: string; isAdmin?: boolean };
 
@@ -140,11 +140,17 @@ export async function patchBookingRequest(id: string, request: UpdateBookingRequ
 }
 
 export async function deleteBookingRequest(id: string, owner: string): Promise<ApiResult> {
-  const { response, payload } = await requestApi<{ error?: string }>(`/api/bookings/${encodeURIComponent(id)}`, {
+  const { response, payload } = await requestApi<{ error?: string; action?: "deleted" | "ended" | "unchanged"; booking?: Booking }>(`/api/bookings/${encodeURIComponent(id)}`, {
     method: "DELETE",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ owner }),
   });
-  if (response.ok) return { ok: true };
-  return { ok: false, message: payload?.error ?? `예약을 취소하지 못했습니다. (${response.status})` };
+  if (response.ok) {
+    if (!payload?.action || (!["deleted", "ended", "unchanged"].includes(payload.action))
+      || (payload.action !== "deleted" && payload.booking?.id !== id)) {
+      throw new Error("삭제 결과를 확인하지 못했습니다. 예약 내역을 확인해 주세요.");
+    }
+    return { ok: true, action: payload.action, booking: payload.booking };
+  }
+  return { ok: false, message: payload?.error ?? `예약을 삭제하지 못했습니다. (${response.status})` };
 }

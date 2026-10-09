@@ -47,7 +47,7 @@ try {
  record('cross-origin action rejected',(await req(s,'/api/admin/backups',{cookie:alice,method:'POST',body:{},headers:{'x-admin-action':'1',origin:'https://evil.example'}})).status===403);
  r=await req(s,'/api/bookings',{cookie:alice,method:'POST',body});record('normal booking creation still succeeds',r.status===201);const id=r.json.created[0].id;
  r=await req(s,'/api/bookings/'+id,{cookie:alice,method:'PATCH',body:{...body,end:'12:30',purpose:'CHANGED PRIVATE PURPOSE'}});record('normal edit succeeds',r.status===200);
- r=await req(s,'/api/bookings/'+id,{cookie:alice,method:'DELETE',body:{}});record('normal cancellation succeeds',r.status===204);
+ r=await req(s,'/api/bookings/'+id,{cookie:alice,method:'DELETE',body:{}});record('future cancellation confirms deletion',r.status===200&&r.json?.action==='deleted');
  const audit=(await req(s,'/api/admin/audit',{cookie:alice})).json;
  record('create update cancel all recorded',audit.items.length===3&&audit.items.map(e=>e.action).join(',')==='cancel,update,create');
  record('audit trusts server identity',audit.items.every(e=>e.actorId==='fixture-alice'&&e.actorName==='QA Alice'));

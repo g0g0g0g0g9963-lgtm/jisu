@@ -51,7 +51,6 @@
 .my-bookings-clean .my-bookings-cancelbar button { min-height: 44px; height: auto; padding: 10px 16px; border: 0; border-radius: 9px; box-shadow: none; font: inherit; font-size: 13px; font-weight: 650; line-height: 1.4; cursor: pointer; color: var(--confirm-muted); background: var(--confirm-soft); }
 .my-bookings-clean .my-booking-actions .edit-booking { color: #304b78; background: var(--confirm-soft); }
 .my-bookings-clean .my-booking-actions .delete-booking { color: #a51034; background: #fcecf0; }
-.my-bookings-clean .my-booking-actions .end-now { color: #08745b; background: #e9f5f0; }
 .my-bookings-clean .my-booking-pick { min-height: 44px; padding: 8px 10px; border-radius: 9px; gap: 8px; background: var(--confirm-soft); }
 .my-bookings-clean .my-booking-pick input { width: 16px; height: 16px; accent-color: #304b78; }
 .my-bookings-clean .my-booking-pick span { color: var(--confirm-ink); font-size: 12px; font-weight: 500; }
@@ -64,4 +63,54 @@
 .my-bookings-clean button:disabled { cursor: not-allowed; opacity: .55; }
 .my-bookings-clean .my-bookings-empty { margin: 0; padding: 44px 16px; border: 1px solid var(--confirm-rule); border-radius: 12px; color: var(--confirm-muted); background: #fff; text-align: center; font-size: 14px; font-weight: 400; }
 .my-bookings-clean .edit-dialog-notice { flex: none; margin: 12px 0 0; }
-.my-bookings-clean input:focus-visible { outline: 2px solid #304b78; outline-offset: 2px; }
+.my-bookings-clean input:focus-visible, .my-bookings-clean button:focus-visible { outline: 2px solid #304b78; outline-offset: 2px; }
+
+/* Compact ledger: keep the clean confirmation palette without the large cards. */
+.my-bookings-dialog.my-bookings-clean { width: min(1100px, 100%); padding: 24px; }
+.my-bookings-clean .my-bookings-search { width: min(300px, 100%); margin-top: 16px; gap: 6px; }
+.my-bookings-clean .my-bookings-search input { height: 38px; }
+.my-bookings-clean .my-bookings-summary { display: flex; flex-wrap: wrap; margin: 16px 0 12px; gap: 6px 18px; }
+.my-bookings-clean .my-bookings-history-range { flex-basis: auto; margin-left: auto; }
+.my-bookings-clean .my-bookings-list-wrap { overflow: auto; border: 1px solid var(--confirm-rule); border-radius: 10px; }
+.my-bookings-clean .my-bookings-list { display: table; width: 100%; min-width: 900px; margin: 0; padding: 0; border-collapse: separate; border-spacing: 0; table-layout: fixed; font-size: 13px; }
+.my-bookings-clean .pick-col { width: 44px; }
+.my-bookings-clean .date-col { width: 105px; }
+.my-bookings-clean .time-col { width: 122px; }
+.my-bookings-clean .room-col { width: 190px; }
+.my-bookings-clean .status-col { width: 100px; }
+.my-bookings-clean .actions-col { width: 118px; }
+.my-bookings-clean .my-bookings-list th { position: sticky; top: 0; z-index: 1; height: 42px; padding: 0 10px; border: 0; border-bottom: 1px solid var(--confirm-rule); color: var(--confirm-muted); background: #f8fafc; font-size: 11px; font-weight: 600; text-align: left; white-space: nowrap; }
+.my-bookings-clean .my-bookings-list td { height: 68px; padding: 10px; border: 0; border-bottom: 1px solid var(--confirm-rule); vertical-align: middle; background: #fff; }
+.my-bookings-clean .my-bookings-list th:first-child, .my-bookings-clean .my-bookings-list td:first-child { padding: 0; }
+.my-bookings-clean .my-bookings-list tr:last-child td { border-bottom: 0; }
+.my-bookings-clean .my-booking-row.is-picked td { background: #f0f5fc; }
+.my-bookings-clean .my-booking-row:hover td { background: #f8fafd; }
+.my-bookings-clean .my-booking-room { display: flex; flex-wrap: wrap; align-items: center; gap: 5px 7px; min-width: 0; margin: 0; padding: 0; }
+.my-bookings-clean .my-booking-room strong { font-size: 13px; font-weight: 650; line-height: 1.5; overflow-wrap: anywhere; }
+.my-bookings-clean .my-booking-room .booking-confirm-floor { padding: 2px 5px; font-size: 10px; border-radius: 4px; }
+.my-bookings-clean .my-booking-date, .my-bookings-clean .my-booking-time { white-space: nowrap; font-variant-numeric: tabular-nums; font-size: 13px; font-weight: 500; }
+.my-bookings-clean .my-booking-duration, .my-bookings-clean .my-booking-retained { display: block; margin-top: 4px; color: var(--confirm-muted); font-size: 10px; line-height: 1.4; }
+.my-bookings-clean .my-booking-badge { display: inline-block; margin: 0; padding: 4px 7px; }
+.my-bookings-clean .my-booking-row:not(.is-past) .my-booking-badge { color: #304b78; background: var(--confirm-soft); }
+.my-bookings-clean .my-booking-row:not(.is-past) .my-booking-badge.running { color: #08745b; background: #e9f5f0; }
+.my-bookings-clean .my-booking-row.is-past .my-booking-badge { color: var(--confirm-muted); background: #f3f5f8; }
+.my-bookings-clean .is-past td { color: var(--confirm-muted); }
+.my-bookings-clean .my-booking-team { margin: 0; }
+.my-bookings-clean .my-booking-purpose, .my-bookings-clean .my-booking-department { margin: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 12px; font-weight: 400; line-height: 1.6; }
+.my-bookings-clean .my-booking-department { margin-top: 3px; font-size: 11px; }
+.my-bookings-clean .booking-attendee-detail { margin-top: 3px; font-size: 11px; overflow-wrap: anywhere; }
+.my-bookings-clean .booking-attendee-detail summary { padding: 4px 0; }
+.my-bookings-clean .my-booking-actions { flex-wrap: nowrap; gap: 4px; margin: 0; }
+.my-bookings-clean .my-booking-actions button, .my-bookings-clean .my-bookings-cancelbar button { min-height: 36px; padding: 8px 12px; border-radius: 7px; font-size: 12px; white-space: nowrap; }
+.my-bookings-clean .my-booking-actions button { min-width: 44px; padding: 8px; }
+.my-bookings-clean .my-booking-pick { display: flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; padding: 0; margin: 0; background: transparent; cursor: pointer; }
+.my-bookings-clean .my-booking-pick input { margin: 0; }
+.my-bookings-clean .my-bookings-cancelbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin: 12px 0 0; padding: 0; border: 0; }
+.my-bookings-clean .my-bookings-cancelbar p { margin: 0; font-size: 12px; }
+.my-bookings-clean .my-bookings-cancelbar > div { gap: 6px; margin-top: 0; }
+.my-bookings-clean .my-bookings-empty { border: 0; }
+.cancel-dialog .cancel-effect { display: block; margin-top: 6px; color: #08745b; font-size: 12px; }
+.cancel-dialog .cancel-boundary-note { margin: 12px 0 0; color: #68778e; font-size: 12px; line-height: 1.6; }
+@media (pointer: coarse) {
+  .my-bookings-clean .my-booking-actions button, .my-bookings-clean .my-bookings-cancelbar button { min-height: 44px; }
+}

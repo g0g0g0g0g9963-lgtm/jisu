@@ -28,7 +28,7 @@ const nodesForClass=name=>jsxNodes.filter(node=>hasClass(node,name));
 const nodeContent=node=>node.parent.getText(ast);
 function context(overrides={}){
  const c={authReady:true,mutationBusy:false,submitting:false,selectedTimeConflict:false,timeNeedsPick:false,REQUIRED_FIELDS:[{key:'owner',id:'owner-input',value:'QA User'},{key:'team',id:'team-input',value:'QA Team'}],officeTeams:[{name:'QA Team'}],owner:'QA User',myBookingOwner:'QA User',currentUser:null,team:'QA Team',purpose:'QA',attendees:[],selected:{id:'qa-room',name:'QA room'},start:'10:00',end:'11:00',today:'2026-10-08',date:'2026-10-12',nowMinutes:615,reservationDates:['2026-10-12'],conflictDates:[],bookingDefaults:lib.bookingDefaults,minutesOf:dt.minutesOf,formatDateLabel:dt.formatDateLabel,formatMinutes:dt.formatMinutes,addMinutes:dt.addMinutes,findConflictingDates:lib.findConflictingDates,bookings:[],startTimeOptions:['10:00','11:00','12:00'],lastSelectableTime:lib.bookingDefaults.closingTime,allDay:false,draftKey:'original-draft',latestDraftKey:{current:'original-draft'},slot:{date:'2026-10-12',start:'10:00',end:'11:00'},roomById:()=>({name:'QA room'}),useCallback:f=>f,useMemo:f=>f(),document:{getElementById:()=>({focus(){}}),querySelector:()=>({scrollTo(){}})},window:{requestAnimationFrame:f=>f()},...overrides};
- Object.assign(c,{bookingBlockReason:'',syncError:'',selectedId:'qa-room',keyboardSelection:null,timePickerOpen:null,selectionFeedback:'',bookingRecovery:null,checkingBookingResult:false,refreshSeq:{current:0},earlyEndDisplayTime:'10:30',officeMinutesOfDay:()=>615,todayKey:()=> '2026-10-12',describeRoomSlotAvailability:roomLib.describeRoomSlotAvailability,formatCapacity:roomLib.formatCapacity,...overrides});
+ Object.assign(c,{bookingBlockReason:'',syncError:'',selectedId:'qa-room',keyboardSelection:null,timePickerOpen:null,selectionFeedback:'',bookingRecovery:null,checkingBookingResult:false,refreshSeq:{current:0},officeMinutesOfDay:()=>615,todayKey:()=> '2026-10-12',describeRoomSlotAvailability:roomLib.describeRoomSlotAvailability,formatCapacity:roomLib.formatCapacity,editDraftOf:booking=>({...booking}),...overrides});
  c.selected={floor:9,...c.selected};
  c.attendeeAccounts=overrides.attendeeAccounts??[];
  c.setAttendeeAccounts=value=>{c.state.attendeeAccounts=value;c.attendeeAccounts=value;};
@@ -37,10 +37,11 @@ function context(overrides={}){
  if(!overrides.document)c.document={activeElement:null,getElementById:id=>({focus(){c.calls.focus++;c.state.focusedId=id;}}),querySelector:()=>({scrollTo(){}})};
  vm.createContext(c);
  c.roomIdentity=fn('roomIdentity',c);c.spokenDuration=fn('spokenDuration',c);
+ c.isMyBooking=fn('isMyBooking',c);c.hasEnded=fn('hasEnded',c);c.isRunningNow=fn('isRunningNow',c);
  c.flashFilled=(title,detail)=>{c.calls.flash++;c.state.filledNotice={title,detail};};
  c.applySlotSelection=selection=>fn('applySlotSelection',c)(selection);
  c.refreshBookings=overrides.refreshBookings??(async()=>{c.calls.refresh++;});
- for(const f of ['Notice','MissingField','TeamOpen','RepeatAsk','SubmitPreviewDates','SelectedId','DraftActive','BookingPanelOpen','RoomPickerOpen','TimeNeedsPick','EditBusy','EarlyEndBusy','CancelBusy','Submitting','CancelSelection','SyncError','Toast','EditDraft','EditNotice','EarlyEndNotice','EarlyEnd','EditConfirmDelete','MyBookingOwner','Purpose','Attendees','AttendeeDraft','Slot','Date','AllDay','Duration','KeyboardSelection','SelectionFeedback','TimePickerOpen','BookingRecovery','CheckingBookingResult','Bookings','MyBookingsOpen','EarlyEndReviewTime']){
+ for(const f of ['Notice','MissingField','TeamOpen','RepeatAsk','SubmitPreviewDates','SelectedId','DraftActive','BookingPanelOpen','RoomPickerOpen','TimeNeedsPick','EditBusy','CancelBusy','Submitting','CancelSelection','CancelAsk','SyncError','Toast','EditDraft','EditNotice','EditConflict','EditConfirmDelete','MyBookingOwner','Purpose','Attendees','AttendeeDraft','Slot','Date','AllDay','Duration','KeyboardSelection','SelectionFeedback','TimePickerOpen','BookingRecovery','CheckingBookingResult','Bookings','MyBookingsOpen']){
   const key=f[0].toLowerCase()+f.slice(1);
   c['set'+f]=v=>{c.state[key]=typeof v==='function'?v(c.state[key]??c[key]):v;};
  }
@@ -70,6 +71,17 @@ try{
  check('ENDED-SAME-DAY','Same-day elapsed reservation is ended',ended({...one,date:'2026-10-08',end:'10:00'}));
  check('ENDED-BOUNDARY','Booking ending exactly now is ended',ended({...one,date:'2026-10-08',end:'10:15'}));
  check('ENDED-ONGOING','Ongoing reservation is not ended',!ended({...one,date:'2026-10-08',end:'11:00'}));
+ const retained={...one,id:'retained-history',date:'2026-10-08',start:'09:00',end:'10:30',endedAt:'2026-10-08T01:15:00Z'};
+ check('ENDED-RETAINED','Released usage is ended before the remaining slot boundary',ended(retained));
+ check('RUNNING-RETAINED','Released usage is never shown as a running reservation',!c.isRunningNow(retained));
+ check('RUNNING-OWN','Unreleased owned booking is running during its reserved interval',c.isRunningNow({...retained,endedAt:null}));
+ c=context();fn('openEditor',c)(retained);
+ check('HISTORY-READONLY','Retained history cannot open the editor from the timetable',!c.state.editDraft&&!c.state.bookingPanelOpen);
+ c=context({myBookings:[retained,one],pastBookingCutoff:'2026-09-08'});
+ c.upcomingMyBookings=fn('upcomingMyBookings',c);c.pastMyBookings=fn('pastMyBookings',c);
+ check('HISTORY-LIST','Released booking moves to past history immediately and future bookings stay actionable',equal(c.upcomingMyBookings,[one])&&equal(c.pastMyBookings,[retained]));
+ c.cancelSelection=[retained.id,one.id];
+ check('HISTORY-SELECTION','Stale selections cannot include retained history',equal(fn('selectedBookingIds',c),[one.id]));
  const dates=['2026-10-12','2026-10-13'],clashes=lib.findConflictingDates([one],'qa-room',dates,'10:00','11:00');
  c=context({reservationDates:dates,conflictDates:clashes,selectedTimeConflict:true});
  await fn('submitReservation',c)({preventDefault(){}});
@@ -134,20 +146,20 @@ try{
  ]){
   c=context(overrides);check('ALTERNATIVE-'+id,'Room alternative covers all valid dates: '+id,fn('slotIsBookable',c)('qa-room','10:00','11:00')===want);
  }
- const handlers=[['sendBooking','submitting','notice',['2026-10-12'],'post'],['saveEdit','editBusy','editNotice',undefined,'patch'],['cancelBookings','cancelBusy','syncError',[one.id],'delete'],['confirmEarlyEnd','earlyEndBusy','earlyEndNotice',undefined,'patch'],['deleteEditing','editBusy','editNotice',undefined,'delete']];
+ const handlers=[['sendBooking','submitting','notice',['2026-10-12'],'post'],['saveEdit','editBusy','editNotice',undefined,'patch'],['cancelBookings','cancelBusy','syncError',[one.id],'delete'],['deleteEditing','editBusy','editNotice',undefined,'delete']];
  for(const [name,busy,notice,arg,request]of handlers){
   for(const mode of ['network','http','success']){
-   c=context({editDraft:one,earlyEnd:one,earlyEndTime:()=> '10:30'});
+   c=context({editDraft:one});
    const dependency=async()=>{c.calls[request]++;if(mode==='network')throw new TypeError('Synthetic network loss');return mode==='http'?{ok:false,message:'Synthetic API rejection'}:{ok:true};};
    c.postBookings=c.patchBookingRequest=c.deleteBookingRequest=dependency;
    let error;try{await fn(name,c)(arg);}catch(e){error=String(e);}
    check('ASYNC-'+name+'-'+mode,'Mutation resolves busy state and reports result: '+name+'/'+mode,!error&&c.calls[request]===1&&c.state[busy]===false&&(mode==='success'?!!c.state.toast:!!c.state[notice]),{error,busy:c.state[busy],requestCalls:c.calls[request],hasNotice:!!c.state[notice]});
   }
-  c=context({editDraft:one,earlyEnd:one,mutationBusy:true,earlyEndTime:()=> '10:30'});
+  c=context({editDraft:one,mutationBusy:true});
   c.postBookings=c.patchBookingRequest=c.deleteBookingRequest=async()=>{c.calls[request]++;return{ok:true};};
   await fn(name,c)(arg);check('BUSY-'+name,'Busy mutation does not dispatch again: '+name,c.calls[request]===0);
  }
- c=context({editDraft:one,earlyEnd:one});const deleteIds=[];
+ c=context({editDraft:one});const deleteIds=[];
  c.deleteBookingRequest=async id=>{deleteIds.push(id);if(id==='network')throw Error('offline');return id==='ok'?{ok:true}:{ok:false,message:'API refused'};};
  await fn('cancelBookings',c)(['ok','http','network','ok']);
  check('CANCEL-PARTIAL','Batch cancellation deduplicates and preserves only failed IDs',equal(deleteIds,['ok','http','network'])&&equal(c.state.cancelSelection,['http','network'])&&c.state.cancelBusy===false&&!!c.state.syncError&&!c.state.toast);
@@ -162,13 +174,37 @@ try{
   c=context(overrides);c.postBookings=async()=>{c.calls.post++;return{ok:true};};await fn('sendBooking',c)([date]);
   check('UX-SEND-RECHECK-'+id,'Final send rechecks the slot before dispatch: '+id,c.calls.post===0&&!!c.state.notice&&c.state.submitPreviewDates===null);
  }
- c=context({nowMinutes:630});check('EARLY-END-BOUNDARY','Exact slot early-end uses current boundary',fn('earlyEndTime',c)({...one,date:'2026-10-08',start:'09:00',end:'11:00'})==='10:30');
- c=context({earlyEnd:one,earlyEndDisplayTime:'10:30',earlyEndTime:()=> '11:00'});c.patchBookingRequest=async()=>{c.calls.patch++;return{ok:true};};await fn('confirmEarlyEnd',c)();
- check('EARLY-END-NO-TIME','No remaining reducible time is not submitted',c.calls.patch===0&&!!c.state.earlyEndNotice);
- c=context({earlyEnd:{...one,end:'12:00'},earlyEndDisplayTime:'10:30',earlyEndTime:()=> '11:00'});c.patchBookingRequest=async()=>{c.calls.patch++;return{ok:true};};await fn('confirmEarlyEnd',c)();
- check('EARLY-END-RECONFIRM','Changed boundary requires explicit review before save',c.calls.patch===0&&c.state.earlyEndReviewTime==='11:00'&&c.state.earlyEndNotice.includes('11:00'));
- c=context({earlyEnd:one,earlyEndTime:()=> '10:30'});c.patchBookingRequest=async()=>({ok:true,booking:{...one,end:'10:30'}});await fn('confirmEarlyEnd',c)();
- check('EARLY-END-ACTUAL','Completion uses the server-confirmed end time',c.state.toast?.text==='회의가 단축되었습니다.'&&c.state.toast?.time==='10:30부터 예약 가능');
+ check('DELETE-UNIFIED','Separate early-ending handler and visible action are removed',!initializers.has('confirmEarlyEnd')&&!initializers.has('earlyEnd')&&!src.includes('일찍 끝내기'));
+ const deletePreview={...one,date:'2026-10-08',start:'09:00',end:'12:00'};
+ for(const [id,instant,endTime,want]of [
+  ['boundary','2026-10-08T01:30:00.000Z','12:00','10:30'],
+  ['next-slot','2026-10-08T01:30:01.000Z','12:00','11:00'],
+  ['fractional-second','2026-10-08T01:30:00.001Z','12:00','11:00'],
+  ['last-slot','2026-10-08T01:15:00.000Z','10:30','10:30'],
+  ['midnight','2026-10-08T14:59:59.000Z','24:00','24:00'],
+ ]){
+  c=context({officeMinutesOfDay:dt.officeMinutesOfDay});
+  check('DELETE-RELEASE-'+id,'Release preview respects slot and original end: '+id,fn('deletionReleaseTime',c)({...deletePreview,end:endTime},new Date(instant))===want);
+ }
+ c=context({editDraft:deletePreview});c.deleteBookingRequest=async()=>({ok:true,action:'ended',booking:{...retained,end:'11:00'}});await fn('deleteEditing',c)();
+ check('DELETE-ACTUAL-TIME','Editor deletion uses the server-confirmed release time and reports retained usage',c.state.toast?.text==='남은 시간을 해제하고 사용 기록을 남겼습니다.'&&c.state.toast?.time==='11:00부터 예약 가능'&&c.state.editDraft===null&&c.calls.refresh===1);
+ c=context({editDraft:deletePreview});c.deleteBookingRequest=async()=>({ok:true,action:'unchanged',booking:retained});await fn('deleteEditing',c)();
+ check('DELETE-RETRY-HISTORY','Idempotent retry still reports usage preservation, not complete erasure',c.state.toast?.text.includes('사용 기록')&&c.state.toast?.time==='10:30부터 예약 가능');
+ c=context();c.deleteBookingRequest=async id=>id===retained.id?{ok:true,action:'ended',booking:retained}:{ok:true,action:'deleted'};
+ await fn('cancelBookings',c)([one.id,retained.id]);
+ check('DELETE-MIXED-BATCH','Mixed batch separates deleted bookings from retained usage and shows the actual release',c.state.toast?.text==='삭제 1건 · 사용 기록 보존 1건'&&c.state.toast?.time==='10:30부터 예약 가능'&&c.state.cancelSelection===null&&c.state.cancelBusy===false);
+ c=context();c.deleteBookingRequest=async id=>({ok:true,action:id===retained.id?'ended':'unchanged',booking:{...retained,id,end:id===retained.id?'10:30':'11:00'}});
+ await fn('cancelBookings',c)([one.id,retained.id]);
+ check('DELETE-MULTIPLE-RELEASES','Different release times are not incorrectly collapsed into one batch time',c.state.toast?.text==='삭제 0건 · 사용 기록 보존 2건'&&c.state.toast?.time==='');
+ for(const handler of ['cancelBookings','deleteEditing']){
+  c=context({editDraft:one,authReady:false});c.deleteBookingRequest=async()=>{c.calls.delete++;return{ok:true,action:'deleted'};};
+  await fn(handler,c)([one.id]);check('DELETE-AUTH-'+handler,'Unknown authentication never sends deletion: '+handler,c.calls.delete===0);
+ }
+ c=context();c.deleteBookingRequest=async()=>{c.calls.delete++;return{ok:true,action:'deleted'};};await fn('cancelBookings',c)([]);
+ check('DELETE-EMPTY-BATCH','An empty selection never submits a batch mutation',c.calls.delete===0&&!c.state.cancelBusy);
+ const listNodes=nodesForClass('my-bookings-list').filter(node=>node.tagName.getText(ast)==='table');
+ check('DELETE-COMPACT-LIST','My bookings renders a semantic table with row-level edit/delete controls',listNodes.length===1&&nodesForClass('my-booking-row').length===1&&nodesForClass('edit-booking').length===1&&nodesForClass('delete-booking').length===1);
+ check('DELETE-PAST-CONFIRM-GUARD','Confirmation dispatch excludes records that became past while the dialog was open',nodesForClass('cancel-go').some(node=>attr(node,'disabled')?.initializer?.getText(ast).includes('!picked.some((booking) => !hasEnded(booking))')&&attr(node,'onClick')?.initializer?.getText(ast).includes('picked.filter((booking) => !hasEnded(booking))')));
  const recovery={owner:'QA User',roomId:'qa-room',dates:['2026-10-12'],start:'10:00',end:'11:00',timedOut:true};
  c=context();c.postBookings=async()=>{c.calls.post++;throw vm.runInContext("Object.assign(new Error('Timed out'),{name:'TimeoutError'})",c);};await fn('sendBooking',c)(['2026-10-12']);
  check('RECOVERY-SNAPSHOT','Unknown write result preserves a separate submitted snapshot and releases busy',c.calls.post===1&&c.state.submitting===false&&equal(c.state.bookingRecovery,recovery)&&!('purpose' in c.state));

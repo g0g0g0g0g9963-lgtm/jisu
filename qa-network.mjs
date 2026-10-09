@@ -43,8 +43,29 @@ check('invalid list is not mistaken for empty bookings', !!r.error);
 c = client(async () => new Response(JSON.stringify({ booking: { id: 'qa-booking', end: '11:30' } })));
 r = await outcome(() => c.api.patchBookingRequest('qa-booking', {}));
 check('patch retains server-confirmed end time', r.value?.booking?.end === '11:30');
-c = client(async () => new Response(null, { status: 204 }));
+c = client(async () => new Response(JSON.stringify({ action: 'deleted' }), { status: 200 }));
 r = await outcome(() => c.api.deleteBookingRequest('qa-booking', 'QA'));
-check('empty successful delete remains supported', r.value?.ok === true);
+check('future deletion retains the confirmed action', r.value?.ok === true && r.value.action === 'deleted' && c.count() === 1 && c.timers.size === 0);
+const endedBooking = { id: 'qa-booking', end: '11:30', endedAt: '2026-10-12T02:15:00.000Z' };
+for (const action of ['ended', 'unchanged']) {
+  c = client(async () => new Response(JSON.stringify({ action, booking: endedBooking }), { status: 200 }));
+  r = await outcome(() => c.api.deleteBookingRequest('qa-booking', 'QA'));
+  check('ongoing deletion preserves server-confirmed history: ' + action, r.value?.ok === true && r.value.action === action && r.value.booking?.id === endedBooking.id && r.value.booking.end === endedBooking.end && r.value.booking.endedAt === endedBooking.endedAt && c.timers.size === 0);
+}
+for (const [name, response] of [
+  ['legacy empty 204', () => new Response(null, { status: 204 })],
+  ['missing action', () => new Response('{}', { status: 200 })],
+  ['unknown action', () => new Response(JSON.stringify({ action: 'success' }), { status: 200 })],
+  ['missing retained booking', () => new Response(JSON.stringify({ action: 'ended' }), { status: 200 })],
+  ['mismatched retained booking', () => new Response(JSON.stringify({ action: 'unchanged', booking: { ...endedBooking, id: 'someone-else' } }), { status: 200 })],
+  ['malformed JSON', () => new Response('{', { status: 200 })],
+]) {
+  c = client(async () => response());
+  r = await outcome(() => c.api.deleteBookingRequest('qa-booking', 'QA'));
+  check('unconfirmed deletion is not reported as success: ' + name, !!r.error && c.count() === 1 && c.timers.size === 0);
+}
+c = client(async () => new Response(JSON.stringify({ error: '종료된 예약은 삭제할 수 없습니다.' }), { status: 400 }));
+r = await outcome(() => c.api.deleteBookingRequest('qa-booking', 'QA'));
+check('rejected deletion remains a definite refusal', r.value?.ok === false && r.value.message.includes('종료된 예약'));
 console.log('SUMMARY ' + JSON.stringify({ total: results.length, pass: results.filter(x => x.pass).length }));
 process.exitCode = results.some(x => !x.pass) ? 1 : 0;

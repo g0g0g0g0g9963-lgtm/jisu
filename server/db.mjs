@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import { mkdirSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { DatabaseSync, backup } from "node:sqlite";
+import { siteConfig } from "./config.mjs";
 
 const dataDir = resolve(process.env.DATA_DIR ?? "./data");
 export const dataDirectory = dataDir;
@@ -50,6 +51,10 @@ if (!bookingColumns.includes("attendee_accounts")) {
 }
 if (!bookingColumns.includes("revision")) {
   db.exec("ALTER TABLE bookings ADD COLUMN revision INTEGER NOT NULL DEFAULT 1");
+}
+// A released ongoing reservation remains as immutable usage history.
+if (!bookingColumns.includes("ended_at")) {
+  db.exec("ALTER TABLE bookings ADD COLUMN ended_at TEXT");
 }
 db.exec(`CREATE TABLE IF NOT EXISTS calendar_jobs (
   booking_id TEXT PRIMARY KEY, owner_id TEXT NOT NULL, desired_json TEXT,
@@ -132,7 +137,8 @@ db.exec(`CREATE TABLE IF NOT EXISTS booking_audit (
 )`);
 db.exec("CREATE INDEX IF NOT EXISTS idx_booking_audit_action_id ON booking_audit(action, id)");
 const auditInsert = db.prepare("INSERT INTO booking_audit(at, action, booking_id, actor_id, actor_name, before_json, after_json, changed_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-const auditSnapshot = (row) => row ? ({roomId:row.room_id, date:row.date, start:row.start, end:row.end}) : null;
+const auditSnapshot = (row) => row ? ({roomId:row.room_id, date:row.date, start:row.start, end:row.end,
+  ...(row.ended_at ? {endedAt:row.ended_at} : {})}) : null;
 const writeAudit = (action, row, after, identity, changed = []) => auditInsert.run(
   new Date().toISOString(), action, row.id, identity?.sso ? identity.ownerId : "development",
   identity?.ownerName || row.owner || "개발용 사용자",
@@ -170,6 +176,7 @@ const toBooking = (row, identity) => ({
   date: row.date,
   start: row.start,
   end: row.end,
+  endedAt: row.ended_at || null,
   owner: row.owner,
   team: row.team || undefined,
   purpose: row.purpose,
@@ -245,24 +252,55 @@ const isOwner = (row, { owner = "", ownerId = "", ownerEmail = "", sso = false }
   }
   return Boolean(owner) && row.owner === owner;
 };
-const hasEnded = (row, today, now) => Boolean(today) &&
-  (row.date < today || (row.date === today && Boolean(now) && row.end <= now));
+const hasEnded = (row, today, now) => Boolean(row.ended_at) || (Boolean(today) &&
+  (row.date < today || (row.date === today && Boolean(now) && row.end <= now)));
 
-export function deleteBooking(id, identity = {}, { today = "", now = "" } = {}) {
-  const row = selectFullById.get(id);
-  if (!row) return { ok: false, reason: "not-found" };
-  if (!isOwner(row, identity)) return { ok: false, reason: "forbidden" };
-  // 지난 예약은 취소할 수 없다. 화면에서도 그 버튼을 숨기지만, API를 직접
-  // 불러도 막히도록 여기서도 확인한다.
-  if (hasEnded(row, today, now)) return { ok: false, reason: "past" };
+export function deleteBooking(id, identity = {}, limits = {}) {
+  // Read and authorize under the write lock so an intervening edit cannot be lost.
   db.exec("BEGIN IMMEDIATE");
+  const reject = (reason) => {
+    db.exec("ROLLBACK");
+    return { ok: false, reason };
+  };
   try {
+    const row = selectFullById.get(id);
+    if (!row) return reject("not-found");
+    if (!isOwner(row, identity)) return reject("forbidden");
+    // Retrying a completed request must never delete or trim its retained history.
+    if (row.ended_at) {
+      db.exec("COMMIT");
+      return { ok: true, action: "unchanged", booking: toBooking(row, identity) };
+    }
+    // The API supplies a clock callback: take the time after acquiring the lock.
+    const { today = "", now = "", nowSeconds = 0 } = typeof limits === "function" ? limits() : limits;
+    if (hasEnded(row, today, now)) return reject("past");
+    const minuteOf = (time) => {
+      const [hours, minutes] = time.split(":").map(Number);
+      return hours * 60 + minutes;
+    };
+    const nowMinute = now ? minuteOf(now) + nowSeconds / 60 : null;
+    const hasStarted = row.date === today && nowMinute !== null && minuteOf(row.start) < nowMinute;
+    if (hasStarted) {
+      const { openingTime, slotMinutes } = siteConfig.booking;
+      const firstMinute = minuteOf(openingTime);
+      const releaseMinute = Math.min(minuteOf(row.end), firstMinute + Math.ceil((nowMinute - firstMinute) / slotMinutes) * slotMinutes);
+      const end = `${String(Math.floor(releaseMinute / 60)).padStart(2, "0")}:${String(releaseMinute % 60).padStart(2, "0")}`;
+      const after = { ...row, end, ended_at: new Date().toISOString(), revision: row.revision + 1 };
+      const changed = ["end", "ended_at"].filter((key) => row[key] !== after[key]);
+      db.prepare("UPDATE bookings SET end = ?, ended_at = ?, revision = revision + 1 WHERE id = ?")
+        .run(after.end, after.ended_at, id);
+      // Keep the shortened Outlook appointment as history; do not cancel it.
+      queueCalendar(after);
+      writeAudit("update", row, after, identity, changed);
+      db.exec("COMMIT");
+      return { ok: true, action: "ended", booking: toBooking(after, identity) };
+    }
     deleteById.run(id);
     queueCalendar(row, true);
     writeAudit("cancel", row, null, identity);
     db.exec("COMMIT");
+    return { ok: true, action: "deleted" };
   } catch (error) { db.exec("ROLLBACK"); throw error; }
-  return { ok: true };
 }
 
 /**

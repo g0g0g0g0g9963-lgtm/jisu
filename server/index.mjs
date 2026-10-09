@@ -69,15 +69,16 @@ const trimmed = (value) => (typeof value === "string" ? value.trim() : "");
 // Use the configured business time zone even if the NAS/container runs in UTC.
 const clockFormatter = new Intl.DateTimeFormat("en-GB", {
   timeZone: siteConfig.timeZone, year: "numeric", month: "2-digit", day: "2-digit",
-  hour: "2-digit", minute: "2-digit", hourCycle: "h23",
+  hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23",
 });
 const bookingLimits = () => {
-  const parts = Object.fromEntries(clockFormatter.formatToParts(new Date()).map(({ type, value }) => [type, value]));
+  const at = new Date();
+  const parts = Object.fromEntries(clockFormatter.formatToParts(at).map(({ type, value }) => [type, value]));
   const today = parts.year + "-" + parts.month + "-" + parts.day;
   const now = parts.hour + ":" + parts.minute;
   const lastDay = new Date(Date.UTC(Number(parts.year), Number(parts.month) + maxAdvanceMonths, 0)).getUTCDate();
   const future = new Date(Date.UTC(Number(parts.year), Number(parts.month) - 1 + maxAdvanceMonths, Math.min(Number(parts.day), lastDay)));
-  return { today, now, maxDate: future.toISOString().slice(0, 10) };
+  return { today, now, nowSeconds: Number(parts.second) + at.getUTCMilliseconds() / 1000, maxDate: future.toISOString().slice(0, 10) };
 };
 const requestIdentity = (req) => ssoEnabled
   ? { sso: true, ownerId: req.user.oid, ownerEmail: req.user.email, ownerName: req.user.name } : undefined;
@@ -309,10 +310,10 @@ app.delete("/api/bookings/:id", (req, res) => {
   const result = deleteBooking(
     req.params.id,
     ssoEnabled ? requestIdentity(req) : { owner },
-    bookingLimits(),
+    bookingLimits,
   );
   if (result.ok) {
-    res.status(204).end();
+    res.json(result);
     return;
   }
   if (result.reason === "not-found") {

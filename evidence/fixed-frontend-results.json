@@ -1,9 +1,9 @@
 {
-  "testedAt": "2026-10-09T12:58:24.281Z",
+  "testedAt": "2026-10-09T13:18:54.712Z",
   "method": "Actual TypeScript AST handlers executed in isolated VM; state setters captured separately to preserve React closure semantics; not browser end-to-end",
   "counts": {
-    "total": 84,
-    "pass": 84,
+    "total": 97,
+    "pass": 97,
     "fail": 0
   },
   "results": [
@@ -75,6 +75,36 @@
     {
       "id": "ENDED-ONGOING",
       "title": "Ongoing reservation is not ended",
+      "status": "PASS"
+    },
+    {
+      "id": "ENDED-RETAINED",
+      "title": "Released usage is ended before the remaining slot boundary",
+      "status": "PASS"
+    },
+    {
+      "id": "RUNNING-RETAINED",
+      "title": "Released usage is never shown as a running reservation",
+      "status": "PASS"
+    },
+    {
+      "id": "RUNNING-OWN",
+      "title": "Unreleased owned booking is running during its reserved interval",
+      "status": "PASS"
+    },
+    {
+      "id": "HISTORY-READONLY",
+      "title": "Retained history cannot open the editor from the timetable",
+      "status": "PASS"
+    },
+    {
+      "id": "HISTORY-LIST",
+      "title": "Released booking moves to past history immediately and future bookings stay actionable",
+      "status": "PASS"
+    },
+    {
+      "id": "HISTORY-SELECTION",
+      "title": "Stale selections cannot include retained history",
       "status": "PASS"
     },
     {
@@ -330,35 +360,6 @@
       "status": "PASS"
     },
     {
-      "id": "ASYNC-confirmEarlyEnd-network",
-      "title": "Mutation resolves busy state and reports result: confirmEarlyEnd/network",
-      "status": "PASS",
-      "busy": false,
-      "requestCalls": 1,
-      "hasNotice": true
-    },
-    {
-      "id": "ASYNC-confirmEarlyEnd-http",
-      "title": "Mutation resolves busy state and reports result: confirmEarlyEnd/http",
-      "status": "PASS",
-      "busy": false,
-      "requestCalls": 1,
-      "hasNotice": true
-    },
-    {
-      "id": "ASYNC-confirmEarlyEnd-success",
-      "title": "Mutation resolves busy state and reports result: confirmEarlyEnd/success",
-      "status": "PASS",
-      "busy": false,
-      "requestCalls": 1,
-      "hasNotice": false
-    },
-    {
-      "id": "BUSY-confirmEarlyEnd",
-      "title": "Busy mutation does not dispatch again: confirmEarlyEnd",
-      "status": "PASS"
-    },
-    {
       "id": "ASYNC-deleteEditing-network",
       "title": "Mutation resolves busy state and reports result: deleteEditing/network",
       "status": "PASS",
@@ -423,23 +424,78 @@
       "status": "PASS"
     },
     {
-      "id": "EARLY-END-BOUNDARY",
-      "title": "Exact slot early-end uses current boundary",
+      "id": "DELETE-UNIFIED",
+      "title": "Separate early-ending handler and visible action are removed",
       "status": "PASS"
     },
     {
-      "id": "EARLY-END-NO-TIME",
-      "title": "No remaining reducible time is not submitted",
+      "id": "DELETE-RELEASE-boundary",
+      "title": "Release preview respects slot and original end: boundary",
       "status": "PASS"
     },
     {
-      "id": "EARLY-END-RECONFIRM",
-      "title": "Changed boundary requires explicit review before save",
+      "id": "DELETE-RELEASE-next-slot",
+      "title": "Release preview respects slot and original end: next-slot",
       "status": "PASS"
     },
     {
-      "id": "EARLY-END-ACTUAL",
-      "title": "Completion uses the server-confirmed end time",
+      "id": "DELETE-RELEASE-fractional-second",
+      "title": "Release preview respects slot and original end: fractional-second",
+      "status": "PASS"
+    },
+    {
+      "id": "DELETE-RELEASE-last-slot",
+      "title": "Release preview respects slot and original end: last-slot",
+      "status": "PASS"
+    },
+    {
+      "id": "DELETE-RELEASE-midnight",
+      "title": "Release preview respects slot and original end: midnight",
+      "status": "PASS"
+    },
+    {
+      "id": "DELETE-ACTUAL-TIME",
+      "title": "Editor deletion uses the server-confirmed release time and reports retained usage",
+      "status": "PASS"
+    },
+    {
+      "id": "DELETE-RETRY-HISTORY",
+      "title": "Idempotent retry still reports usage preservation, not complete erasure",
+      "status": "PASS"
+    },
+    {
+      "id": "DELETE-MIXED-BATCH",
+      "title": "Mixed batch separates deleted bookings from retained usage and shows the actual release",
+      "status": "PASS"
+    },
+    {
+      "id": "DELETE-MULTIPLE-RELEASES",
+      "title": "Different release times are not incorrectly collapsed into one batch time",
+      "status": "PASS"
+    },
+    {
+      "id": "DELETE-AUTH-cancelBookings",
+      "title": "Unknown authentication never sends deletion: cancelBookings",
+      "status": "PASS"
+    },
+    {
+      "id": "DELETE-AUTH-deleteEditing",
+      "title": "Unknown authentication never sends deletion: deleteEditing",
+      "status": "PASS"
+    },
+    {
+      "id": "DELETE-EMPTY-BATCH",
+      "title": "An empty selection never submits a batch mutation",
+      "status": "PASS"
+    },
+    {
+      "id": "DELETE-COMPACT-LIST",
+      "title": "My bookings renders a semantic table with row-level edit/delete controls",
+      "status": "PASS"
+    },
+    {
+      "id": "DELETE-PAST-CONFIRM-GUARD",
+      "title": "Confirmation dispatch excludes records that became past while the dialog was open",
       "status": "PASS"
     },
     {

@@ -17,6 +17,8 @@ export type Booking = {
   id: string;
   /** Server revision captured when an edit starts; absent only in legacy fixtures. */
   revision?: number;
+  /** 진행 중 삭제로 종료한 시각. 사용 내역은 보존한다. */
+  endedAt?: string | null;
   roomId: string;
   /** SSO 서버가 판정한 소유권. 익명 모드에서만 생략한다. */
   isMine?: boolean;

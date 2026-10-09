@@ -92,7 +92,7 @@ try{
  check('CACHE-MALFORMED','Malformed request errors disable cache',r.headers.get('cache-control')==='no-store');
  r=await create(anon,{date:'2026-10-15',purpose:'x'.repeat(70000)});check('B04','Oversized request returns 413',r.status===413);
  check('CACHE-OVERSIZED','Oversized request errors disable cache',r.headers.get('cache-control')==='no-store');
- const own=await create(anon,{date:'2026-10-16'});r=await req(anon,'/api/bookings/'+idOf(own),'DELETE',{owner:'QA Alice'});check('C29','Delete persists',r.status===204&&!(await rows(anon)).some(x=>x.id===idOf(own)));
+ const own=await create(anon,{date:'2026-10-16'});r=await req(anon,'/api/bookings/'+idOf(own),'DELETE',{owner:'QA Alice'});check('C29','Future delete confirms its action and persists',r.status===200&&r.data?.action==='deleted'&&!(await rows(anon)).some(x=>x.id===idOf(own)));
  const seriesA=await create(anon,{dates:['2026-10-19','2026-10-20'],seriesId:'attacker-series'}),seriesB=await create(anon,{dates:['2026-10-21','2026-10-22'],seriesId:'attacker-series'});
  const sa=seriesA.data?.created,sb=seriesB.data?.created;
  check('SERIES-A','One batch has a server-generated shared series',seriesA.status===201&&sa.length===2&&!!sa[0].seriesId&&sa[0].seriesId===sa[1].seriesId&&sa[0].seriesId!=='attacker-series');

@@ -1,5 +1,5 @@
 {
-  "testedAt": "2026-10-09T10:25:16.340Z",
+  "testedAt": "2026-10-09T13:19:08.016Z",
   "appClock": "2026-10-08T10:15:00+09:00",
   "isolation": "Loopback only; synthetic SQLite; OIDC response mocked; no real Microsoft network",
   "counts": {
@@ -234,7 +234,7 @@
     },
     {
       "id": "C29",
-      "title": "Delete persists",
+      "title": "Future delete confirms its action and persists",
       "status": "PASS"
     },
     {
@@ -544,7 +544,8 @@
         "series_id",
         "attendees",
         "attendee_accounts",
-        "revision"
+        "revision",
+        "ended_at"
       ]
     }
   ]

@@ -3040,7 +3040,7 @@ export default function Home() {
       </div>}
       {myBookingsOpen && <div className="my-bookings-backdrop my-bookings-clean-backdrop" role="presentation" inert={topmostDialog !== "myBookingsOpen"} aria-hidden={topmostDialog !== "myBookingsOpen" || undefined} onMouseDown={() => { setMyBookingsOpen(false); setCancelSelection(null); }}>
         <section ref={myBookingsDialogRef} className="my-bookings-dialog my-bookings-clean booking-confirm-clean" role="dialog" aria-modal="true" aria-labelledby="my-bookings-title" onMouseDown={(event) => event.stopPropagation()}>
-          <div className="my-bookings-dialog-head"><div><h2 id="my-bookings-title">내 예약</h2><p>예약한 회의실과 시간을 한눈에 확인하세요.</p></div><button type="button" className="booking-confirm-close" onClick={() => { setMyBookingsOpen(false); setCancelSelection(null); }} aria-label="내 예약 닫기"><CloseIcon /></button></div>
+          <div className="my-bookings-dialog-head"><h2 id="my-bookings-title">내 예약</h2><button type="button" className="booking-confirm-close" onClick={() => { setMyBookingsOpen(false); setCancelSelection(null); }} aria-label="내 예약 닫기"><CloseIcon /></button></div>
           {authReady && !currentUser && <label className="my-bookings-search"><span>예약자 이름</span><input value={myBookingOwner} onChange={(event) => setMyBookingOwner(event.target.value)} placeholder="예약자 이름을 입력하세요" /></label>}
           <p className="my-bookings-summary">
             <span>진행·예정 예약 <b>{upcomingMyBookings.length}</b></span>

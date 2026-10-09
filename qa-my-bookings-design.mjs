@@ -40,7 +40,7 @@ const check = (name, good) => { assert.ok(good, name); results.push(name); conso
 const rows = async () => (await (await fetch(base + '/api/bookings')).json()).bookings;
 try {
   let ready = false;
-  for (let i = 0; i < 100; i++) {
+  for (let i = 0; i < 300; i++) {
     if (child.exitCode !== null) throw Error(logs);
     try { if ((await fetch(base + '/api/health')).ok) { ready = true; break; } } catch {}
     await pause(100);
@@ -73,7 +73,7 @@ try {
   check('single booking uses compact table row with room and time',await dialog.locator('table.my-bookings-list').count()===1&&await listRows.count()===1&&(await listRows.locator('.my-booking-room').textContent()).includes('Conference Room 3')&&/21:30.*23:00/.test(await listRows.textContent()));
   check('active row exposes selection edit delete without standalone early-end',await listRows.getByRole('checkbox',{name:/예약 선택$/}).count()===1&&await listRows.locator('.edit-booking').textContent()==='수정'&&await listRows.locator('.delete-booking').textContent()==='삭제'&&await dialog.getByRole('button',{name:/일찍 끝내기/}).count()===0);
   check('selection deletion starts disabled',await toolbarDelete.isDisabled()&&(await toolbarDelete.textContent()).includes('선택 삭제'));
-  check('disabled selection deletion uses a neutral surface',await toolbarDelete.evaluate(el=>{const s=getComputedStyle(el);return s.backgroundColor==='rgb(248, 250, 252)'&&s.color==='rgb(104, 119, 142)';}));
+  check('disabled selection deletion uses a neutral surface',await toolbarDelete.evaluate(el=>{const s=getComputedStyle(el);return s.backgroundColor==='rgb(248, 250, 252)'&&s.color==='rgb(82, 98, 122)';}));
   await listRows.locator('.edit-booking').click(); await editor.waitFor();
   check('editor opens the chosen booking',await editor.getByLabel('회의 목적',{exact:true}).inputValue()==='회의'&&await editor.locator('.edit-time-row select').first().inputValue()==='21:30');
   await editor.getByLabel('회의 목적',{exact:true}).fill('저장하지 않을 수정');
@@ -85,9 +85,16 @@ try {
   await editor.getByRole('button',{name:'예약 수정 닫기'}).click(); await editor.waitFor({state:'hidden'});
   check('X returns to list without data changes',await dialog.isVisible()&&writes===0&&(await rows()).find(b=>b.owner==='QA Single').purpose==='회의');
   check('dialog keeps a clean white surface',await dialog.evaluate(el=>{const s=getComputedStyle(el);return s.backgroundImage==='none'&&s.backgroundColor==='rgb(255, 255, 255)'&&s.backdropFilter==='none';}));
+  check('unnecessary header subtitle is removed',await dialog.locator('.my-bookings-dialog-head p').count()===0);
+  check('date time and room use readable 15px semibold text',await listRows.locator('.my-booking-date,.my-booking-time,.my-booking-room strong').evaluateAll(nodes=>nodes.length===3&&nodes.every(el=>{const s=getComputedStyle(el);return parseFloat(s.fontSize)>=15&&Number(s.fontWeight)>=600;})));
+  check('purpose text is at least 14px',await listRows.locator('.my-booking-purpose').evaluate(el=>parseFloat(getComputedStyle(el).fontSize)>=14));
+  check('duration floor department and history text are at least 12px',await dialog.locator('.my-booking-duration,.booking-confirm-floor,.my-booking-department,.my-bookings-history-range').evaluateAll(nodes=>nodes.length>=4&&nodes.every(el=>parseFloat(getComputedStyle(el).fontSize)>=12)));
+  check('column labels use clear 13px semibold text',await dialog.locator('.my-bookings-list th').evaluateAll(nodes=>nodes.length===7&&nodes.every(el=>{const s=getComputedStyle(el);return parseFloat(s.fontSize)>=13&&Number(s.fontWeight)>=600;})));
+  check('anonymous name search uses one compact horizontal line',await dialog.locator('.my-bookings-search').evaluate(el=>{const label=el.querySelector('span').getBoundingClientRect(),input=el.querySelector('input').getBoundingClientRect();return input.left>=label.right&&Math.abs((label.top+label.height/2)-(input.top+input.height/2))<=3&&input.width<=181&&input.height<=37;}));
   for(const [width,height] of [[1440,960],[1280,720],[1366,768]]){
     await page.setViewportSize({width,height});
     check('single row and controls fit '+width+'x'+height,await dialog.evaluate(el=>{const r=el.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight&&r.left>=0&&r.right<=innerWidth&&el.scrollWidth<=el.clientWidth&&[...el.querySelectorAll('button')].every(b=>{const q=b.getBoundingClientRect();return q.top>=r.top&&q.bottom<=r.bottom&&q.width>0&&q.height>=32;});}));
+    check('single booking dialog stays compact '+width+'x'+height,await dialog.evaluate(el=>{const r=el.getBoundingClientRect();return r.width<=920&&r.height<=380;}));
     await dialog.screenshot({path:resolve(run,'my-bookings-single-'+width+'.png')});
   }
   await dialog.getByRole('button',{name:'내 예약 닫기'}).focus(); await page.keyboard.press('Shift+Tab');
@@ -112,8 +119,8 @@ try {
   const running=listRows.filter({has:page.locator('.booking-status',{hasText:'진행 중'})});
   check('running row has selection edit delete but no early-end button',await running.locator('.edit-booking').count()===1&&await running.locator('.delete-booking').count()===1&&await running.getByRole('checkbox').count()===1&&await dialog.getByRole('button',{name:/일찍 끝내기/}).count()===0);
   check('running status uses bold navy text and a small navy dot without colored fill',await running.locator('.booking-status').evaluate(el=>{const s=getComputedStyle(el),dot=getComputedStyle(el,'::before');return s.color==='rgb(23, 36, 61)'&&s.backgroundColor==='rgba(0, 0, 0, 0)'&&Number(s.fontWeight)>=700&&dot.backgroundColor==='rgb(23, 36, 61)'&&dot.width==='5px'&&dot.height==='5px';}));
-  check('all upcoming statuses use muted text without colored fills',await listRows.locator('.booking-status').evaluateAll(nodes=>{const planned=nodes.filter(el=>el.textContent==='예정');return planned.length===5&&planned.every(el=>{const s=getComputedStyle(el);return s.color==='rgb(104, 119, 142)'&&s.backgroundColor==='rgba(0, 0, 0, 0)';});}));
-  check('past status uses muted text without a gray badge fill',await listRows.last().locator('.booking-status').evaluate(el=>{const s=getComputedStyle(el);return s.backgroundColor==='rgba(0, 0, 0, 0)'&&s.color==='rgb(104, 119, 142)';}));
+  check('all upcoming statuses use muted text without colored fills',await listRows.locator('.booking-status').evaluateAll(nodes=>{const planned=nodes.filter(el=>el.textContent==='예정');return planned.length===5&&planned.every(el=>{const s=getComputedStyle(el);return s.color==='rgb(82, 98, 122)'&&s.backgroundColor==='rgba(0, 0, 0, 0)';});}));
+  check('past status uses muted text without a gray badge fill',await listRows.last().locator('.booking-status').evaluate(el=>{const s=getComputedStyle(el);return s.backgroundColor==='rgba(0, 0, 0, 0)'&&s.color==='rgb(82, 98, 122)';}));
   check('floor labels use a separator instead of colored chips',await listRows.locator('.booking-confirm-floor').evaluateAll(nodes=>nodes.length===7&&nodes.every(el=>{const s=getComputedStyle(el);return s.backgroundColor==='rgba(0, 0, 0, 0)'&&s.borderLeftWidth==='1px'&&s.borderLeftStyle==='solid'&&s.borderLeftColor==='rgb(230, 235, 242)';})));
   check('row actions share white bordered surfaces with red only on delete text',await listRows.locator('.edit-booking,.delete-booking').evaluateAll(nodes=>nodes.length===12&&nodes.every(el=>{const s=getComputedStyle(el);return s.backgroundColor==='rgb(255, 255, 255)'&&s.borderTopWidth==='1px'&&s.borderTopStyle==='solid'&&s.borderTopColor==='rgb(230, 235, 242)'&&s.color===(el.classList.contains('delete-booking')?'rgb(215, 12, 57)':'rgb(23, 36, 61)');})));
   await running.locator('.edit-booking').click(); await editor.waitFor();
@@ -131,6 +138,7 @@ try {
     const m=await dialog.evaluate(el=>{const r=el.getBoundingClientRect(),wrap=el.querySelector('.my-bookings-list-wrap'),w=wrap.getBoundingClientRect();return {fit:r.top>=0&&r.bottom<=innerHeight&&r.left>=0&&r.right<=innerWidth&&el.scrollWidth<=el.clientWidth&&wrap.scrollWidth<=wrap.clientWidth,visible:[...el.querySelectorAll('tbody > tr.my-booking-row')].filter(row=>{const q=row.getBoundingClientRect();return q.top>=w.top&&q.bottom<=w.bottom;}).length,controlsVisible:[...el.querySelectorAll('.booking-confirm-close,.my-bookings-cancelbar button')].every(b=>{const q=b.getBoundingClientRect();return q.top>=r.top&&q.bottom<=r.bottom&&q.left>=r.left&&q.right<=r.right;})};});
     geometry.push({width,height,...m});
     check('compact list shows multiple rows and controls '+width+'x'+height,m.fit&&m.visible>=2&&m.controlsVisible);
+    check('multiple booking dialog stays bounded and scrolls internally '+width+'x'+height,await dialog.evaluate(el=>{const r=el.getBoundingClientRect(),list=el.querySelector('.my-bookings-list-wrap');return r.width<=920&&r.height<=620&&list.scrollHeight>list.clientHeight;}));
     await page.screenshot({path:resolve(run,'my-bookings-many-default-'+width+'.png')});
     await dialog.locator('.my-bookings-list-wrap').evaluate(el=>{el.scrollTop=el.scrollHeight;});
     check('last history row reachable by list scroll '+width,await listRows.last().evaluate(el=>{const r=el.getBoundingClientRect(),w=el.closest('.my-bookings-list-wrap').getBoundingClientRect();return r.top>=w.top&&r.bottom<=w.bottom;}));
@@ -178,7 +186,7 @@ try {
   check('mixed delete requests each selection once and reports partial failure',writes===9&&mutations.slice(3).every(m=>m.method==='DELETE')&&new Set(mutations.slice(3).map(m=>m.path)).size===6&&injectedFailure===1&&(await dialog.getByRole('alert').textContent()).includes('시험용 일시 오류'));
   check('running delete preserves used interval and explicit endedAt',ended&&ended.start==='14:00'&&ended.end==='15:00'&&ended.endedAt&&new Date(ended.endedAt).getTime()===new Date(instant).getTime()&&afterMixed.length===initialRows.length-5);
   check('ended booking is read-only history before rounded release boundary',await history.evaluate(el=>el.classList.contains('is-past')&&!el.querySelector('button,input'))&&(await dialog.locator('.my-bookings-summary').textContent()).includes('최근 1개월 2'));
-  check('newly ended booking uses plain muted history text without colored fill',await history.locator('.booking-status').evaluate(el=>{const s=getComputedStyle(el),dot=getComputedStyle(el,'::before');return s.backgroundColor==='rgba(0, 0, 0, 0)'&&s.color==='rgb(104, 119, 142)'&&(dot.content==='none'||dot.content==='normal'||dot.display==='none');}));
+  check('newly ended booking uses plain muted history text without colored fill',await history.locator('.booking-status').evaluate(el=>{const s=getComputedStyle(el),dot=getComputedStyle(el,'::before');return s.backgroundColor==='rgba(0, 0, 0, 0)'&&s.color==='rgb(82, 98, 122)'&&(dot.content==='none'||dot.content==='normal'||dot.display==='none');}));
   check('only failed future row remains selected and actionable',await listRows.locator('input:checked').count()===1&&await listRows.locator('.edit-booking').count()===1&&await listRows.locator('.delete-booking').count()===1&&(await toolbarDelete.textContent()).includes('1건 삭제')&&afterMixed.some(b=>b.id===retryFixture.id));
   await page.screenshot({path:resolve(run,'my-bookings-partial-failure-history.png')});
   await toolbarDelete.click(); await confirm.waitFor();

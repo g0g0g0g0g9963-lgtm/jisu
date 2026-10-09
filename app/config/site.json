@@ -28,7 +28,7 @@
     "startHour": 0,
     "endHour": 24,
     "hourHeightPx": 96,
-    "initialViewportRatio": 0.4,
+    "initialViewportRatio": 0.04,
     "defaultFocusHour": 9
   },
   "testUser": {

@@ -102,7 +102,7 @@ try{
  c=context();fn('handleTimelineKey',c)(timelineRoom,c.date,{...timelineEvent('Enter'),target:{}});
  check('UX-KEYBOARD-CHILD','Reservation-button key events do not also select a parent timeline slot',Object.keys(c.state).length===0&&c.calls.flash===0);
  c=context();c.applySlotSelection({roomId:'qa-room',date:'2026-10-07',start:'10:00',end:'11:00'});
- check('UX-SLOT-PAST','Past daily selection is rejected before replacing the form draft',!c.state.slot&&!c.state.bookingPanelOpen&&!!c.state.selectionFeedback);
+ check('UX-SLOT-PAST','Past daily selection stays blocked without the removed timeline notice',!c.state.slot&&!c.state.bookingPanelOpen&&c.state.selectionFeedback==='');
  c=context({bookings:[one]});c.applySlotSelection({roomId:'qa-room',date:'2026-10-12',start:'10:30',end:'11:30'});
  check('UX-SLOT-CONFLICT','Conflicting daily selection gives feedback without replacing the form draft',!c.state.slot&&!c.state.bookingPanelOpen&&!!c.state.selectionFeedback);
  c=context();check('UX-FLOOR-IDENTITY','Same-name rooms retain distinct floor information',fn('roomIdentity',c)({floor:9,name:'Conference Room 1'})==='9층 · Conference Room 1'&&fn('roomIdentity',c)({floor:12,name:'Conference Room 1'})==='12층 · Conference Room 1');

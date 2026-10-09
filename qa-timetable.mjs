@@ -90,9 +90,9 @@ try {
   const scrollContext = context({ dailyGridRef: { current: grid }, dailyGridMetrics: metrics, timelineStart: 0, timelineEnd: 1440, siteConfig: config, useCallback: (callback) => callback, window: { matchMedia: () => ({ matches: false }) } });
   const scroll = evaluate(initializers.get('scrollDailyToMinute'), scrollContext);
   scroll(0);
-  check('SCROLL-00', 'Midnight scroll clamps to the top', grid.scrollTop === 0);
+  check('SCROLL-00', 'Midnight remains visible below the sticky header without negative scrolling', grid.scrollTop >= 0 && metrics.bodyTop - grid.scrollTop > metrics.headerHeight && metrics.bodyTop - grid.scrollTop <= metrics.headerHeight + 42);
   scroll(720);
-  check('SCROLL-12', 'Midday current time lands at 40 percent of usable body viewport', near((metrics.bodyTop + metrics.bodyHeight / 2 - grid.scrollTop - metrics.headerHeight) / (grid.clientHeight - metrics.headerHeight), 0.4));
+  check('SCROLL-12', 'Midday current time lands near the top, leaving the viewport for future slots', near((metrics.bodyTop + metrics.bodyHeight / 2 - grid.scrollTop - metrics.headerHeight) / (grid.clientHeight - metrics.headerHeight), config.timeline.initialViewportRatio) && config.timeline.initialViewportRatio > 0 && config.timeline.initialViewportRatio <= 0.05);
   scroll(1439);
   check('SCROLL-2359', 'Late-night scroll clamps at the bottom while keeping the time visible', grid.scrollTop === grid.scrollHeight - grid.clientHeight && metrics.bodyTop + 1439 / 1440 * metrics.bodyHeight <= grid.scrollTop + grid.clientHeight);
   scrollContext.window.matchMedia = () => ({ matches: true });
@@ -117,6 +117,30 @@ try {
   check('JUMP-TODAY-REPEAT', 'Repeated current-time action works when already on today', jumpCalls.length === 2 && jumpCalls.every((call) => call[0] === 720 && call[1] === 'smooth'));
   jumpContext.date = futureDate; jump();
   check('JUMP-FROM-OTHER-DATE', 'Current-time action selects today from another date', jumpCalls.at(-1)[0] === 'date' && jumpCalls.at(-1)[1] === options.today);
+
+  const tapCalls = [];
+  const tapGrid = { scrollTop: 700, scrollLeft: 0, clientTop: 0, getBoundingClientRect: () => ({ top: 0 }) };
+  const tapContext = context({ dailyPastTap: { current: null }, date: options.today, today: options.today, nowMinutes: 720, dailyGridMetrics: metrics, timelineStart: 0, timelineEnd: 1440, setSelectionFeedback: () => {}, scrollDailyToMinute: (...args) => tapCalls.push(args) });
+  const startTap = evaluate(initializers.get('startDailyPastTap'), tapContext);
+  const moveTap = evaluate(initializers.get('moveDailyPastTap'), tapContext);
+  const finishTap = evaluate(initializers.get('finishDailyPastTap'), tapContext);
+  const tapEvent = { isPrimary: true, button: 0, pointerId: 1, clientX: 100, clientY: 100, currentTarget: tapGrid, target: { closest: selector => selector.includes('.time-axis-body') ? {} : null } };
+  startTap(tapEvent); finishTap(tapEvent);
+  check('PAST-TAP', 'Past blank slot click returns to the current time', tapCalls.length === 1 && tapCalls[0][0] === 720 && tapCalls[0][1] === 'smooth');
+  startTap(tapEvent); moveTap({ ...tapEvent, clientX: 120 }); moveTap(tapEvent); finishTap(tapEvent);
+  check('PAST-DRAG', 'Movement out and back is not mistaken for a click', tapCalls.length === 1);
+  startTap(tapEvent); tapGrid.scrollTop += 25; finishTap(tapEvent);
+  check('PAST-PAN', 'Scroll while pressed does not return to the current time', tapCalls.length === 1);
+  startTap(tapEvent); finishTap({ ...tapEvent, clientY: 120 });
+  check('PAST-UP-DISTANCE', 'Pointer release movement is checked even without a move event', tapCalls.length === 1);
+  startTap({ ...tapEvent, target: { closest: () => ({}) } }); finishTap(tapEvent);
+  check('PAST-BOOKING', 'Booking buttons are excluded from current-time navigation', tapCalls.length === 1);
+  startTap({ ...tapEvent, clientY: 650 }); finishTap({ ...tapEvent, clientY: 650 });
+  check('FUTURE-TAP', 'Future slots keep their existing reservation behavior', tapCalls.length === 1);
+  tapContext.date = futureDate; startTap(tapEvent); finishTap(tapEvent);
+  check('OTHER-DATE-TAP', 'Viewing another date never switches to today on a slot click', tapCalls.length === 1);
+  tapContext.date = options.today; startTap({ ...tapEvent, isPrimary: false }); finishTap(tapEvent);
+  check('SECONDARY-TOUCH', 'Secondary touches cannot trigger navigation', tapCalls.length === 1);
 
   let measured;
   const measuringGrid = { scrollLeft: 0, scrollTop: 0, clientLeft: 1, clientTop: 1, getBoundingClientRect: () => ({ left: 10, top: 20 }) };

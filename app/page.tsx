@@ -1166,6 +1166,9 @@ export default function Home() {
   // 재측정 값이 흔들리지 않도록 뷰포트 좌표를 스크롤 콘텐츠 좌표로 바꾼다.
   const dailyGridRef = useRef<HTMLDivElement | null>(null);
   const dailyInitialScrollKey = useRef<string | null>(null);
+  const dailyPastTap = useRef<{
+    pointerId: number; x: number; y: number; scrollTop: number; scrollLeft: number;
+  } | null>(null);
   const [dailyVisibleRange, setDailyVisibleRange] = useState("");
   const [dailyGridMetrics, setDailyGridMetrics] = useState<{
     left: number; width: number; bodyTop: number; bodyHeight: number; headerHeight: number;
@@ -1226,6 +1229,37 @@ export default function Home() {
     if (date !== today) setDate(today);
     else if (nowMinutes !== null) scrollDailyToMinute(nowMinutes, "smooth");
   };
+
+  // 과거의 빈 시간 칸을 짧게 클릭한 경우에만 현재로 복귀한다.
+  // 예약 버튼, 드래그, 터치 스크롤, 다른 날짜 조회는 그대로 둔다.
+  const startDailyPastTap = (event: ReactPointerEvent<HTMLDivElement>) => {
+    dailyPastTap.current = null;
+    if (!event.isPrimary || event.button !== 0 || date !== today || nowMinutes === null || !dailyGridMetrics) return;
+    const target = event.target as HTMLElement;
+    if (!target.closest(".timeline-day-body, .time-axis-body") || target.closest("button, a, input, select, textarea, .timeline-draft")) return;
+    const grid = event.currentTarget;
+    const y = event.clientY - grid.getBoundingClientRect().top + grid.scrollTop - grid.clientTop;
+    const minute = timelineStart + (y - dailyGridMetrics.bodyTop) / dailyGridMetrics.bodyHeight * (timelineEnd - timelineStart);
+    if (minute >= nowMinutes) return;
+    dailyPastTap.current = { pointerId: event.pointerId, x: event.clientX, y: event.clientY, scrollTop: grid.scrollTop, scrollLeft: grid.scrollLeft };
+  };
+
+  const moveDailyPastTap = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const tap = dailyPastTap.current;
+    if (tap?.pointerId === event.pointerId && Math.hypot(event.clientX - tap.x, event.clientY - tap.y) >= 8) dailyPastTap.current = null;
+  };
+
+  const finishDailyPastTap = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const tap = dailyPastTap.current;
+    dailyPastTap.current = null;
+    if (!tap || tap.pointerId !== event.pointerId || date !== today || nowMinutes === null) return;
+    if (Math.hypot(event.clientX - tap.x, event.clientY - tap.y) >= 8 ||
+      Math.abs(event.currentTarget.scrollTop - tap.scrollTop) > 1 || Math.abs(event.currentTarget.scrollLeft - tap.scrollLeft) > 1) return;
+    setSelectionFeedback("");
+    scrollDailyToMinute(nowMinutes, "smooth");
+  };
+
+  useEffect(() => { dailyPastTap.current = null; }, [date, floor, scheduleView]);
 
   useEffect(() => {
     const grid = dailyGridRef.current;
@@ -1514,13 +1548,16 @@ export default function Home() {
 
   const startSlotDrag = (room: Room, reservationDate: DateKey, event: ReactPointerEvent<HTMLDivElement>) => {
     if (event.button !== 0) return;
+    // 현재로 돌아오는 클릭은 예약 입력으로 처리하지 않는다.
+    if (dailyPastTap.current?.pointerId === event.pointerId) return;
     const startMinutes = getSlotMinutes(event);
     const availability = describeRoomSlotAvailability(
       bookings.filter((booking) => booking.roomId === room.id), reservationDate,
       formatMinutes(startMinutes), formatMinutes(startMinutes + bookingDefaults.slotMinutes), { today, nowMinutes },
     );
     if (!availability.available) {
-      setSelectionFeedback(availability.nextLabel);
+      // 과거 시간은 예약할 수 없지만, 시간표 위의 반복 안내는 표시하지 않는다.
+      setSelectionFeedback(availability.status === "past" ? "" : availability.nextLabel);
       return;
     }
     setSelectionFeedback("");
@@ -1787,7 +1824,10 @@ export default function Home() {
     const availability = describeRoomSlotAvailability(
       bookings.filter((booking) => booking.roomId === selection.roomId), selection.date, selection.start, selection.end, { today, nowMinutes },
     );
-    if (!availability.available) { setSelectionFeedback(availability.nextLabel); return; }
+    if (!availability.available) {
+      setSelectionFeedback(availability.status === "past" ? "" : availability.nextLabel);
+      return;
+    }
     setSelectionFeedback("");
     setKeyboardSelection(null);
     const minutes = minutesOf(selection.end) - minutesOf(selection.start);
@@ -2332,10 +2372,13 @@ export default function Home() {
 
               {selectionFeedback && <p className="schedule-selection-feedback" role="status">{selectionFeedback}</p>}
               {scheduleView === "day" && floorRooms.length > 0 && <>
-              <div className="daily-timeline-toolbar">
-                <span>{formatMinutes(timelineStart)}–{formatMinutes(timelineEnd)} <small>24시간 보기</small></span>
-              </div>
-              <div className="week-timeline daily-timeline timeline-full-day" data-floor={floor} ref={dailyGridRef} role="region" aria-label="24시간 일간 시간표, 위아래로 스크롤" tabIndex={0} style={{ "--room-count": floorRooms.length, "--timeline-hour-height": `${siteConfig.timeline.hourHeightPx}px`, "--timeline-slot-height": `${siteConfig.timeline.hourHeightPx * bookingDefaults.slotMinutes / 60}px`, "--timeline-body-height": `${(timelineEnd - timelineStart) / 60 * siteConfig.timeline.hourHeightPx}px` } as CSSProperties}>
+              <div className="week-timeline daily-timeline timeline-full-day" data-floor={floor} ref={dailyGridRef} role="region" aria-label="24시간 일간 시간표, 위아래로 스크롤. 오늘의 과거 빈 시간 칸을 클릭하면 현재 시간으로 이동" tabIndex={0}
+                onPointerDownCapture={startDailyPastTap}
+                onPointerMoveCapture={moveDailyPastTap}
+                onPointerUpCapture={finishDailyPastTap}
+                onPointerCancelCapture={() => { dailyPastTap.current = null; }}
+                onScroll={() => { dailyPastTap.current = null; }}
+                style={{ "--room-count": floorRooms.length, "--timeline-hour-height": `${siteConfig.timeline.hourHeightPx}px`, "--timeline-slot-height": `${siteConfig.timeline.hourHeightPx * bookingDefaults.slotMinutes / 60}px`, "--timeline-body-height": `${(timelineEnd - timelineStart) / 60 * siteConfig.timeline.hourHeightPx}px` } as CSSProperties}>
                 <div className="time-axis">
                   <span className="axis-corner">TIME</span>
                   <div className="time-axis-body">

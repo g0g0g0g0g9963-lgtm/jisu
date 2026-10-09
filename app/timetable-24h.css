@@ -1,5 +1,4 @@
 /* Full-day timeline: preserve hourly density inside the existing scroll region. */
-.app-shell .weekly-board .daily-timeline-toolbar,
 .app-shell .weekly-board .daily-timeline-footer {
   flex: none;
   display: flex;
@@ -11,9 +10,6 @@
   line-height: 1.4;
   min-width: 0;
 }
-.app-shell .weekly-board .daily-timeline-toolbar { padding: 8px 0; }
-.daily-timeline-toolbar > span { font-variant-numeric: tabular-nums; }
-.daily-timeline-toolbar small { margin-left: 8px; font-size: 12px; }
 .app-shell .weekly-board .daily-timeline-footer { padding: 8px 0 3px; flex-wrap: wrap; }
 .app-shell .weekly-board .daily-timeline.timeline-full-day {
   --timeline-head-height: 72px;
@@ -107,7 +103,5 @@
   background: #d30935;
 }
 @media (max-width: 600px) {
-  .app-shell .weekly-board .daily-timeline-toolbar,
   .app-shell .weekly-board .daily-timeline-footer { padding-left: 4px; padding-right: 4px; font-size: 11px; }
-  .daily-timeline-toolbar small { margin-left: 4px; font-size: 11px; }
 }

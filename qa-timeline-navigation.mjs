@@ -1,7 +1,7 @@
 // Browser regression with a fixed office clock and an isolated synthetic database.
 // Never modifies the preview database or contacts Microsoft.
 import { spawn } from 'node:child_process';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import net from 'node:net';
@@ -136,6 +136,84 @@ try {
   }
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); await pause(500);
   check('touch pan scrolls without snapping to current time', (await geometry(mobile)).scroll < beforePan - 20);
+  const equipmentPage = await browser.newPage({ viewport: { width: 1440, height: 960 }, timezoneId: 'Asia/Seoul' });
+  equipmentPage.on('pageerror', e => errors.push(e.message));
+  await equipmentPage.clock.setFixedTime(new Date(instant)); await equipmentPage.goto(base);
+  await equipmentPage.locator('.room-equipment-chip').first().waitFor();
+  const firstRoom = equipmentPage.locator('.daily-room').first();
+  check('short equipment labels match the chosen design', JSON.stringify(await firstRoom.locator('.room-equipment-chip:visible').allTextContents()) === JSON.stringify(['프로젝터', '화이트보드', '+1']));
+  check('single-equipment room has no unnecessary more button', await equipmentPage.locator('.daily-room').nth(1).locator('.room-equipment-chip:visible').count() === 1);
+  const selectedBefore = await equipmentPage.locator('.daily-room.active .daily-room-title strong').textContent();
+  await equipmentPage.locator('.daily-room').nth(1).locator('.room-equipment-chip:visible').first().click();
+  await equipmentPage.locator('.room-equipment-popover:popover-open').waitFor();
+  check('equipment click does not change the selected booking room', await equipmentPage.locator('.daily-room.active .daily-room-title strong').textContent() === selectedBefore);
+  await firstRoom.locator('.room-equipment-chip:visible').first().click();
+  check('only one equipment popover opens at a time', await equipmentPage.locator('.room-equipment-popover:popover-open').count() === 1);
+  check('full equipment includes the hidden screen', JSON.stringify(await equipmentPage.locator('.room-equipment-popover:popover-open li span').allTextContents()) === JSON.stringify(['프로젝터', '화이트보드', '스크린']));
+  await equipmentPage.locator('.room-equipment-popover:popover-open').screenshot({ path: resolve(run, 'equipment-details.png') });
+  await equipmentPage.keyboard.press('Escape');
+  check('Escape closes equipment and returns focus', await equipmentPage.locator('.room-equipment-popover:popover-open').count() === 0 && await firstRoom.locator('.room-equipment-chip').first().evaluate(el => document.activeElement === el));
+  await equipmentPage.keyboard.press('Enter');
+  check('keyboard can open equipment details', await equipmentPage.locator('.room-equipment-popover:popover-open').count() === 1);
+  await equipmentPage.getByRole('button', { name: '장비 정보 닫기', exact: true }).filter({ visible: true }).click();
+  check('close button dismisses details', await equipmentPage.locator('.room-equipment-popover:popover-open').count() === 0);
+  const roomConfig = JSON.parse(readFileSync(resolve(root, 'app/config/rooms.json'), 'utf8'));
+  for (const [width, floor, expanded] of [[1440, 9, false], [1280, 9, true], [1280, 12, true], [390, 12, false], [320, 9, false]]) {
+    await equipmentPage.setViewportSize({ width, height: 900 });
+    if (expanded && await equipmentPage.getByRole('button', { name: '빠른 예약 펼치기' }).isVisible()) await equipmentPage.getByRole('button', { name: '빠른 예약 펼치기' }).click();
+    if (!expanded) await equipmentPage.reload();
+    await equipmentPage.getByRole('button', { name: `${floor}층`, exact: true }).click(); await pause(150);
+    const measurements = await equipmentPage.locator('.daily-room-head').evaluateAll(headers => headers.map(head => {
+      const bounds = head.getBoundingClientRect();
+      const children = [...head.querySelectorAll('.daily-room-title strong, .daily-room-meta, .room-equipment-chip')].filter(el => el.getClientRects().length);
+      return { width: bounds.width, height: bounds.height, contained: children.every(el => { const r = el.getBoundingClientRect(); return r.top >= bounds.top && r.bottom <= bounds.bottom + 1 && r.left >= bounds.left && r.right <= bounds.right + 1; }), bodyTop: head.nextElementSibling.getBoundingClientRect().top };
+    }));
+    console.log('EQUIPMENT_LAYOUT ' + JSON.stringify({ width, floor, expanded, measurements }));
+    check(`equipment fits headers ${width}px/${floor}F/panel=${expanded}`, measurements.every(item => item.contained) && measurements.every(item => Math.abs(item.bodyTop - measurements[0].bodyTop) < 1));
+    const allEquipment = await equipmentPage.locator('.daily-room .room-equipment-popover li span').allTextContents();
+    check(`equipment remains sourced from room data ${width}px/${floor}F`, JSON.stringify([...allEquipment].sort()) === JSON.stringify(roomConfig.filter(room => room.floor === floor).flatMap(room => room.equipment).sort()));
+    await equipmentPage.screenshot({ path: resolve(run, `equipment-${width}-${floor}.png`), fullPage: true });
+  }
+  check('room headers never nest interactive buttons', await equipmentPage.locator('.daily-room-head button button').count() === 0);
+  for (const [width, floor, expanded] of [[1440, 9, false], [1280, 12, true], [390, 12, false], [320, 9, false]]) {
+    await equipmentPage.setViewportSize({ width, height: 900 }); await equipmentPage.reload();
+    await equipmentPage.getByRole('button', { name: `${floor}층`, exact: true }).click();
+    await equipmentPage.getByRole('button', { name: '주간', exact: true }).click();
+    if (expanded) await equipmentPage.getByRole('button', { name: '빠른 예약 펼치기' }).click();
+    await equipmentPage.locator('.weekly-room-name .room-equipment').first().waitFor();
+    check(`weekly equipment shown for every room ${width}px/${floor}F`, await equipmentPage.locator('.weekly-room-name .room-equipment').count() === roomConfig.filter(room => room.floor === floor && room.equipment.length).length);
+    check(`weekly room labels fit ${width}px/${floor}F`, await equipmentPage.locator('.weekly-room-name').evaluateAll(headers => headers.every(head => {
+      const bounds = head.getBoundingClientRect();
+      return [...head.querySelectorAll('.weekly-room-title,.weekly-room-floor,.weekly-room-select small,.room-equipment-chip')].filter(el => el.getClientRects().length).every(el => {
+        const r = el.getBoundingClientRect(); return r.top >= bounds.top && r.bottom <= bounds.bottom + 1 && r.left >= bounds.left && r.right <= bounds.right + 1;
+      });
+    })));
+    const names = await equipmentPage.locator('.weekly-room-name .room-equipment-popover li span').allTextContents();
+    check(`weekly equipment uses the same room data ${width}px/${floor}F`, JSON.stringify([...names].sort()) === JSON.stringify(roomConfig.filter(room => room.floor === floor).flatMap(room => room.equipment).sort()));
+    await equipmentPage.screenshot({ path: resolve(run, `equipment-weekly-${width}-${floor}.png`), fullPage: true });
+    const roomLabels = equipmentPage.locator('.weekly-room-name');
+    await roomLabels.nth(1).locator('.weekly-room-select').click();
+    check(`weekly room selection still works ${width}px`, await roomLabels.nth(1).locator('.weekly-room-select').getAttribute('aria-pressed') === 'true');
+    await roomLabels.first().locator('.room-equipment-chip:visible').first().click();
+    await equipmentPage.locator('.room-equipment-popover:popover-open').waitFor();
+    check(`weekly equipment details do not change room selection ${width}px`, await roomLabels.nth(1).locator('.weekly-room-select').getAttribute('aria-pressed') === 'true');
+    check(`weekly equipment details are not clipped ${width}px`, await equipmentPage.locator('.room-equipment-popover:popover-open').evaluate(el => { const r = el.getBoundingClientRect(); return r.left >= 0 && r.right <= innerWidth && r.top >= 0 && r.bottom <= innerHeight; }));
+    await equipmentPage.keyboard.press('Escape');
+    check(`weekly equipment closes without nested buttons ${width}px`, await equipmentPage.locator('.room-equipment-popover:popover-open').count() === 0 && await equipmentPage.locator('.weekly-room-name button button').count() === 0);
+  }
+  await equipmentPage.close();
+  await mobile.locator('.nav-today').tap();
+  await mobile.locator('.room-equipment-chip:visible').first().tap();
+  await mobile.locator('.room-equipment-popover:popover-open').waitFor();
+  check('touch equipment details fit the viewport', await mobile.locator('.room-equipment-popover:popover-open').evaluate(el => { const r = el.getBoundingClientRect(); return r.left >= 0 && r.top >= 0 && r.right <= innerWidth && r.bottom <= innerHeight; }));
+  check('touch equipment controls have comfortable hit targets', await mobile.locator('.room-equipment-chip:visible').first().evaluate(el => el.getBoundingClientRect().height >= 44));
+  await mobile.locator('.room-equipment-popover:popover-open button').tap();
+  await mobile.getByRole('button', { name: '주간', exact: true }).tap();
+  await mobile.locator('.weekly-room-name .room-equipment-chip:visible').first().tap();
+  check('weekly equipment details open on touch', await mobile.locator('.room-equipment-popover:popover-open').isVisible());
+  await mobile.locator('.room-equipment-popover:popover-open button').tap();
+  await mobile.getByRole('button', { name: '일간', exact: true }).tap();
+  check('daily equipment remains available after leaving weekly view', await mobile.locator('.daily-room-head .room-equipment-chip:visible').first().isVisible());
   await page.setViewportSize({ width: 1440, height: 960 });
   await page.clock.setFixedTime(new Date('2026-10-07T15:00:00Z')); await page.reload();
   await page.locator('.current-time-line-all').waitFor();

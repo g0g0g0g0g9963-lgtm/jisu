@@ -1,0 +1,129 @@
+<div id="room-equipment-design">
+  <style>
+    #room-equipment-design .equipment-stage { box-sizing: border-box; min-height: 355px; padding: 56px 12px 20px; display: flex; justify-content: center; align-items: flex-start; }
+    #room-equipment-design .equipment-product { --room-bg: light-dark(#ffffff, #202a39); --room-text: light-dark(#17253e, #e4eaf3); --room-muted: light-dark(#6c7e96, #a5b3c8); --room-line: light-dark(#dce4ef, #3d4a5f); --room-green: light-dark(#087e61, #60d6b0); --room-blue: light-dark(#344f80, #a9c0ea); --room-soft: light-dark(#f5f8fc, #2b3649); --room-check: light-dark(#ffffff, #17253e); width: 440px; max-width: 100%; color: var(--room-text); font-family: "Pretendard", "Malgun Gothic", "Segoe UI", sans-serif; font-size: 14px; line-height: 1.4; position: relative; }
+    #room-equipment-design .equipment-header { background: var(--room-bg); padding: 14px; box-sizing: border-box; border-bottom: 1px solid var(--room-line); box-shadow: 0 3px 7px light-dark(#24355308, #00000015); }
+    #room-equipment-design .equipment-title { display: flex; align-items: center; gap: 10px; min-height: 22px; }
+    #room-equipment-design .equipment-title strong { font-size: 15px; font-weight: 700; min-width: 0; flex: 1; }
+    #room-equipment-design .equipment-floor { font-size: 11px; color: var(--room-muted); border-left: 1px solid var(--room-line); padding-left: 9px; white-space: nowrap; }
+    #room-equipment-design .equipment-selected { display: grid; place-items: center; background: var(--room-blue); color: var(--room-check); width: 18px; height: 18px; border-radius: 50%; flex: none; }
+    #room-equipment-design .equipment-selected svg { width: 12px; height: 12px; stroke-width: 2.5; }
+    #room-equipment-design .equipment-meta { display: flex; align-items: center; justify-content: space-between; gap: 6px; min-height: 30px; margin-top: 3px; }
+    #room-equipment-design .equipment-status { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; font-size: 12px; color: var(--room-green); }
+    #room-equipment-design .equipment-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; flex: none; }
+    #room-equipment-design .equipment-status b { font-weight: 600; }
+    #room-equipment-design .equipment-status em { font-style: normal; color: var(--room-muted); }
+    #room-equipment-design .equipment-tools { display: flex; align-items: center; gap: 2px; flex: none; }
+    #room-equipment-design .equipment-icon, #room-equipment-design .equipment-close { appearance: none; display: inline-grid; place-items: center; background: transparent; border: 0; color: var(--room-muted); padding: 0; width: 30px; height: 30px; border-radius: 6px; }
+    #room-equipment-design .equipment-icon:hover, #room-equipment-design .equipment-icon[aria-expanded="true"], #room-equipment-design .equipment-close:hover { color: var(--room-blue); background: var(--room-soft); }
+    #room-equipment-design .equipment-icon svg { width: 18px; height: 18px; stroke-width: 1.65; }
+    #room-equipment-design .equipment-close svg { width: 16px; height: 16px; }
+    #room-equipment-design .equipment-chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 7px; }
+    #room-equipment-design .equipment-chip { appearance: none; display: inline-flex; align-items: center; gap: 5px; padding: 5px 8px; background: var(--room-soft); border: 0; border-radius: 5px; color: var(--room-muted); font: inherit; font-size: 11px; }
+    #room-equipment-design .equipment-chip:hover { color: var(--room-blue); }
+    #room-equipment-design .equipment-chip svg { width: 14px; height: 14px; }
+    #room-equipment-design .equipment-details { background: var(--room-bg); position: absolute; z-index: 5; right: 0; top: calc(100% + 8px); width: 250px; max-width: 100%; padding: 14px; box-sizing: border-box; border: 1px solid var(--room-line); border-radius: 10px; box-shadow: 0 9px 28px light-dark(#1b2d4718, #00000045); }
+    #room-equipment-design .equipment-details[hidden] { display: none; }
+    #room-equipment-design .equipment-details-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+    #room-equipment-design .equipment-details-head strong { font-size: 13px; font-weight: 650; }
+    #room-equipment-design .equipment-list { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; font-size: 12px; }
+    #room-equipment-design .equipment-list li { display: flex; align-items: center; gap: 10px; }
+    #room-equipment-design .equipment-list svg { color: var(--room-muted); width: 17px; height: 17px; flex: none; }
+    @media (pointer: coarse) { #room-equipment-design .equipment-icon, #room-equipment-design .equipment-close { width: 44px; height: 44px; } #room-equipment-design .equipment-chip { min-height: 44px; } }
+    @media (max-width: 360px) { #room-equipment-design .equipment-header { padding: 12px 10px; } #room-equipment-design .equipment-title { gap: 7px; } #room-equipment-design .equipment-tools { gap: 0; } }
+  </style>
+  <div class="viz-carousel viz-dotted-background" aria-label="회의실 장비 표시 디자인 비교" data-previous-label="이전 시안" data-next-label="다음 시안">
+    <section data-variant="작은 아이콘" aria-label="작은 아이콘으로 표시한 회의실">
+      <div class="equipment-stage">
+        <div class="equipment-product" data-design="icons" aria-label="작은 아이콘형 회의실 카드">
+          <div class="equipment-header">
+            <div class="equipment-title"><strong>Conference Room 1</strong><span class="equipment-floor">9F</span><span class="equipment-selected" aria-label="선택된 회의실"><i data-lucide="check" aria-hidden="true"></i></span></div>
+            <div class="equipment-meta">
+              <span class="equipment-status"><span class="equipment-dot" aria-hidden="true"></span><b>지금 사용 가능</b><em>·</em><span>최대 10명</span></span>
+              <div class="equipment-tools" aria-label="주요 장비">
+                <button class="equipment-icon cursor-interaction" type="button" aria-label="프로젝터, 전체 장비 보기" aria-expanded="false" aria-controls="equipment-icon-details" data-tooltip="프로젝터" data-equipment-open><i data-lucide="projector" aria-hidden="true"></i></button>
+                <button class="equipment-icon cursor-interaction" type="button" aria-label="화이트보드, 전체 장비 보기" aria-expanded="false" aria-controls="equipment-icon-details" data-tooltip="화이트보드" data-equipment-open><i data-lucide="presentation" aria-hidden="true"></i></button>
+              </div>
+            </div>
+          </div>
+          <section class="equipment-details" id="equipment-icon-details" aria-label="회의실 장비" hidden>
+            <div class="equipment-details-head"><strong>회의실 장비</strong><button type="button" class="equipment-close cursor-interaction" aria-label="장비 정보 닫기" data-equipment-close><i data-lucide="x" aria-hidden="true"></i></button></div>
+            <ul class="equipment-list"><li><i data-lucide="projector" aria-hidden="true"></i>프로젝터</li><li><i data-lucide="monitor" aria-hidden="true"></i>스크린</li><li><i data-lucide="presentation" aria-hidden="true"></i>화이트보드</li></ul>
+          </section>
+        </div>
+      </div>
+    </section>
+    <section data-variant="짧은 장비명" aria-label="장비명을 한 줄 추가한 회의실" hidden>
+      <div class="equipment-stage">
+        <div class="equipment-product" data-design="labels" aria-label="짧은 장비명형 회의실 카드">
+          <div class="equipment-header">
+            <div class="equipment-title"><strong>Conference Room 1</strong><span class="equipment-floor">9F</span><span class="equipment-selected" aria-label="선택된 회의실"><i data-lucide="check" aria-hidden="true"></i></span></div>
+            <div class="equipment-meta"><span class="equipment-status"><span class="equipment-dot" aria-hidden="true"></span><b>지금 사용 가능</b><em>·</em><span>최대 10명</span></span></div>
+            <div class="equipment-chip-row" aria-label="회의실 장비">
+              <button type="button" class="equipment-chip cursor-interaction" aria-expanded="false" aria-controls="equipment-label-details" data-equipment-open><i data-lucide="projector" aria-hidden="true"></i>프로젝터</button>
+              <button type="button" class="equipment-chip cursor-interaction" aria-expanded="false" aria-controls="equipment-label-details" data-equipment-open><i data-lucide="presentation" aria-hidden="true"></i>화이트보드</button>
+              <button type="button" class="equipment-chip cursor-interaction" aria-label="스크린 포함 전체 장비 보기" aria-expanded="false" aria-controls="equipment-label-details" data-equipment-open>+1</button>
+            </div>
+          </div>
+          <section class="equipment-details" id="equipment-label-details" aria-label="회의실 장비" hidden>
+            <div class="equipment-details-head"><strong>회의실 장비</strong><button type="button" class="equipment-close cursor-interaction" aria-label="장비 정보 닫기" data-equipment-close><i data-lucide="x" aria-hidden="true"></i></button></div>
+            <ul class="equipment-list"><li><i data-lucide="projector" aria-hidden="true"></i>프로젝터</li><li><i data-lucide="monitor" aria-hidden="true"></i>스크린</li><li><i data-lucide="presentation" aria-hidden="true"></i>화이트보드</li></ul>
+          </section>
+        </div>
+      </div>
+    </section>
+    <section data-variant="기존 모습" aria-label="장비 정보가 없는 기존 회의실" hidden>
+      <div class="equipment-stage">
+        <div class="equipment-product" data-design="original" aria-label="기존 회의실 카드">
+          <div class="equipment-header">
+            <div class="equipment-title"><strong>Conference Room 1</strong><span class="equipment-floor">9F</span><span class="equipment-selected" aria-label="선택된 회의실"><i data-lucide="check" aria-hidden="true"></i></span></div>
+            <div class="equipment-meta"><span class="equipment-status"><span class="equipment-dot" aria-hidden="true"></span><b>지금 사용 가능</b><em>·</em><span>최대 10명</span></span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+    (() => {
+      const root = document.getElementById('room-equipment-design');
+      const products = Array.from(root.querySelectorAll('.equipment-product'));
+      let lastTrigger = null;
+      function showPanel(product, open) {
+        const panel = product.querySelector('.equipment-details');
+        if (!panel) return;
+        panel.hidden = !open;
+        product.querySelectorAll('[data-equipment-open]').forEach(button => button.setAttribute('aria-expanded', String(open)));
+      }
+      function persist(product, open) {
+        if (window.openai?.setWidgetState) window.openai.setWidgetState({ modelContent: null, privateContent: { equipmentPanel: open ? product.dataset.design : null } }).catch(() => {});
+      }
+      function restore(state) {
+        const active = state?.privateContent?.equipmentPanel;
+        products.forEach(product => showPanel(product, product.dataset.design === active));
+      }
+      products.forEach(product => {
+        product.querySelectorAll('[data-equipment-open]').forEach(button => button.addEventListener('click', () => {
+          const panel = product.querySelector('.equipment-details');
+          const open = panel.hidden;
+          lastTrigger = button;
+          showPanel(product, open);
+          persist(product, open);
+        }));
+        product.querySelector('[data-equipment-close]')?.addEventListener('click', () => {
+          showPanel(product, false); persist(product, false); lastTrigger?.focus();
+        });
+        product.addEventListener('keydown', event => {
+          if (event.key !== 'Escape') return;
+          showPanel(product, false); persist(product, false); lastTrigger?.focus();
+        });
+        if (globalThis.Tweak) {
+          const settings = { width: 440 };
+          const tweak = new Tweak({ container: product, onChange: () => { product.style.width = settings.width + 'px'; } });
+          tweak.addSlider(settings, 'width', { label: '회의실 칸 너비', min: 280, max: 500, step: 10, unit: 'px' });
+        }
+      });
+      restore(window.openai?.widgetState);
+      window.addEventListener('openai:set_globals', event => { if (event.detail?.globals?.widgetState) restore(event.detail.globals.widgetState); });
+    })();
+  </script>
+</div>

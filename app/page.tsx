@@ -3,6 +3,7 @@
 import { CSSProperties, FocusEvent as ReactFocusEvent, FormEvent, KeyboardEvent as ReactKeyboardEvent, PointerEvent as ReactPointerEvent, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import siteConfig from "./config/site.json";
 import officeTeams from "./config/teams.json";
+import { RoomEquipment } from "./room-equipment";
 import { EmployeePicker, FavoriteButton, FavoriteIcon, MicrosoftPanel, useFavorites } from "./convenience";
 import { type CurrentUser, deleteBookingRequest, fetchBookings, fetchMe, patchBookingRequest, postBookings } from "./lib/api";
 import {
@@ -2404,23 +2405,26 @@ export default function Home() {
                   const status = statusOf(room);
                   return (
                     <div className={`timeline-day daily-room ${selected.id === room.id ? "active" : ""}`} key={room.id}>
-                      <button
-                        type="button"
-                        className="timeline-day-head daily-room-head"
-                        aria-pressed={selected.id === room.id}
-                        title={roomIdentity(room)}
-                        onClick={() => setSelectedId(room.id)}
-                      >
-                        <span className="daily-room-title">
-                          <strong>{room.name}</strong>
-                          <i aria-hidden="true" />
-                          <small>{room.floor}F</small>
-                        </span>
-                        <span className="daily-room-selected-icon"><SelectedRoomIcon /></span>
-                        {/* 지금 쓸 수 있는지가 이 표에서 가장 먼저 봐야 할 정보다.
-                            주간현황과도 같은 형식으로 맞춘다. */}
-                        <span className={`daily-room-meta ${status.status}`}><i className={`room-status-dot ${status.status}`} /><b>{status.statusLabel}</b><em>·</em>{formatCapacity(room.capacity)}</span>
-                      </button>
+                      <div className="timeline-day-head daily-room-head">
+                        <button
+                          type="button"
+                          className="daily-room-select"
+                          aria-pressed={selected.id === room.id}
+                          title={roomIdentity(room)}
+                          onClick={() => setSelectedId(room.id)}
+                        >
+                          <span className="daily-room-title">
+                            <strong>{room.name}</strong>
+                            <i aria-hidden="true" />
+                            <small>{room.floor}F</small>
+                          </span>
+                          <span className="daily-room-selected-icon"><SelectedRoomIcon /></span>
+                          {/* 지금 쓸 수 있는지가 이 표에서 가장 먼저 봐야 할 정보다.
+                              주간현황과도 같은 형식으로 맞춘다. */}
+                          <span className={`daily-room-meta ${status.status}`}><i className={`room-status-dot ${status.status}`} /><b>{status.statusLabel}</b><em>·</em>{formatCapacity(room.capacity)}</span>
+                        </button>
+                        <RoomEquipment key={`${date}:${room.id}`} room={room} />
+                      </div>
                       <div
                         className={`timeline-day-body${slotDrag?.pointerType === "touch" && slotDrag.roomId === room.id && slotDrag.date === date ? " touch-dragging" : ""}`}
                         role="group"
@@ -2509,10 +2513,13 @@ export default function Home() {
                   const status = statusOf(room);
                   return (
                     <div className="weekly-room-row" key={room.id}>
-                      <button type="button" className={`weekly-room-name ${selected.id === room.id ? "selected" : ""}`} aria-pressed={selected.id === room.id} title={room.name} onClick={() => setSelectedId(room.id)}>
-                        <span className="weekly-room-title">{room.name}</span><span className="weekly-room-floor">{room.floor}층</span><small className={status.status}><i className={`room-status-dot ${status.status}`} /><b>{status.statusLabel}</b><em>·</em>{formatCapacity(room.capacity)}</small>
-                        {selected.id === room.id && <span className="daily-room-selected-icon"><SelectedRoomIcon /></span>}
-                      </button>
+                      <div className={`weekly-room-name ${selected.id === room.id ? "selected" : ""}`}>
+                        <button type="button" className="weekly-room-select" aria-pressed={selected.id === room.id} title={roomIdentity(room)} onClick={() => setSelectedId(room.id)}>
+                          <span className="weekly-room-title">{room.name}</span><span className="weekly-room-floor">{room.floor}층</span><small className={status.status}><i className={`room-status-dot ${status.status}`} /><b>{status.statusLabel}</b><em>·</em>{formatCapacity(room.capacity)}</small>
+                          {selected.id === room.id && <span className="daily-room-selected-icon"><SelectedRoomIcon /></span>}
+                        </button>
+                        <RoomEquipment key={`${date}:${room.id}`} room={room} />
+                      </div>
                       {weekDays.map((day) => {
                         const dayBookings = layoutOverlappingBookings(
                           bookings.filter((booking) => booking.roomId === room.id && booking.date === day),

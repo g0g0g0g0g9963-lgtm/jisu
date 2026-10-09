@@ -12,7 +12,7 @@
 }
 .app-shell .weekly-board .daily-timeline-footer { padding: 8px 0 3px; flex-wrap: wrap; }
 .app-shell .weekly-board .daily-timeline.timeline-full-day {
-  --timeline-head-height: 72px;
+  --timeline-head-height: 120px;
   --timeline-top-gap: 24px;
   flex: 1 1 0%;
   min-height: 0 !important;
@@ -104,4 +104,110 @@
 }
 @media (max-width: 600px) {
   .app-shell .weekly-board .daily-timeline-footer { padding-left: 4px; padding-right: 4px; font-size: 11px; }
+}
+
+/* 장비명은 상태와 분리한 짧은 세 번째 줄로 표시한다. */
+.app-shell .schedule-design-cards .daily-timeline.timeline-full-day .daily-room-head {
+  padding: 10px 12px;
+  gap: 6px;
+  justify-content: center;
+  cursor: default;
+}
+.app-shell .daily-room-head .daily-room-select {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+  padding: 0 28px 0 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.app-shell .daily-room-select .daily-room-selected-icon { top: 0; right: 0; }
+.app-shell .daily-room-select:focus-visible { outline: 2px solid #304b78; outline-offset: 3px; border-radius: 2px; }
+.app-shell .schedule-design-cards .weekly-room-board .weekly-room-name { gap: 8px; cursor: default; }
+.app-shell .weekly-room-name .weekly-room-select {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 7px;
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.app-shell .weekly-room-select .weekly-room-title { padding-right: 24px; }
+.app-shell .weekly-room-select .daily-room-selected-icon { top: 0; right: 0; }
+.app-shell .weekly-room-select:focus-visible { outline: 2px solid #304b78; outline-offset: 3px; border-radius: 2px; }
+.room-equipment { width: 100%; min-width: 0; container: room-equipment / inline-size; }
+.room-equipment-chips { display: flex; align-items: center; gap: 5px; min-width: 0; }
+.app-shell .room-equipment-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 0;
+  min-height: 27px;
+  padding: 4px 6px;
+  color: #63738b;
+  background: #edf1f7;
+  border: 0;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.4;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.app-shell .room-equipment-chip svg { width: 14px; height: 14px; flex: none; }
+.app-shell .room-equipment-chip span { font: inherit; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.app-shell .room-equipment-more { flex: none; min-width: 27px; }
+.app-shell .room-equipment-chip:hover, .app-shell .room-equipment-chip[aria-expanded="true"] { color: #304b78; background: #e2e9f3; }
+.app-shell .room-equipment-chip:focus-visible { outline: 2px solid #304b78; outline-offset: 2px; }
+.app-shell .equipment-compact-more { display: none; }
+@container room-equipment (max-width: 220px) {
+  .app-shell .equipment-secondary, .app-shell .equipment-wide-more { display: none; }
+  .app-shell .equipment-compact-more { display: inline-flex; }
+}
+.room-equipment-popover {
+  position: fixed;
+  inset: auto;
+  margin: 0;
+  width: min(260px, calc(100vw - 16px));
+  max-height: calc(100dvh - 16px);
+  overflow: auto;
+  padding: 14px;
+  color: #17253e;
+  background: #fff;
+  border: 1px solid #dce4ef;
+  border-radius: 10px;
+  box-shadow: 0 9px 28px #1b2d471f;
+  text-align: left;
+  cursor: default;
+}
+.room-equipment-popover-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.room-equipment-popover-head h3 { margin: 0; font-size: 14px; font-weight: 650; }
+.room-equipment-popover-head button { display: grid; place-items: center; width: 30px; height: 30px; border: 0; border-radius: 5px; color: #63738b; background: transparent; cursor: pointer; }
+.room-equipment-popover-head button:hover { background: #edf1f7; }
+.room-equipment-popover-head button svg { width: 16px; height: 16px; }
+.room-equipment-popover > p { margin: 1px 0 14px; color: #63738b; font-size: 11px; }
+.room-equipment-popover > ul { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.room-equipment-popover li { display: flex; align-items: center; gap: 10px; font-size: 12px; }
+.app-shell .room-equipment-popover li span { font: inherit; white-space: normal; }
+.room-equipment-popover li svg { flex: none; width: 17px; height: 17px; color: #63738b; }
+@media (pointer: coarse) {
+  .app-shell .weekly-board .daily-timeline.timeline-full-day { --timeline-head-height: 138px; }
+  .app-shell .room-equipment-chip { min-height: 44px; }
+  .app-shell .room-equipment-more { min-width: 44px; }
+  .room-equipment-popover-head button { width: 44px; height: 44px; }
 }

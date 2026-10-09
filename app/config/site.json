@@ -29,6 +29,7 @@
     "endHour": 24,
     "hourHeightPx": 96,
     "initialViewportRatio": 0.04,
+    "equipmentPreviewLimit": 2,
     "defaultFocusHour": 9
   },
   "testUser": {

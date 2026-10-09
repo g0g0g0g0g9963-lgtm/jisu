@@ -19,6 +19,7 @@ const instant = '2026-10-08T05:15:00Z'; // 14:15 in Seoul
 const child = spawn(process.execPath, ['--import', './qa-preload.mjs', 'server/index.mjs'], {
   cwd: root, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'],
   env: { ...process.env, NODE_ENV: 'test', HOST: '127.0.0.1', PORT: String(port), DATA_DIR: run,
+    CLIENT_DIR: resolve(root, 'dist'), BACKUP_INTERVAL_MINUTES: '0',
     ALLOW_ANONYMOUS: '1', SEED_DEMO: '0', MS_TENANT_ID: '', MS_CLIENT_ID: '', MS_CLIENT_SECRET: '',
     APP_BASE_URL: '', MICROSOFT_TOKEN_KEY: '', ADMIN_MS_EMAIL: '', ADMIN_MS_OBJECT_ID: '', BACKUP_DIR: '',
     TEST_NOW: instant, TEST_FIXTURE_BOUNDARIES: '1', TEST_FIXTURE_SSO: '', TEST_ROOM: '9-c1', TEST_ROOM2: '9-c2' },
@@ -31,7 +32,9 @@ const check = (name, good) => { assert.ok(good, name); results.push(name); conso
 const geometry = page => page.locator('.daily-timeline').evaluate(grid => {
   const line = grid.querySelector('.current-time-line-all').getBoundingClientRect();
   const head = grid.querySelector('.daily-room-head').getBoundingClientRect();
-  return { scroll: grid.scrollTop, ratio: (line.top - head.bottom) / (grid.clientHeight - head.height) };
+  const inset = line.top - head.bottom;
+  return { scroll: grid.scrollTop, ratio: inset / (grid.clientHeight - head.height), inset,
+    expectedInset: Math.max(grid.querySelector('.current-time-pointer').offsetHeight / 2 + 4, (grid.clientHeight - head.height) * 0.04) };
 });
 const positionAt = (page, minute, index = 2) => page.locator('.daily-timeline').evaluate((grid, { minute, index }) => {
   const body = grid.querySelectorAll('.timeline-day-body')[index].getBoundingClientRect();
@@ -46,7 +49,12 @@ const browsePast = async (page, focusHour = 9) => {
   await pause(120);
 };
 const clickPoint = (page, point) => page.mouse.click(point.x, point.y);
-const nearTop = async page => { await pause(650); const g = await geometry(page); return g.ratio > 0 && g.ratio < 0.055; };
+const nearTop = async page => { await pause(650); const g = await geometry(page); return g.inset > 0 && g.inset <= g.expectedInset + 2; };
+const scrollPosition = page => page.locator('.daily-timeline').evaluate(el => el.scrollTop);
+const dragPoint = async (page, point, dx = 0, dy = 40) => {
+  await page.mouse.move(point.x, point.y); await page.mouse.down();
+  await page.mouse.move(point.x + dx, point.y + dy, { steps: 8 });
+};
 
 try {
   let ready = false;
@@ -57,7 +65,7 @@ try {
   }
   assert.ok(ready, logs);
   const { chromium } = await import(pathToFileURL(process.env.QA_PLAYWRIGHT_MODULE));
-  browser = await chromium.launch({ executablePath: process.env.QA_BROWSER, headless: true });
+  browser = await chromium.launch({ executablePath: process.env.QA_BROWSER, headless: true, ignoreDefaultArgs: ['--hide-scrollbars'] });
   const page = await browser.newPage({ viewport: { width: 1440, height: 960 }, timezoneId: 'Asia/Seoul' });
   page.on('pageerror', e => errors.push(e.message));
   await page.clock.setFixedTime(new Date(instant));
@@ -73,24 +81,65 @@ try {
   await pause(500);
   check('manual past scroll stays in place', Math.abs((await geometry(page)).scroll - old) < 1);
   await clickPoint(page, await positionAt(page, 600));
-  check('past blank click returns to current time', await nearTop(page));
-  check('return click creates no reservation draft or error', await page.locator('.timeline-draft,.schedule-selection-feedback').count() === 0);
-  await browsePast(page);
+  await pause(250);
+  check('past blank click leaves the browsed time in place', Math.abs(await scrollPosition(page) - old) < 1);
+  check('past click creates no reservation draft or error', await page.locator('.timeline-draft,.schedule-selection-feedback').count() === 0);
+  const jitter = await positionAt(page, 600);
+  await dragPoint(page, jitter, 2, 3); await page.mouse.up(); await pause(250);
+  check('small pointer jitter is a click, not an automatic return', Math.abs(await scrollPosition(page) - old) < 1);
   const axis = await positionAt(page, 600);
   const axisBox = await page.locator('.time-axis').boundingBox();
   await page.mouse.click(axisBox.x + axisBox.width / 2, axis.y);
-  check('past time-axis click also returns', await nearTop(page));
-  await browsePast(page);
+  await dragPoint(page, { x: axisBox.x + axisBox.width / 2, y: axis.y }); await page.mouse.up(); await pause(250);
+  check('time-axis click and drag do not move the timetable', Math.abs(await scrollPosition(page) - old) < 1);
   const drag = await positionAt(page, 600);
-  await page.mouse.move(drag.x, drag.y); await page.mouse.down();
+  await page.mouse.move(drag.x, drag.y); await pause(150);
+  check('hovering a past blank slot does not jump', Math.abs(await scrollPosition(page) - old) < 1);
+  await page.mouse.down(); await pause(250);
+  check('pressing a past slot without moving does not jump', Math.abs(await scrollPosition(page) - old) < 1);
   await page.mouse.move(drag.x + 20, drag.y + 40, { steps: 8 });
-  await page.mouse.move(drag.x, drag.y, { steps: 8 }); await page.mouse.up(); await pause(250);
-  check('past drag out and back does not jump', Math.abs((await geometry(page)).scroll - old) < 1);
+  check('past drag returns to the current pointer before release', await nearTop(page));
+  await page.screenshot({ path: resolve(run, 'past-drag-return-held.png'), fullPage: true });
+  await page.mouse.move(drag.x, drag.y + 100, { steps: 8 }); await page.mouse.up(); await pause(250);
+  check('continuing and releasing the return gesture creates no draft', await page.locator('.timeline-draft,.timeline-drag-selection,.schedule-selection-feedback').count() === 0);
+  for (const [name, dx, dy] of [['upward', 0, -30], ['horizontal', 25, 0], ['out-and-back', 15, 30]]) {
+    await browsePast(page);
+    const point = await positionAt(page, 600);
+    await dragPoint(page, point, dx, dy);
+    if (name === 'out-and-back') await page.mouse.move(point.x, point.y, { steps: 8 });
+    await page.mouse.up();
+    check(`${name} past drag returns once without reserving`, await nearTop(page) && await page.locator('.timeline-draft,.timeline-drag-selection').count() === 0);
+  }
+  await browsePast(page);
+  const interrupted = await positionAt(page, 600);
+  await page.mouse.move(interrupted.x, interrupted.y); await page.mouse.down();
+  await page.mouse.wheel(0, -120); await pause(250);
+  const afterWheel = await scrollPosition(page);
+  await page.mouse.move(interrupted.x, interrupted.y + 40, { steps: 8 }); await page.mouse.up(); await pause(250);
+  check('wheel while pressed cancels automatic return', afterWheel < old - 50 && Math.abs(await scrollPosition(page) - afterWheel) < 1);
+  await browsePast(page);
+  const cancelled = await positionAt(page, 600);
+  await page.mouse.move(cancelled.x, cancelled.y); await page.mouse.down();
+  await page.locator('.daily-timeline').evaluate(grid => grid.dispatchEvent(new PointerEvent('pointercancel', { pointerId: 1, bubbles: true })));
+  await page.mouse.move(cancelled.x, cancelled.y + 40, { steps: 8 }); await page.mouse.up(); await pause(250);
+  check('cancelled pointer cannot trigger a later return', Math.abs(await scrollPosition(page) - old) < 1);
+  const scrollbar = await page.locator('.daily-timeline').evaluate(grid => {
+    const r = grid.getBoundingClientRect();
+    const trackHeight = grid.clientHeight;
+    const gutter = grid.offsetWidth - grid.clientWidth;
+    return { x: r.left + grid.clientWidth + gutter / 2, y: r.top + grid.scrollTop / grid.scrollHeight * trackHeight + grid.clientHeight / grid.scrollHeight * trackHeight / 2 };
+  });
+  await dragPoint(page, scrollbar, 0, -30); await page.mouse.up(); await pause(250);
+  console.log('SCROLLBAR ' + JSON.stringify({ point: scrollbar, before: old, after: await scrollPosition(page) }));
+  check('scrollbar dragging browses past time without returning', await scrollPosition(page) < old - 20 && await page.locator('.timeline-draft').count() === 0);
+  await browsePast(page);
   await clickPoint(page, await positionAt(page, 570, 0)); await pause(200);
   check('past reservation click does not move the timeline', Math.abs((await geometry(page)).scroll - old) < 1);
   await page.getByRole('button', { name: '이전 날짜', exact: true }).click();
-  await browsePast(page); await clickPoint(page, await positionAt(page, 600));
-  check('past date stays read-only without the removed past-time notice', await page.locator('.schedule-selection-feedback,.timeline-draft').count() === 0);
+  await browsePast(page);
+  const previousDateScroll = await scrollPosition(page);
+  await dragPoint(page, await positionAt(page, 600)); await page.mouse.up(); await pause(250);
+  check('past date stays read-only without jumping to today', await page.locator('.current-time-line-all,.schedule-selection-feedback,.timeline-draft').count() === 0 && Math.abs(await scrollPosition(page) - previousDateScroll) < 1);
   await page.locator('.nav-today').click(); await nearTop(page);
   await page.getByRole('button', { name: '다음 날짜', exact: true }).click();
   await browsePast(page);
@@ -109,8 +158,10 @@ try {
   await page.mouse.move(wheelPoint.x, wheelPoint.y); await page.mouse.wheel(0, -180); await pause(300);
   check('wheel scrolling into the past is not reset', (await geometry(page)).scroll < old - 100);
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await clickPoint(page, await positionAt(page, 510));
-  check('reduced-motion click return works', await nearTop(page));
+  await dragPoint(page, await positionAt(page, 510));
+  const reduced = await geometry(page);
+  check('reduced-motion past drag returns immediately without animation', reduced.inset > 0 && reduced.inset <= reduced.expectedInset + 2);
+  await page.mouse.up();
   await page.getByRole('button', { name: '12층', exact: true }).click();
   check('floor change keeps current time at the top', await nearTop(page));
   await page.getByRole('button', { name: '9층', exact: true }).click();
@@ -123,9 +174,11 @@ try {
   mobile.on('pageerror', e => errors.push(e.message));
   await mobile.clock.setFixedTime(new Date(instant)); await mobile.goto(base); await mobile.locator('.current-time-line-all').waitFor();
   await browsePast(mobile, 11);
+  const beforeTap = await scrollPosition(mobile);
   const tap = await positionAt(mobile, 690, 0);
   await mobile.touchscreen.tap(tap.x, tap.y);
-  check('touch tap on a past blank slot returns', await nearTop(mobile));
+  await pause(250);
+  check('touch tap on a past blank slot does not jump', Math.abs(await scrollPosition(mobile) - beforeTap) < 1);
   await browsePast(mobile, 11);
   const touch = await positionAt(mobile, 690, 0);
   const beforePan = (await geometry(mobile)).scroll;

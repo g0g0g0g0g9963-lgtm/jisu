@@ -1159,8 +1159,9 @@ export default function Home() {
   // 재측정 값이 흔들리지 않도록 뷰포트 좌표를 스크롤 콘텐츠 좌표로 바꾼다.
   const dailyGridRef = useRef<HTMLDivElement | null>(null);
   const dailyInitialScrollKey = useRef<string | null>(null);
-  const dailyPastTap = useRef<{
+  const dailyPastDrag = useRef<{
     pointerId: number; x: number; y: number; scrollTop: number; scrollLeft: number;
+    grid: HTMLDivElement; returned: boolean;
   } | null>(null);
   const [dailyVisibleRange, setDailyVisibleRange] = useState("");
   const [dailyGridMetrics, setDailyGridMetrics] = useState<{
@@ -1225,36 +1226,50 @@ export default function Home() {
     else if (nowMinutes !== null) scrollDailyToMinute(nowMinutes, "smooth");
   };
 
-  // 과거의 빈 시간 칸을 짧게 클릭한 경우에만 현재로 복귀한다.
-  // 예약 버튼, 드래그, 터치 스크롤, 다른 날짜 조회는 그대로 둔다.
-  const startDailyPastTap = (event: ReactPointerEvent<HTMLDivElement>) => {
-    dailyPastTap.current = null;
-    if (!event.isPrimary || event.button !== 0 || date !== today || nowMinutes === null || !dailyGridMetrics) return;
+  const cancelDailyPastDrag = useCallback(() => {
+    const drag = dailyPastDrag.current;
+    dailyPastDrag.current = null;
+    if (drag?.grid.hasPointerCapture(drag.pointerId)) drag.grid.releasePointerCapture(drag.pointerId);
+  }, []);
+
+  // 시안처럼 과거의 빈 칸에서 실제로 드래그할 때만 현재로 복귀한다.
+  // 클릭·휠·스크롤바·터치 쓸기는 조회 동작이므로 이동시키지 않는다.
+  const startDailyPastDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (!event.isPrimary) return;
+    cancelDailyPastDrag();
+    if (event.button !== 0 || event.pointerType === "touch" || date !== today || nowMinutes === null || !dailyGridMetrics) return;
     const target = event.target as HTMLElement;
-    if (!target.closest(".timeline-day-body, .time-axis-body") || target.closest("button, a, input, select, textarea, .timeline-draft")) return;
+    if (!target.closest(".timeline-day-body") || target.closest("button, a, input, select, textarea, .timeline-draft")) return;
     const grid = event.currentTarget;
     const y = event.clientY - grid.getBoundingClientRect().top + grid.scrollTop - grid.clientTop;
     const minute = timelineStart + (y - dailyGridMetrics.bodyTop) / dailyGridMetrics.bodyHeight * (timelineEnd - timelineStart);
     if (minute >= nowMinutes) return;
-    dailyPastTap.current = { pointerId: event.pointerId, x: event.clientX, y: event.clientY, scrollTop: grid.scrollTop, scrollLeft: grid.scrollLeft };
+    dailyPastDrag.current = { pointerId: event.pointerId, x: event.clientX, y: event.clientY, scrollTop: grid.scrollTop, scrollLeft: grid.scrollLeft, grid, returned: false };
+    // 자동 스크롤 뒤 손을 떼어도 새 위치에 예약 선택이 생기지 않도록 끝까지 받는다.
+    grid.setPointerCapture(event.pointerId);
   };
 
-  const moveDailyPastTap = (event: ReactPointerEvent<HTMLDivElement>) => {
-    const tap = dailyPastTap.current;
-    if (tap?.pointerId === event.pointerId && Math.hypot(event.clientX - tap.x, event.clientY - tap.y) >= 8) dailyPastTap.current = null;
-  };
-
-  const finishDailyPastTap = (event: ReactPointerEvent<HTMLDivElement>) => {
-    const tap = dailyPastTap.current;
-    dailyPastTap.current = null;
-    if (!tap || tap.pointerId !== event.pointerId || date !== today || nowMinutes === null) return;
-    if (Math.hypot(event.clientX - tap.x, event.clientY - tap.y) >= 8 ||
-      Math.abs(event.currentTarget.scrollTop - tap.scrollTop) > 1 || Math.abs(event.currentTarget.scrollLeft - tap.scrollLeft) > 1) return;
+  const moveDailyPastDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const drag = dailyPastDrag.current;
+    if (!drag || drag.pointerId !== event.pointerId || drag.returned) return;
+    if (!(event.buttons & 1) || date !== today || nowMinutes === null ||
+      Math.abs(drag.grid.scrollTop - drag.scrollTop) > 1 || Math.abs(drag.grid.scrollLeft - drag.scrollLeft) > 1) {
+      cancelDailyPastDrag();
+      return;
+    }
+    if (Math.hypot(event.clientX - drag.x, event.clientY - drag.y) < 8) return;
+    drag.returned = true;
+    event.preventDefault();
     setSelectionFeedback("");
+    setKeyboardSelection(null);
     scrollDailyToMinute(nowMinutes, "smooth");
   };
 
-  useEffect(() => { dailyPastTap.current = null; }, [date, floor, scheduleView]);
+  const finishDailyPastDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (dailyPastDrag.current?.pointerId === event.pointerId) cancelDailyPastDrag();
+  };
+
+  useEffect(() => cancelDailyPastDrag, [date, floor, scheduleView, cancelDailyPastDrag]);
 
   useEffect(() => {
     const grid = dailyGridRef.current;
@@ -1546,8 +1561,8 @@ export default function Home() {
 
   const startSlotDrag = (room: Room, reservationDate: DateKey, event: ReactPointerEvent<HTMLDivElement>) => {
     if (event.button !== 0) return;
-    // 현재로 돌아오는 클릭은 예약 입력으로 처리하지 않는다.
-    if (dailyPastTap.current?.pointerId === event.pointerId) return;
+    // 과거에서 시작한 제스처는 현재로 돌아온 뒤에도 예약 입력으로 처리하지 않는다.
+    if (dailyPastDrag.current?.pointerId === event.pointerId) return;
     const startMinutes = getSlotMinutes(event);
     const availability = describeRoomSlotAvailability(
       bookings.filter((booking) => booking.roomId === room.id), reservationDate,
@@ -2370,12 +2385,14 @@ export default function Home() {
 
               {selectionFeedback && <p className="schedule-selection-feedback" role="status">{selectionFeedback}</p>}
               {scheduleView === "day" && floorRooms.length > 0 && <>
-              <div className="week-timeline daily-timeline timeline-full-day" data-floor={floor} ref={dailyGridRef} role="region" aria-label="24시간 일간 시간표, 위아래로 스크롤. 오늘의 과거 빈 시간 칸을 클릭하면 현재 시간으로 이동" tabIndex={0}
-                onPointerDownCapture={startDailyPastTap}
-                onPointerMoveCapture={moveDailyPastTap}
-                onPointerUpCapture={finishDailyPastTap}
-                onPointerCancelCapture={() => { dailyPastTap.current = null; }}
-                onScroll={() => { dailyPastTap.current = null; }}
+              <div className="week-timeline daily-timeline timeline-full-day" data-floor={floor} ref={dailyGridRef} role="region" aria-label="24시간 일간 시간표, 위아래로 스크롤. 오늘의 과거 빈 시간 칸을 마우스로 드래그하면 현재 시간으로 이동" tabIndex={0}
+                onPointerDownCapture={startDailyPastDrag}
+                onPointerMoveCapture={moveDailyPastDrag}
+                onPointerUpCapture={finishDailyPastDrag}
+                onPointerCancelCapture={finishDailyPastDrag}
+                onLostPointerCapture={finishDailyPastDrag}
+                onWheelCapture={cancelDailyPastDrag}
+                onScroll={() => { if (!dailyPastDrag.current?.returned) cancelDailyPastDrag(); }}
                 style={{ "--room-count": floorRooms.length, "--timeline-hour-height": `${siteConfig.timeline.hourHeightPx}px`, "--timeline-slot-height": `${siteConfig.timeline.hourHeightPx * bookingDefaults.slotMinutes / 60}px`, "--timeline-body-height": `${(timelineEnd - timelineStart) / 60 * siteConfig.timeline.hourHeightPx}px` } as CSSProperties}>
                 <div className="time-axis">
                   <span className="axis-corner">TIME</span>

@@ -9,6 +9,7 @@ import "../app/ux-ui-improvements.css";
 import "../app/timetable-24h.css";
 import "../app/convenience.css";
 import "../app/booking-confirmation.css";
+import "../app/my-bookings-clean.css";
 
 const container = document.getElementById("root");
 if (!container) throw new Error("Root container #root was not found.");

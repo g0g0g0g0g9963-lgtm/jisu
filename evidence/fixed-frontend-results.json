@@ -1,5 +1,5 @@
 {
-  "testedAt": "2026-10-09T12:21:49.754Z",
+  "testedAt": "2026-10-09T12:31:32.468Z",
   "method": "Actual TypeScript AST handlers executed in isolated VM; state setters captured separately to preserve React closure semantics; not browser end-to-end",
   "counts": {
     "total": 82,

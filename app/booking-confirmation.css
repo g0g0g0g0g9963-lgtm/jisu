@@ -1,10 +1,12 @@
 /* Clean confirmation: retain the existing reservation flow and focus management. */
-.booking-confirm-dialog.booking-confirm-clean {
+.booking-confirm-clean {
   --confirm-ink: #17243d;
   --confirm-muted: #68778e;
   --confirm-rule: #e6ebf2;
   --confirm-soft: #edf2f8;
   --confirm-accent: #d70c39;
+}
+.booking-confirm-dialog.booking-confirm-clean {
   position: relative;
   display: flex;
   flex-direction: column;

@@ -1325,7 +1325,7 @@ export default function Home() {
   const pastMyBookings = myBookings
     .filter((booking) => hasEnded(booking) && booking.date >= pastBookingCutoff)
     .reverse();
-  /** 예정 예약을 위, 지난 예약을 아래에 둔 한 벌의 표 데이터. */
+  /** 예정 예약을 위, 지난 예약을 아래에 둔 한 벌의 목록 데이터. */
   const myBookingRows = [
     ...upcomingMyBookings.map((booking) => ({ booking, upcoming: true })),
     ...pastMyBookings.map((booking) => ({ booking, upcoming: false })),
@@ -3088,9 +3088,9 @@ export default function Home() {
           </div>
         </section>
       </div>}
-      {myBookingsOpen && <div className="my-bookings-backdrop" role="presentation" onMouseDown={() => { setMyBookingsOpen(false); setCancelSelection(null); }}>
-        <section ref={myBookingsDialogRef} className="my-bookings-dialog" role="dialog" aria-modal="true" aria-labelledby="my-bookings-title" onMouseDown={(event) => event.stopPropagation()}>
-          <div className="my-bookings-dialog-head"><div><h2 id="my-bookings-title">내 예약</h2></div><button type="button" onClick={() => { setMyBookingsOpen(false); setCancelSelection(null); }} aria-label="내 예약 닫기"><CloseIcon /></button></div>
+      {myBookingsOpen && <div className="my-bookings-backdrop my-bookings-clean-backdrop" role="presentation" onMouseDown={() => { setMyBookingsOpen(false); setCancelSelection(null); }}>
+        <section ref={myBookingsDialogRef} className="my-bookings-dialog my-bookings-clean booking-confirm-clean" role="dialog" aria-modal="true" aria-labelledby="my-bookings-title" onMouseDown={(event) => event.stopPropagation()}>
+          <div className="my-bookings-dialog-head"><div><h2 id="my-bookings-title">내 예약</h2><p>예약한 회의실과 시간을 한눈에 확인하세요.</p></div><button type="button" className="booking-confirm-close" onClick={() => { setMyBookingsOpen(false); setCancelSelection(null); }} aria-label="내 예약 닫기"><CloseIcon /></button></div>
           {authReady && !currentUser && <label className="my-bookings-search"><span>예약자 이름</span><input value={myBookingOwner} onChange={(event) => setMyBookingOwner(event.target.value)} placeholder="예약자 이름을 입력하세요" /></label>}
           <p className="my-bookings-summary">
             <span>예정 예약 <b>{upcomingMyBookings.length}</b></span>
@@ -3099,38 +3099,21 @@ export default function Home() {
               지난 예약 조회: {pastBookingCutoff.replaceAll("-", ".")}–{moveDate(today, -1).replaceAll("-", ".")}
             </span>
           </p>
-          <div className="my-bookings-table-wrap">
-            <table className="my-bookings-table">
-              <thead>
-                <tr>
-                  <th scope="col">날짜</th>
-                  <th scope="col">시간</th>
-                  <th scope="col">회의실</th>
-                  <th scope="col">회의 목적 · 본부</th>
-                  <th scope="col">상태</th>
-                  <th scope="col">
-                    {/* 고르는 중일 때만 전체선택을 띄운다. 예정 예약이 많으면 하나씩 누르기 번거롭다. */}
-                    {cancelSelection !== null && upcomingMyBookings.length > 0 ? (
-                      <label className="my-booking-pick my-booking-pick-all">
-                        <input
-                          type="checkbox"
-                          checked={cancelSelection.length === upcomingMyBookings.length}
-                          onChange={(event) => setCancelSelection(
-                            event.target.checked ? upcomingMyBookings.map((booking) => booking.id) : [],
-                          )}
-                        />
-                        <span>전체선택</span>
-                      </label>
-                    ) : upcomingMyBookings.length > 1 ? (
-                      // 여러 건을 한 번에 취소하는 길. 예전에는 행의 '예약 취소'를
-                      // 눌러야만 들어갈 수 있어, 그 버튼이 두 가지 일을 했다.
-                      <button type="button" className="pick-many" onClick={() => setCancelSelection([])}>선택해서 취소</button>
-                    ) : <span className="sr-only">예약 취소</span>}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {myBookingRows.length ? myBookingRows.map(({ booking, upcoming }) => {
+          {(cancelSelection !== null || upcomingMyBookings.length > 1) && <div className="my-bookings-list-tools">
+            {cancelSelection !== null && upcomingMyBookings.length > 0 ? (
+              <label className="my-booking-pick my-booking-pick-all">
+                <input type="checkbox" checked={cancelSelection.length === upcomingMyBookings.length}
+                  onChange={(event) => setCancelSelection(event.target.checked ? upcomingMyBookings.map((booking) => booking.id) : [])} />
+                <span>전체선택</span>
+              </label>
+            ) : upcomingMyBookings.length > 1 && (
+              <button type="button" className="pick-many" onClick={() => setCancelSelection([])}>선택해서 취소</button>
+            )}
+          </div>}
+          <div className="my-bookings-list-wrap">
+            {myBookingRows.length ? <ul className="my-bookings-list" aria-label="내 예약 목록">
+                {myBookingRows.map(({ booking, upcoming }) => {
+                  const room = roomById(booking.roomId);
                   const picking = cancelSelection !== null && upcoming;
                   const picked = picking && cancelSelection.includes(booking.id);
                   const toggle = () => setCancelSelection((current) => {
@@ -3138,18 +3121,24 @@ export default function Home() {
                     return list.includes(booking.id) ? list.filter((id) => id !== booking.id) : [...list, booking.id];
                   });
                   return (
-                    <tr key={booking.id} className={`${upcoming ? "" : "is-past"} ${picked ? "is-picked" : ""}`.trim() || undefined}>
-                      <td className="my-booking-date">{formatDateLabel(booking.date)}</td>
-                      <td className="my-booking-time">{booking.start}–{booking.end}</td>
-                      <td className="my-booking-room">{roomIdentity(roomById(booking.roomId))}</td>
-                      <td className="my-booking-team">
-                        {booking.purpose} · {teamOf(booking)}
+                    <li key={booking.id} className={`my-booking-card${upcoming ? "" : " is-past"}${picked ? " is-picked" : ""}`}>
+                      <div className="my-booking-card-head">
+                        <div className="my-booking-room booking-confirm-room" aria-label={roomIdentity(roomById(booking.roomId))}>
+                          <strong>{room?.name ?? "회의실"}</strong>{room && <span className="booking-confirm-floor">{room.floor}F</span>}
+                        </div>
+                        <span className={`my-booking-badge ${isRunningNow(booking) ? "running" : ""}`}>
+                          {isRunningNow(booking) ? "진행 중" : upcoming ? "예정" : "지난 예약"}
+                        </span>
+                      </div>
+                      <div className="booking-confirm-details">
+                        <div className="booking-confirm-detail my-booking-date"><CalendarIcon /><time dateTime={booking.date}>{formatDateLabel(booking.date)}</time></div>
+                        <div className="booking-confirm-detail"><ClockIcon /><span className="booking-confirm-time my-booking-time"><time>{booking.start}</time> — <time>{booking.end}</time></span><span className="booking-confirm-duration">{spokenDuration(minutesOf(booking.end) - minutesOf(booking.start))}</span></div>
+                      </div>
+                      <div className="my-booking-team">
+                        {booking.purpose && <p className="my-booking-purpose">{booking.purpose}</p>}
+                        <p className="my-booking-department">{teamOf(booking)}</p>
                         {!!booking.attendeeAccounts?.length && <details className="booking-attendee-detail"><summary>직원 참석자 {booking.attendeeAccounts.length}명</summary>{booking.attendeeAccounts.map(employee => <div key={employee.id}>{employee.name} · {employee.email}</div>)}</details>}
-                      </td>
-                      <td><span className={`my-booking-badge ${isRunningNow(booking) ? "running" : ""}`}>
-                        {isRunningNow(booking) ? "진행 중" : upcoming ? "예정" : "지난 예약"}
-                      </span></td>
-                      <td>
+                      </div>
                         {upcoming && (
                           <div className="my-booking-actions">
                             {picking ? (
@@ -3173,12 +3162,10 @@ export default function Home() {
                             )}
                           </div>
                         )}
-                      </td>
-                    </tr>
+                    </li>
                   );
-                }) : <tr><td colSpan={6} className="my-bookings-empty">예약이 없습니다.</td></tr>}
-              </tbody>
-            </table>
+                })}
+            </ul> : <p className="my-bookings-empty" role="status">예약이 없습니다.</p>}
           </div>
           {syncError && <p className="edit-dialog-notice" role="alert">{syncError}</p>}
           {cancelSelection !== null && (() => {
@@ -3194,7 +3181,7 @@ export default function Home() {
                       같은 반복 예약 {series.length}건 모두
                     </button>
                   )}
-                  {/* 표 머리의 '전체선택' 체크박스가 같은 일을 하므로 여기서는 뺀다. */}
+                  {/* 목록 위의 '전체선택' 체크박스가 같은 일을 하므로 여기서는 뺀다. */}
                   <button type="button" onClick={() => setCancelSelection(null)}>선택 해제</button>
                   <button
                     type="button"

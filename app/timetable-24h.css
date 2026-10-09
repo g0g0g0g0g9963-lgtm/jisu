@@ -194,8 +194,8 @@
   min-width: 0;
   min-height: 27px;
   padding: 4px 6px;
-  color: #63738b;
-  background: #edf1f7;
+  color: #3b6397;
+  background: transparent;
   border: 0;
   border-radius: 5px;
   font-size: 11px;
@@ -207,8 +207,8 @@
 .app-shell .room-equipment-chip svg { width: 14px; height: 14px; flex: none; }
 .app-shell .room-equipment-chip span { font: inherit; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .app-shell .room-equipment-more { flex: none; min-width: 27px; }
-.app-shell .room-equipment-chip:hover, .app-shell .room-equipment-chip[aria-expanded="true"] { color: #304b78; background: #e2e9f3; }
-.app-shell .room-equipment-chip:focus-visible { outline: 2px solid #304b78; outline-offset: 2px; }
+.app-shell .room-equipment-chip:hover, .app-shell .room-equipment-chip[aria-expanded="true"] { color: #234c80; background: #edf4fc; }
+.app-shell .room-equipment-chip:focus-visible { outline: 2px solid #3b6397; outline-offset: 2px; }
 .app-shell .equipment-compact-more { display: none; }
 @container room-equipment (max-width: 220px) {
   .app-shell .equipment-secondary, .app-shell .equipment-wide-more { display: none; }

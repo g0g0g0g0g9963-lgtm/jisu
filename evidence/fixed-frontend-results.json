@@ -1,9 +1,9 @@
 {
-  "testedAt": "2026-10-09T12:31:32.468Z",
+  "testedAt": "2026-10-09T12:36:44.342Z",
   "method": "Actual TypeScript AST handlers executed in isolated VM; state setters captured separately to preserve React closure semantics; not browser end-to-end",
   "counts": {
-    "total": 82,
-    "pass": 82,
+    "total": 84,
+    "pass": 84,
     "fail": 0
   },
   "results": [
@@ -170,6 +170,16 @@
     {
       "id": "UX-FLOOR-MARKUP-my-booking-room",
       "title": "Floor-aware room identity is rendered in my-booking-room",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-NO-OWNER-BADGE",
+      "title": "Daily and weekly reservation cards omit the visible ownership badge",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-DAY-CONTENT",
+      "title": "Daily bookings retain owner, time, department and editing action",
       "status": "PASS"
     },
     {

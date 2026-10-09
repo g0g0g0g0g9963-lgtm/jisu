@@ -2517,7 +2517,7 @@ export default function Home() {
                               onPointerDown={(event) => event.stopPropagation()}
                               onClick={(event) => { event.stopPropagation(); setSelectedId(room.id); openEditor(booking); }}
                             >
-                              <strong>{booking.owner}{isMyBooking(booking) && <em className="booking-owner-badge">내 예약</em>}</strong>
+                              <strong>{booking.owner}</strong>
                               <time>{booking.start}–{booking.end}</time>
                               <small>{teamOf(booking)}</small>
                               {isMyBooking(booking) && <ReservationHoverCard />}
@@ -2585,7 +2585,7 @@ export default function Home() {
                                   : `${booking.start}–${booking.end} / ${booking.owner} · ${teamOf(booking)}`}
                                 onClick={() => { setSelectedId(room.id); setDate(day); openEditor(booking); }}
                               >
-                                <b>{booking.owner}{isMyBooking(booking) && <em className="booking-owner-badge">내 예약</em>}</b>
+                                <b>{booking.owner}</b>
                                 <time>{booking.start}<span className="wk-end">–{booking.end}</span></time>
                                 <small title={teamOf(booking)}>{teamOf(booking)}</small>
                                 {isMyBooking(booking) && <ReservationHoverCard />}

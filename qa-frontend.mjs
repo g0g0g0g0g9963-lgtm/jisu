@@ -110,6 +110,9 @@ try{
   const nodes=nodesForClass(name);check('UX-FLOOR-MARKUP-'+name,'Floor-aware room identity is rendered in '+name,nodes.length>0&&nodes.some(node=>nodeContent(node).includes(expression)));
  }
  const weeklyEvents=nodesForClass('weekly-room-event');
+ check('UX-NO-OWNER-BADGE','Daily and weekly reservation cards omit the visible ownership badge',nodesForClass('booking-owner-badge').length===0);
+ const dailyEvents=nodesForClass('timeline-event');
+ check('UX-DAY-CONTENT','Daily bookings retain owner, time, department and editing action',dailyEvents.length===1&&['booking.owner','booking.start','booking.end','teamOf(booking)','openEditor(booking)'].every(text=>nodeContent(dailyEvents[0]).includes(text)));
  check('UX-WEEK-LIST','Weekly bookings are normal-flow list items, not overlapping absolute-time rectangles',nodesForClass('weekly-booking-list').length===1&&weeklyEvents.length===1&&!attr(weeklyEvents[0],'style'));
  check('UX-WEEK-CONTENT','Every weekly booking retains owner, end time, and department',weeklyEvents.length===1&&['booking.owner','booking.end','teamOf(booking)'].every(text=>nodeContent(weeklyEvents[0]).includes(text)));
  const pickerOptions=[0,1,2].map(index=>({focus(){c.document.activeElement=this;c.state.pickerFocusedIndex=index;},scrollIntoView(){}}));

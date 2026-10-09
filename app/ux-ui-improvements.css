@@ -248,23 +248,6 @@
 .app-shell .schedule-design-cards .weekly-room-board .weekly-room-event:not(.is-mine):hover { background: #e7ecf2; border-color: #aab8c9; box-shadow: none; transform: none; }
 .app-shell .schedule-design-cards .daily-timeline .timeline-event.is-mine:hover,
 .app-shell .schedule-design-cards .weekly-room-board .weekly-room-event.is-mine:hover { background: #fce9ee; border-color: #d597a9; box-shadow: none; transform: none; }
-.booking-owner-badge {
-  display: inline-flex;
-  align-items: center;
-  vertical-align: middle;
-  white-space: nowrap;
-  gap: 3px;
-  margin-left: 6px;
-  padding: 1px 5px;
-  border: 1px solid #e8b8c6;
-  border-radius: 4px;
-  color: var(--mine);
-  background: #fff;
-  font-size: 11px;
-  font-style: normal;
-  font-weight: 650;
-  line-height: 1.35;
-}
 
 /* Text and dot always agree, including historical and reserved rooms. */
 .app-shell .status-dot.available,
@@ -354,15 +337,6 @@
 .app-shell .schedule-design-cards .daily-timeline .timeline-event.ev-md > time { order: 1; }
 .app-shell .schedule-design-cards .daily-timeline .timeline-event.ev-sm > small,
 .app-shell .schedule-design-cards .daily-timeline .timeline-event.ev-md > small { order: 2; }
-.app-shell .schedule-design-cards .daily-timeline .timeline-event.ev-sm .booking-owner-badge,
-.app-shell .schedule-design-cards .daily-timeline .timeline-event.ev-md .booking-owner-badge {
-  font-size: 12px;
-  line-height: 1.1;
-  padding: 0 4px;
-  margin-left: 4px;
-  border: 0;
-  vertical-align: baseline;
-}
 .app-shell .booking-panel .room-picker-card,
 .app-shell .booking-panel .room-picker-toggle { animation: none; }
 

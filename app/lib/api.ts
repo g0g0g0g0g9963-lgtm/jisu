@@ -17,7 +17,7 @@ export type CreateBookingRequest = {
   attendeeIds?: string[];
 };
 
-export type ApiResult = { ok: true; booking?: Booking } | { ok: false; message: string };
+export type ApiResult = { ok: true; booking?: Booking } | { ok: false; message: string; code?: "booking-changed"; latest?: Booking };
 
 export type CurrentUser = { name: string; email: string; isAdmin?: boolean };
 
@@ -105,6 +105,7 @@ export async function postBookings(request: CreateBookingRequest): Promise<ApiRe
 }
 
 export type UpdateBookingRequest = {
+  expectedRevision: number | undefined;
   roomId: string;
   date: string;
   start: string;
@@ -116,7 +117,7 @@ export type UpdateBookingRequest = {
 
 /** 예약 한 건 수정. 본인 예약인지는 서버가 owner(익명) 또는 로그인 정보로 판단한다. */
 export async function patchBookingRequest(id: string, request: UpdateBookingRequest): Promise<ApiResult> {
-  const { response, payload } = await requestApi<{ error?: string; conflict?: Booking; booking?: Booking }>(`/api/bookings/${encodeURIComponent(id)}`, {
+  const { response, payload } = await requestApi<{ error?: string; code?: string; latest?: Booking; conflict?: Booking; booking?: Booking }>(`/api/bookings/${encodeURIComponent(id)}`, {
     method: "PATCH",
     headers: { "content-type": "application/json" },
     body: JSON.stringify(request),
@@ -124,6 +125,9 @@ export async function patchBookingRequest(id: string, request: UpdateBookingRequ
   if (response.ok) {
     if (!payload?.booking?.id) throw new Error("예약 수정 결과를 확인하지 못했습니다.");
     return { ok: true, booking: payload.booking };
+  }
+  if (response.status === 409 && payload?.code === "booking-changed" && payload.latest?.id === id) {
+    return { ok: false, code: "booking-changed", latest: payload.latest, message: payload.error ?? "예약 내용이 변경되었습니다." };
   }
   if (response.status === 409 && payload?.conflict) {
     const clash = payload.conflict;

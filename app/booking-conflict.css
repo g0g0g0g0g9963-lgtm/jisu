@@ -1,0 +1,17 @@
+.edit-backdrop.booking-conflict-backdrop { z-index: 400; background: rgb(23 34 58 / 28%); backdrop-filter: none; }
+.booking-conflict-dialog { width: min(480px, calc(100vw - 48px)); max-height: calc(100dvh - 48px); overflow-y: auto; padding: 26px; color: var(--ink-1); background: #fff; border: 1px solid #dce4ef; border-radius: 12px; box-shadow: 0 16px 45px #182b4225; }
+.booking-conflict-dialog header { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px; }
+.booking-conflict-dialog h2 { flex: 1; margin: 0; font-size: 20px; line-height: 1.4; font-weight: 700; letter-spacing: -.035em; }
+.booking-conflict-dialog .booking-conflict-close { flex: none; padding: 0; width: 28px; height: 28px; border: 0; border-radius: 6px; background: transparent; color: #687992; font-size: 24px; line-height: 1; }
+.booking-conflict-dialog p { margin: 0; color: #5d6e88; font-size: 14px; line-height: 1.8; word-break: keep-all; }
+.booking-conflict-dialog .booking-conflict-note { margin-top: 18px; padding: 11px 12px; border-radius: 7px; background: #f5f7fa; font-size: 12px; }
+.booking-conflict-dialog footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 24px; height: auto; padding: 0; border: 0; background: transparent; }
+.booking-conflict-dialog footer button { min-height: 42px; padding: 10px 16px; border: 1px solid #dce4ef; border-radius: 7px; color: #17253e; background: #fff; font-size: 13px; font-weight: 600; }
+.booking-conflict-dialog footer .booking-conflict-primary { color: #fff; background: #233858; border-color: #233858; }
+.booking-conflict-dialog button:disabled { opacity: .6; cursor: wait; }
+.booking-conflict-compare { width: 100%; table-layout: fixed; border-collapse: collapse; margin-top: 18px; text-align: left; font-size: 12px; }
+.booking-conflict-compare th, .booking-conflict-compare td { padding: 10px 7px; border-bottom: 1px solid #dce4ef; vertical-align: top; overflow-wrap: anywhere; }
+.booking-conflict-compare th { color: #5d6e88; font-weight: 500; }
+.booking-conflict-compare th:first-child { width: 19%; padding-left: 0; }
+.booking-conflict-compare .changed td:nth-child(2) { color: #233858; font-weight: 700; background: #eef2f8; }
+.booking-conflict-dialog .booking-conflict-error { margin-top: 12px; font-size: 12px; color: #a51034; }

@@ -48,6 +48,9 @@ if (!bookingColumns.includes("attendees")) {
 if (!bookingColumns.includes("attendee_accounts")) {
   db.exec("ALTER TABLE bookings ADD COLUMN attendee_accounts TEXT NOT NULL DEFAULT '[]'");
 }
+if (!bookingColumns.includes("revision")) {
+  db.exec("ALTER TABLE bookings ADD COLUMN revision INTEGER NOT NULL DEFAULT 1");
+}
 db.exec(`CREATE TABLE IF NOT EXISTS calendar_jobs (
   booking_id TEXT PRIMARY KEY, owner_id TEXT NOT NULL, desired_json TEXT,
   version INTEGER NOT NULL DEFAULT 1, synced_version INTEGER NOT NULL DEFAULT 0,
@@ -105,7 +108,7 @@ const selectFullById = db.prepare(
   "SELECT * FROM bookings WHERE id = ?",
 );
 const updateById = db.prepare(
-  "UPDATE bookings SET room_id = ?, date = ?, start = ?, end = ?, team = ?, purpose = ?, attendees = ? WHERE id = ?",
+  "UPDATE bookings SET room_id = ?, date = ?, start = ?, end = ?, team = ?, purpose = ?, attendees = ?, revision = revision + 1 WHERE id = ? AND revision = ?",
 );
 const insertBooking = db.prepare(
   "INSERT INTO bookings (id, room_id, date, start, end, owner, owner_id, owner_email, series_id, team, purpose, attendees, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
@@ -162,6 +165,7 @@ const parseAttendees = (value) => {
 /** DB 행(snake_case)을 프런트엔드 Booking 형태(camelCase)로 변환. */
 const toBooking = (row, identity) => ({
   id: row.id,
+  revision: row.revision,
   roomId: row.room_id,
   date: row.date,
   start: row.start,
@@ -220,7 +224,7 @@ export function createBookings({ roomId, dates, start, end, owner, ownerId = "",
       const auditRow = {id,room_id:roomId,date,start,end,owner};
       writeAudit("create", auditRow, auditRow, identity);
       created.push(toBooking({ id, room_id: roomId, date, start, end, owner, owner_id: ownerId,
-        owner_email: ownerEmail, series_id: seriesId, team, purpose, attendees: attendeesJson, attendee_accounts: JSON.stringify(attendeeAccounts) }, identity));
+        owner_email: ownerEmail, series_id: seriesId, revision: 1, team, purpose, attendees: attendeesJson, attendee_accounts: JSON.stringify(attendeeAccounts) }, identity));
     }
     db.exec("COMMIT");
     return { ok: true, created };
@@ -266,42 +270,40 @@ export function deleteBooking(id, identity = {}, { today = "", now = "" } = {}) 
  * 참석자를 넘기지 않으면 기존 값을 그대로 둔다.
  */
 export function updateBooking(id, identity = {}, patch, { today = "", now = "", maxDate = "" } = {}) {
-  const row = selectFullById.get(id);
-  if (!row) return { ok: false, reason: "not-found" };
-  if (!isOwner(row, identity)) return { ok: false, reason: "forbidden" };
-
-  // 이미 지나간 예약은 통째로 고칠 수 없다. 지난 예약은 기록으로 남아야
-  // 하고, 지난 날짜로 "옮기는" 것도 같은 이유로 막는다.
-  if (hasEnded(row, today, now)) return { ok: false, reason: "past" };
-  if (today && patch.date < today) return { ok: false, reason: "past" };
-  if (maxDate && patch.date > maxDate) return { ok: false, reason: "too-far" };
-  if (today && now && patch.date === today && patch.start < now) {
-    // Keep an ongoing booking's room/date/start stable. Its end may move to
-    // the current or a future slot; the overlap check below still applies.
-    const sameOngoingStart = row.date === today && row.start < now && row.end > now &&
-      patch.roomId === row.room_id && patch.start === row.start;
-    if (!sameOngoingStart || patch.end < now) {
-      return { ok: false, reason: "past-time" };
-    }
-  }
-
-  const team = patch.team ?? row.team;
-  const purpose = patch.purpose ?? row.purpose;
-  const attendees = patch.attendees ?? parseAttendees(row.attendees);
-
+  // Read, authorize and compare under the same write lock, including across workers.
   db.exec("BEGIN IMMEDIATE");
+  const reject = (reason, extra = {}) => {
+    db.exec("ROLLBACK");
+    return { ok: false, reason, ...extra };
+  };
   try {
+    const row = selectFullById.get(id);
+    if (!row) return reject("not-found");
+    if (!isOwner(row, identity)) return reject("forbidden");
+    if (!Number.isSafeInteger(patch.expectedRevision) || patch.expectedRevision < 1) return reject("revision-required");
+    if (patch.expectedRevision !== row.revision) return reject("stale", { latest: toBooking(row, identity) });
+    if (hasEnded(row, today, now)) return reject("past");
+    if (today && patch.date < today) return reject("past");
+    if (maxDate && patch.date > maxDate) return reject("too-far");
+    if (today && now && patch.date === today && patch.start < now) {
+      const sameOngoingStart = row.date === today && row.start < now && row.end > now &&
+        patch.roomId === row.room_id && patch.start === row.start;
+      if (!sameOngoingStart || patch.end < now) return reject("past-time");
+    }
+    const team = patch.team ?? row.team;
+    const purpose = patch.purpose ?? row.purpose;
+    const attendees = patch.attendees ?? parseAttendees(row.attendees);
     const clash = selectOverlapExcept.get(patch.roomId, patch.date, patch.end, patch.start, id);
     if (clash) {
-      db.exec("ROLLBACK");
-      return { ok: false, reason: "conflict", conflict: toBooking({ ...clash, team: "", purpose: "" }) };
+      return reject("conflict", { conflict: toBooking({ ...clash, team: "", purpose: "" }) });
     }
 
-    updateById.run(
+    const updated = updateById.run(
       patch.roomId, patch.date, patch.start, patch.end,
-      team, purpose, JSON.stringify(attendees), id,
+      team, purpose, JSON.stringify(attendees), id, patch.expectedRevision,
     );
-    const after = {...row,room_id:patch.roomId,date:patch.date,start:patch.start,end:patch.end,team,purpose,attendees:JSON.stringify(attendees)};
+    if (updated.changes !== 1) throw new Error("Booking revision update failed");
+    const after = {...row,revision:row.revision+1,room_id:patch.roomId,date:patch.date,start:patch.start,end:patch.end,team,purpose,attendees:JSON.stringify(attendees)};
     if (patch.attendeeAccounts !== undefined) {
       after.attendee_accounts = JSON.stringify(patch.attendeeAccounts);
       db.prepare("UPDATE bookings SET attendee_accounts=? WHERE id=?").run(after.attendee_accounts,id);
@@ -310,19 +312,11 @@ export function updateBooking(id, identity = {}, patch, { today = "", now = "", 
     const changed = ["room_id","date","start","end","team","purpose","attendees","attendee_accounts"].filter(key => row[key] !== after[key]);
     writeAudit("update", row, after, identity, changed);
     db.exec("COMMIT");
+    return { ok: true, booking: toBooking(after, identity) };
   } catch (error) {
     db.exec("ROLLBACK");
     throw error;
   }
-
-  return {
-    ok: true,
-    booking: toBooking({
-      ...row, ...patch, room_id: patch.roomId, team, purpose,
-      attendees: JSON.stringify(attendees),
-      attendee_accounts: patch.attendeeAccounts === undefined ? row.attendee_accounts : JSON.stringify(patch.attendeeAccounts),
-    }, identity),
-  };
 }
 
 /* --- 세션/메타 (SSO용) -------------------------------------------------- */

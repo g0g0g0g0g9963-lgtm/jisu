@@ -21,6 +21,10 @@ async function start(mode='admin',extra={}){
  for(let i=0;i<100;i++){if(child.exitCode!==null)throw Error(logs);try{if((await fetch(base+'/api/health')).ok)return s;}catch{}await pause(100);}throw Error('Startup timeout '+logs);
 }
 async function req(s,path,{method='GET',body,cookie,headers={}}={}){
+ if(method==='PATCH'&&path.startsWith('/api/bookings/')&&body?.expectedRevision===undefined){
+  const current=(await req(s,'/api/bookings',{cookie})).json?.bookings?.find(b=>b.id===path.split('/').at(-1));
+  body={...body,expectedRevision:current?.revision};
+ }
  const r=await fetch(s.base+path,{method,redirect:'manual',headers:{...(cookie?{cookie}:{}),...(body!==undefined?{'content-type':'application/json'}:{}),...headers},...(body!==undefined?{body:JSON.stringify(body)}:{})});const text=await r.text();let json;try{json=JSON.parse(text);}catch{}return{status:r.status,json,text,headers:r.headers};
 }
 async function login(s,code){const begin=await req(s,'/auth/login?returnTo=/admin');const state=new URL(begin.headers.get('location')).searchParams.get('state');const c=begin.headers.getSetCookie()[0].split(';')[0];const end=await req(s,'/auth/callback?state='+state+'&code='+code,{cookie:c});assert.equal(end.status,302);return end.headers.getSetCookie().find(v=>v.startsWith('bdo-session=')&&!v.startsWith('bdo-session=;')).split(';')[0];}

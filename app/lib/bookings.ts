@@ -15,6 +15,8 @@ import { publicHolidayOf } from "./holidays";
 export type Employee = { id: string; name: string; email: string };
 export type Booking = {
   id: string;
+  /** Server revision captured when an edit starts; absent only in legacy fixtures. */
+  revision?: number;
   roomId: string;
   /** SSO 서버가 판정한 소유권. 익명 모드에서만 생략한다. */
   isMine?: boolean;

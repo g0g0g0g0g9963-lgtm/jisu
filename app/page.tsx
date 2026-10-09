@@ -4,6 +4,7 @@ import { CSSProperties, FocusEvent as ReactFocusEvent, FormEvent, KeyboardEvent 
 import siteConfig from "./config/site.json";
 import officeTeams from "./config/teams.json";
 import { RoomEquipment } from "./room-equipment";
+import { BookingConflictDialog, editDraftOf, type EditDraft } from "./booking-conflict";
 import { EmployeePicker, FavoriteButton, FavoriteIcon, MicrosoftPanel, useFavorites } from "./convenience";
 import { type CurrentUser, deleteBookingRequest, fetchBookings, fetchMe, patchBookingRequest, postBookings } from "./lib/api";
 import {
@@ -90,17 +91,6 @@ type SlotForm = {
  * 예약 완료를 알리는 짧은 알림.
  * 같은 문구를 연달아 띄워도 새 객체라 표시 시간이 다시 시작된다.
  */
-/** 내 예약 한 건을 고쳐 쓰는 중인 값. id로 어떤 예약인지 기억한다. */
-type EditDraft = {
-  id: string;
-  roomId: string;
-  date: DateKey;
-  start: string;
-  end: string;
-  purpose: string;
-  team: string;
-};
-
 type Toast = {
   text: string;
   /** 회의실과 날짜. 시간은 색을 달리 주려고 따로 둔다. */
@@ -813,6 +803,7 @@ export default function Home() {
   const [repeatAsk, setRepeatAsk] = useState<{ conflicts: string[]; free: string[] } | null>(null);
   // 예약 현황에서 내 예약을 눌렀을 때 여는 수정 창.
   const [editDraft, setEditDraft] = useState<EditDraft | null>(null);
+  const [editConflict, setEditConflict] = useState(false);
   const [editNotice, setEditNotice] = useState("");
   const [editBusy, setEditBusy] = useState(false);
   const [editConfirmDelete, setEditConfirmDelete] = useState(false);
@@ -835,7 +826,8 @@ export default function Home() {
   // 모달 여러 개가 겹칠 수 있어(예: 예약 수정 위에 조기 종료), 가장 위에 뜬
   // 것 하나만 Escape·Tab을 갖도록 우선순위를 매긴다. 겹칠 수 있는 목록이
   // 위에, 늘 단독으로 뜨는 것들이 아래에 온다.
-  const topmostDialog = cancelAsk ? "cancelAsk"
+  const topmostDialog = editConflict && editDraft ? "editConflict"
+    : cancelAsk ? "cancelAsk"
     : earlyEnd ? "earlyEnd"
     : repeatAsk ? "repeatAsk"
     : submitPreviewDates ? "submitPreviewDates"
@@ -1386,15 +1378,8 @@ export default function Home() {
     // 접고 입력값은 유지해, 닫은 뒤 다시 펼치면 작성 내용을 이어갈 수 있게 한다.
     setBookingPanelOpen(false);
     setRoomPickerOpen(false);
-    setEditDraft({
-      id: booking.id,
-      roomId: booking.roomId,
-      date: booking.date,
-      start: booking.start,
-      end: booking.end,
-      purpose: booking.purpose,
-      team: booking.team ?? "",
-    });
+    setEditDraft(editDraftOf(booking));
+    setEditConflict(false);
     setEditNotice("");
     setEditConfirmDelete(false);
   };
@@ -1409,6 +1394,7 @@ export default function Home() {
     setEditNotice("");
     try {
       const result = await patchBookingRequest(editDraft.id, {
+        expectedRevision: editDraft.revision,
         roomId: editDraft.roomId,
         date: editDraft.date,
         start: editDraft.start,
@@ -1418,6 +1404,10 @@ export default function Home() {
         purpose: editDraft.purpose,
       });
       if (!result.ok) {
+        if (result.code === "booking-changed") {
+          setEditConflict(true);
+          return;
+        }
         setEditNotice(result.message);
         return;
       }
@@ -1480,6 +1470,7 @@ export default function Home() {
     setEarlyEndNotice("");
     try {
       const result = await patchBookingRequest(earlyEnd.id, {
+        expectedRevision: earlyEnd.revision,
         roomId: earlyEnd.roomId,
         date: earlyEnd.date,
         start: earlyEnd.start,
@@ -1489,6 +1480,10 @@ export default function Home() {
         purpose: earlyEnd.purpose,
       });
       if (!result.ok) {
+        if (result.code === "booking-changed" && result.latest) {
+          setEarlyEnd(result.latest);
+          setEarlyEndReviewTime(null);
+        }
         setEarlyEndNotice(result.message);
         return;
       }
@@ -3177,7 +3172,7 @@ export default function Home() {
           })()}
         </section>
       </div>}
-      {editDraft && <div className="edit-backdrop" role="presentation" onMouseDown={() => { if (!editBusy && !earlyEndBusy) setEditDraft(null); }}>
+      {editDraft && <div className="edit-backdrop" role="presentation" inert={editConflict} aria-hidden={editConflict || undefined} onMouseDown={() => { if (!editBusy && !earlyEndBusy && !editConflict) setEditDraft(null); }}>
         <section ref={editDraftDialogRef} className="edit-dialog" role="dialog" aria-modal="true" aria-labelledby="edit-dialog-title" onMouseDown={(event) => event.stopPropagation()}>
           <div className="edit-dialog-head">
             <div><h2 id="edit-dialog-title">예약 수정</h2></div>
@@ -3242,6 +3237,13 @@ export default function Home() {
           </div>
         </section>
       </div>}
+      {editDraft && editConflict && <BookingConflictDialog draft={editDraft} onBack={() => setEditConflict(false)} onReload={(latest) => {
+        setEditDraft(editDraftOf(latest));
+        setEditConflict(false);
+        setEditConfirmDelete(false);
+        setEditNotice("최신 내용을 불러왔습니다. 확인 후 필요한 항목을 수정해 주세요.");
+        void refreshBookings();
+      }} />}
       {earlyEnd && <div className="edit-backdrop" role="presentation" onMouseDown={() => { if (!earlyEndBusy) setEarlyEnd(null); }}>
         <section ref={earlyEndDialogRef} className="early-dialog" role="dialog" aria-modal="true" aria-labelledby="early-end-title" onMouseDown={(event) => event.stopPropagation()}>
           <h2 id="early-end-title">회의를 일찍 끝낼까요?</h2>

@@ -1,5 +1,5 @@
 {
-  "testedAt": "2026-10-08T07:29:38.090Z",
+  "testedAt": "2026-10-09T10:25:16.340Z",
   "appClock": "2026-10-08T10:15:00+09:00",
   "isolation": "Loopback only; synthetic SQLite; OIDC response mocked; no real Microsoft network",
   "counts": {
@@ -104,7 +104,7 @@
     },
     {
       "id": "C12",
-      "title": "Outside opening hours rejected",
+      "title": "Start at closing boundary rejected",
       "status": "PASS",
       "actual": 400
     },
@@ -542,7 +542,9 @@
         "owner_email",
         "owner_id",
         "series_id",
-        "attendees"
+        "attendees",
+        "attendee_accounts",
+        "revision"
       ]
     }
   ]

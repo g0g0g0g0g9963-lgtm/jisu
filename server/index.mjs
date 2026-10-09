@@ -162,7 +162,7 @@ function validatePatch(body) {
   const team = typeof body?.team === "string" ? value.team : undefined;
   const purpose = typeof body?.purpose === "string" ? value.purpose : undefined;
   const attendees = Array.isArray(body?.attendees) ? value.attendees : undefined;
-  return { value: { ...value, date, team, purpose, attendees } };
+  return { value: { ...value, date, team, purpose, attendees, expectedRevision: body?.expectedRevision } };
 }
 
 // ── API ────────────────────────────────────────────────────
@@ -271,6 +271,14 @@ app.patch("/api/bookings/:id", (req, res) => {
   }
   if (result.reason === "not-found") {
     res.status(404).json({ error: "예약을 찾을 수 없습니다." });
+    return;
+  }
+  if (result.reason === "stale") {
+    res.status(409).json({ code: "booking-changed", error: "다른 창에서 이 예약이 변경되었습니다. 최신 내용을 확인한 뒤 다시 수정해 주세요.", latest: result.latest });
+    return;
+  }
+  if (result.reason === "revision-required") {
+    res.status(428).json({ error: "수정창을 닫고 페이지를 새로고침한 뒤 다시 수정해 주세요." });
     return;
   }
   if (result.reason === "past") {

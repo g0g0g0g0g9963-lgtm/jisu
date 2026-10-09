@@ -37,6 +37,12 @@ async function configReject(mode){
  if(s.c.exitCode===null)s.c.kill();
 }
 async function req(s,path,method='GET',body,cookie,extra={}){
+ // Existing scenarios test booking rules against the version read immediately before editing.
+ // Stale/missing-version requests are tested without this helper in qa-booking-conflict.mjs.
+ if(method==='PATCH'&&path.startsWith('/api/bookings/')&&body&&typeof body==='object'&&body.expectedRevision===undefined){
+  const current=(await req(s,'/api/bookings','GET',undefined,cookie)).data?.bookings?.find(b=>b.id===path.split('/').at(-1));
+  body={...body,expectedRevision:current?.revision};
+ }
  const r=await fetch(s.base+path,{method,redirect:'manual',headers:{...(body!==undefined?{'content-type':'application/json'}:{}),...(cookie?{cookie}:{}),...extra},...(body!==undefined?{body:typeof body==='string'?body:JSON.stringify(body)}:{})});
  const text=await r.text();let data;try{data=JSON.parse(text);}catch{}return{status:r.status,data,text,headers:r.headers};
 }

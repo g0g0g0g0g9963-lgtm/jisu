@@ -79,7 +79,10 @@ const valid = {
   start: "00:00", end: "00:30", purpose: "Synthetic full-day boundary test",
 };
 const create = (changes = {}) => request("POST", "/api/bookings", { ...valid, ...changes });
-const patch = (id, changes = {}) => request("PATCH", `/api/bookings/${id}`, { ...valid, ...changes });
+const patch = async (id, changes = {}) => {
+  const current = (await request("GET", "/api/bookings")).data.bookings.find(b => b.id === id);
+  return request("PATCH", `/api/bookings/${id}`, { ...valid, expectedRevision: current?.revision, ...changes });
+};
 
 try {
   let ready = false;

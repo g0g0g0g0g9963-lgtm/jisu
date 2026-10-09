@@ -16,7 +16,12 @@ const base='http://127.0.0.1:'+port,key=crypto.randomBytes(32).toString('base64'
 const env={...process.env,NODE_ENV:'test',HOST:'127.0.0.1',PORT:String(port),DATA_DIR:run,CLIENT_DIR:resolve(root,'dist'),ALLOW_ANONYMOUS:'',SEED_DEMO:'0',SESSION_SECRET:'qa-only',
  MS_TENANT_ID:'qa-tenant',MS_CLIENT_ID:'qa-client',MS_CLIENT_SECRET:'qa-only',APP_BASE_URL:base,MICROSOFT_TOKEN_KEY:key,ADMIN_MS_EMAIL:'',ADMIN_MS_OBJECT_ID:'',BACKUP_DIR:'',BACKUP_INTERVAL_MINUTES:'0'};
 async function start(){const child=spawn(process.execPath,['--import',pathToFileURL(resolve(root,'qa-convenience-preload.mjs')).href,'server/index.mjs'],{cwd:root,env,windowsHide:true,stdio:['ignore','pipe','pipe']});children.push(child);let logs='';child.stdout.on('data',x=>logs+=x);child.stderr.on('data',x=>logs+=x);for(let i=0;i<100;i++){if(child.exitCode!==null)throw Error(logs);try{if((await fetch(base+'/api/health')).ok)return child;}catch{}await pause(100);}throw Error(logs);}
-async function req(path,{cookie,method='GET',body,headers={}}={}){const r=await fetch(base+path,{method,redirect:'manual',headers:{...(cookie?{cookie}:{}),...(body!==undefined?{'content-type':'application/json'}:{}),...headers},...(body!==undefined?{body:JSON.stringify(body)}:{})});const text=await r.text();let json;try{json=JSON.parse(text);}catch{}return{status:r.status,headers:r.headers,json,text};}
+async function req(path,{cookie,method='GET',body,headers={}}={}){
+ if(method==='PATCH'&&path.startsWith('/api/bookings/')&&body?.expectedRevision===undefined){
+  const current=(await req('/api/bookings',{cookie})).json?.bookings?.find(b=>b.id===path.split('/').at(-1));
+  body={...body,expectedRevision:current?.revision};
+ }
+ const r=await fetch(base+path,{method,redirect:'manual',headers:{...(cookie?{cookie}:{}),...(body!==undefined?{'content-type':'application/json'}:{}),...headers},...(body!==undefined?{body:JSON.stringify(body)}:{})});const text=await r.text();let json;try{json=JSON.parse(text);}catch{}return{status:r.status,headers:r.headers,json,text};}
 async function login(code,cookie,connecting=false){const begin=await req(connecting?'/auth/microsoft/connect':'/auth/login',{cookie});assert.equal(begin.status,302);const location=new URL(begin.headers.get('location')),state=location.searchParams.get('state');const jar=[cookie,begin.headers.getSetCookie()[0].split(';')[0]].filter(Boolean).join('; ');const end=await req('/auth/callback?state='+state+'&code='+code,{cookie:jar});return{...end,scopes:location.searchParams.get('scope'),cookie:end.headers.getSetCookie().find(x=>x.startsWith('bdo-session=')&&!x.startsWith('bdo-session=;'))?.split(';')[0]};}
 const action={'x-booking-action':'1'};
 const graph=()=>JSON.parse(readFileSync(resolve(run,'mock-graph.json'),'utf8'));

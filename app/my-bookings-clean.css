@@ -45,11 +45,12 @@
 .my-bookings-clean .my-booking-department { margin: 4px 0 0; color: var(--confirm-muted); font-size: 12px; }
 .my-bookings-clean .booking-attendee-detail { margin-top: 8px; color: var(--confirm-muted); }
 .my-bookings-clean .booking-attendee-detail summary { padding: 8px 0; cursor: pointer; }
-.my-bookings-clean .my-booking-actions { display: flex; justify-content: flex-end; margin-top: 18px; }
+.my-bookings-clean .my-booking-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; margin-top: 18px; }
 .my-bookings-clean .my-booking-actions button,
 .my-bookings-clean .pick-many,
 .my-bookings-clean .my-bookings-cancelbar button { min-height: 44px; height: auto; padding: 10px 16px; border: 0; border-radius: 9px; box-shadow: none; font: inherit; font-size: 13px; font-weight: 650; line-height: 1.4; cursor: pointer; color: var(--confirm-muted); background: var(--confirm-soft); }
-.my-bookings-clean .my-booking-actions button:not(.end-now) { color: #a51034; background: #fcecf0; }
+.my-bookings-clean .my-booking-actions .edit-booking { color: #304b78; background: var(--confirm-soft); }
+.my-bookings-clean .my-booking-actions .delete-booking { color: #a51034; background: #fcecf0; }
 .my-bookings-clean .my-booking-actions .end-now { color: #08745b; background: #e9f5f0; }
 .my-bookings-clean .my-booking-pick { min-height: 44px; padding: 8px 10px; border-radius: 9px; gap: 8px; background: var(--confirm-soft); }
 .my-bookings-clean .my-booking-pick input { width: 16px; height: 16px; accent-color: #304b78; }

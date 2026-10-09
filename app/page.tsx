@@ -3088,7 +3088,7 @@ export default function Home() {
           </div>
         </section>
       </div>}
-      {myBookingsOpen && <div className="my-bookings-backdrop my-bookings-clean-backdrop" role="presentation" onMouseDown={() => { setMyBookingsOpen(false); setCancelSelection(null); }}>
+      {myBookingsOpen && <div className="my-bookings-backdrop my-bookings-clean-backdrop" role="presentation" inert={topmostDialog !== "myBookingsOpen"} aria-hidden={topmostDialog !== "myBookingsOpen" || undefined} onMouseDown={() => { setMyBookingsOpen(false); setCancelSelection(null); }}>
         <section ref={myBookingsDialogRef} className="my-bookings-dialog my-bookings-clean booking-confirm-clean" role="dialog" aria-modal="true" aria-labelledby="my-bookings-title" onMouseDown={(event) => event.stopPropagation()}>
           <div className="my-bookings-dialog-head"><div><h2 id="my-bookings-title">내 예약</h2><p>예약한 회의실과 시간을 한눈에 확인하세요.</p></div><button type="button" className="booking-confirm-close" onClick={() => { setMyBookingsOpen(false); setCancelSelection(null); }} aria-label="내 예약 닫기"><CloseIcon /></button></div>
           {authReady && !currentUser && <label className="my-bookings-search"><span>예약자 이름</span><input value={myBookingOwner} onChange={(event) => setMyBookingOwner(event.target.value)} placeholder="예약자 이름을 입력하세요" /></label>}
@@ -3148,17 +3148,15 @@ export default function Home() {
                                     머리의 '전체선택'과 같은 말로 맞춘다. */}
                                 <span>{picked ? "선택됨" : "선택"}</span>
                               </label>
-                            ) : isRunningNow(booking) ? (
-                              // 진행 중인 회의는 취소가 아니라 '지금 끝내기'가 필요한 동작이다.
-                              // 단, 남은 시간이 30분 미만이면 끝내봤자 풀리는 시간이 없어 버튼을 두지 않는다.
-                              minutesOf(earlyEndTime(booking)) < minutesOf(booking.end) && (
-                                <button type="button" className="end-now" onClick={() => openEarlyEnd(booking)}>일찍 끝내기</button>
-                              )
                             ) : (
-                              // '예약 취소'는 곧바로 확인창을 연다. 예전에는 고르기 모드로
-                              // 들어가 아무 일도 안 일어난 것처럼 보였고, 같은 글자가
-                              // '고르기 시작'과 '실행' 두 뜻으로 쓰였다.
-                              <button type="button" onClick={() => setCancelAsk([booking.id])}>예약 취소</button>
+                              <>
+                                <button type="button" className="edit-booking" disabled={mutationBusy || !authReady} onClick={() => openEditor(booking)}>수정</button>
+                                {/* 삭제는 확인창을 거치며, 진행 중이어도 같은 경로로 제공한다. */}
+                                <button type="button" className="delete-booking" disabled={mutationBusy || !authReady} onClick={() => setCancelAsk([booking.id])}>예약 삭제</button>
+                                {isRunningNow(booking) && minutesOf(earlyEndTime(booking)) < minutesOf(booking.end) && (
+                                  <button type="button" className="end-now" disabled={mutationBusy || !authReady} onClick={() => openEarlyEnd(booking)}>일찍 끝내기</button>
+                                )}
+                              </>
                             )}
                           </div>
                         )}

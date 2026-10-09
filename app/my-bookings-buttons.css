@@ -111,6 +111,25 @@
   border-bottom-color: #e7ebf2;
 }
 
+/* 수정창에서도 X를 볼 수 있고 누를 수 있도록 명시적인 크기를 둔다. */
+.edit-dialog .edit-dialog-head > button {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 9px;
+  color: #68778e;
+  background: transparent;
+  cursor: pointer;
+}
+.edit-dialog .edit-dialog-head > button svg { width: 15px; height: 15px; }
+.edit-dialog .edit-dialog-head > button:hover { color: #17243d; background: #edf2f8; }
+.edit-dialog .edit-dialog-head > button:focus-visible { outline: 2px solid #304b78; outline-offset: 2px; }
+
 .edit-dialog .edit-dialog-body input,
 .edit-dialog .edit-dialog-body select,
 .edit-dialog .edit-dialog-body .date-field-value {

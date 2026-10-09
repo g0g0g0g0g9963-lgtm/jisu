@@ -56,6 +56,8 @@ try {
   page.on('request', req => { if (['POST','PATCH','DELETE'].includes(req.method()) && new URL(req.url()).pathname.startsWith('/api/bookings')) { writes++; mutations.push({method:req.method(),path:new URL(req.url()).pathname}); } });
   await page.clock.setFixedTime(new Date(instant)); await page.goto(base);
   const entry = page.getByRole('button', {name:/^내 예약 열기/});
+  await entry.waitFor();
+  check('header has no reservation dot without an owning booking',await entry.locator('.header-bookings-dot').count()===0);
   await entry.click();
   const dialog = page.getByRole('dialog', {name:'내 예약',exact:true});
   const listRows = dialog.locator('.my-bookings-list tbody > tr.my-booking-row');
@@ -65,11 +67,28 @@ try {
   const until = async condition => {for(let i=0;i<80;i++){if(await condition())return;await pause(100);}assert.fail('Timed out waiting for isolated data/UI change');};
   const originalRunning = initialRows.find(b=>b.owner==='QA List'&&b.roomId==='9-c1');
   const retryFixture = initialRows.find(b=>b.owner==='QA List'&&b.date==='2026-10-12');
-  const geometry = [], deleteResponses = [];
+  const geometry = [], headerGeometry = [], deleteResponses = [];
   page.on('response',response=>{if(response.request().method()==='DELETE')deleteResponses.push(response.json().then(body=>({status:response.status(),path:new URL(response.url()).pathname,body})));});
   await dialog.waitFor();
   check('close receives initial focus',await dialog.getByRole('button',{name:'내 예약 닫기'}).evaluate(el=>el===document.activeElement));
   await dialog.getByLabel('예약자 이름',{exact:true}).fill('QA Single'); await listRows.waitFor();
+  await dialog.getByRole('button',{name:'내 예약 닫기'}).click(); await dialog.waitFor({state:'hidden'});
+  check('one own upcoming booking displays one header reservation dot',await entry.locator('.header-bookings-dot').count()===1&&(await entry.getAttribute('aria-label')).includes('예정 예약 1건'));
+  for(const [width,height] of [[1280,720],[1366,768],[1920,1080]]) for(const zoom of [1,1.25]) {
+    await page.setViewportSize({width,height});
+    await page.evaluate(value=>{document.documentElement.style.zoom=String(value);},zoom);
+    await page.mouse.move(1,1);
+    const metrics=await entry.evaluate((el,scale)=>{
+      const label=el.querySelector('span:not(.header-bookings-dot)'),dot=el.querySelector('.header-bookings-dot'),icon=el.querySelector('svg');
+      const b=el.getBoundingClientRect(),t=label.getBoundingClientRect(),d=dot.getBoundingClientRect(),i=icon.getBoundingClientRect(),s=getComputedStyle(dot);
+      return {position:s.position,labelGap:d.left-t.right,iconGap:d.left-i.right,dotWidth:d.width,dotHeight:d.height,inside:d.left>=b.left&&d.right<=b.right&&d.top>=b.top&&d.bottom<=b.bottom,centerOffset:Math.abs((d.top+d.height/2)-(b.top+b.height/2)),scale};
+    },zoom);
+    headerGeometry.push({width,height,zoom,...metrics});
+    check('header dot stays after text and clear of icon at '+width+'x'+height+' CSS zoom '+zoom,metrics.position==='static'&&metrics.labelGap>=6*zoom-.5&&metrics.iconGap>0&&metrics.inside&&metrics.centerOffset<=.5&&Math.abs(metrics.dotWidth-6*zoom)<=.5&&Math.abs(metrics.dotHeight-6*zoom)<=.5);
+    await entry.screenshot({path:resolve(run,'header-my-bookings-'+width+'-zoom-'+zoom+'.png')});
+  }
+  await page.evaluate(()=>{document.documentElement.style.zoom='';}); await page.setViewportSize({width:1440,height:960});
+  await entry.click(); await dialog.waitFor();
   check('single booking uses compact table row with room and time',await dialog.locator('table.my-bookings-list').count()===1&&await listRows.count()===1&&(await listRows.locator('.my-booking-room').textContent()).includes('Conference Room 3')&&/21:30.*23:00/.test(await listRows.textContent()));
   check('reservation time range remains without a duration subtitle',await dialog.locator('.my-booking-duration').count()===0&&(await listRows.locator('.my-booking-time').textContent())==='21:30–23:00'&&!(await listRows.textContent()).includes('1시간 30분'));
   check('active row exposes selection edit delete without standalone early-end',await listRows.getByRole('checkbox',{name:/예약 선택$/}).count()===1&&await listRows.locator('.edit-booking').textContent()==='수정'&&await listRows.locator('.delete-booking').textContent()==='삭제'&&await dialog.getByRole('button',{name:/일찍 끝내기/}).count()===0);
@@ -114,6 +133,7 @@ try {
   check('backdrop dismissal remains available',writes===0);
   await entry.click(); await dialog.getByLabel('예약자 이름',{exact:true}).fill('QA Nobody');
   check('empty result is labelled',await dialog.getByRole('status').textContent()==='예약이 없습니다.'&&await listRows.count()===0);
+  check('header reservation dot disappears when the selected owner has no bookings',await page.locator('.header-bookings-dot').count()===0);
   await dialog.getByLabel('예약자 이름',{exact:true}).fill('QA List'); await listRows.first().waitFor();
   check('counts include six active and one history row',/예정 예약 6/.test(await dialog.locator('.my-bookings-summary').textContent())&&/최근 1개월 1/.test(await dialog.locator('.my-bookings-summary').textContent())&&await listRows.count()===7);
   check('past row stays read-only and last',await listRows.last().evaluate(el=>el.classList.contains('is-past')&&!el.querySelector('button,input')));
@@ -219,6 +239,6 @@ try {
   await sso.evaluate(()=>{window.location.hash='my-bookings';}); await signedDialog.waitFor();
   check('changing the hash to my bookings reopens the list without writes',await signedDialog.isVisible()&&writes===10&&ssoWrites===0);
   check('no browser errors',errors.length===0);
-  writeFileSync(resolve(run,'results.json'),JSON.stringify({passed:results.length,results,errors,mutations,deleteResponses:responseResults,geometry},null,2));
+  writeFileSync(resolve(run,'results.json'),JSON.stringify({passed:results.length,results,errors,mutations,deleteResponses:responseResults,geometry,headerGeometry},null,2));
   console.log('RESULT '+results.length+' passed; '+run);
 } finally { if(browser) await browser.close(); child.kill(); }

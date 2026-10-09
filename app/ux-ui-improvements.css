@@ -457,6 +457,17 @@
   width: 19px;
   height: 19px;
 }
+/* Keep the indicator in the layout so it cannot cover the icon or label. */
+.app-shell .header-account .header-nav .header-bookings-dot {
+  position: static;
+  flex: none;
+  align-self: center;
+  width: 6px;
+  height: 6px;
+  margin-left: 2px;
+  border: 0;
+  box-sizing: border-box;
+}
 
 /* A navy outline means selection/draft, never an error or confirmed booking. */
 .app-shell .schedule-design-cards .daily-timeline .timeline-draft,

@@ -40,10 +40,13 @@ export function useFavorites(user: CurrentUser | null, ready: boolean) {
   }
   return {ids,pending,message,loaded,toggle};
 }
+export function FavoriteIcon({filled=false}:{filled?:boolean}) {
+  return <svg viewBox="0 0 24 24" fill={filled?"currentColor":"none"} stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" aria-hidden="true"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9Z"/></svg>;
+}
 export function FavoriteButton({roomId,active,disabled,onClick}:{roomId:string;active:boolean;disabled:boolean;onClick:()=>void}) {
   const room=roomById(roomId), label=`${room?.floor}층 ${room?.name} 즐겨찾기 ${active?"해제":"추가"}`;
   return <button type="button" className={`room-favorite ${active?"is-favorite":""}`} title={label} aria-label={label} aria-pressed={active} disabled={disabled} onClick={onClick}>
-    <svg viewBox="0 0 24 24" fill={active?"currentColor":"none"} stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9Z"/></svg>
+    <FavoriteIcon filled={active} />
   </button>;
 }
 

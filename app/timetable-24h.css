@@ -14,28 +14,6 @@
 .app-shell .weekly-board .daily-timeline-toolbar { padding: 8px 0; }
 .daily-timeline-toolbar > span { font-variant-numeric: tabular-nums; }
 .daily-timeline-toolbar small { margin-left: 8px; font-size: 12px; }
-.daily-timeline-toolbar > .current-time-control {
-  display: inline-flex;
-  align-items: center;
-  flex-shrink: 0;
-  gap: 8px;
-  border: 1px solid #dce3ee;
-  border-radius: 10px;
-  background: #fff;
-  color: #304b78;
-  padding: 6px 11px;
-  min-height: 34px;
-  font: inherit;
-  white-space: nowrap;
-  box-shadow: 0 1px 3px #1c304407;
-  cursor: pointer;
-}
-.daily-timeline-toolbar > .current-time-control:hover { background: #f0f4fa; border-color: #b8c6d9; }
-.daily-timeline-toolbar > .current-time-control:focus-visible { outline: 2px solid #304b78; outline-offset: 3px; }
-.daily-timeline-toolbar > .current-time-control:disabled { opacity: 0.55; cursor: wait; }
-.current-time-control > svg { width: 20px; height: 20px; flex: none; }
-.current-time-control > span { color: #5a6c87; font-size: 12px; font-weight: 500; }
-.current-time-control > time { color: #223653; font-size: 15px; font-weight: 650; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
 .app-shell .weekly-board .daily-timeline-footer { padding: 8px 0 3px; flex-wrap: wrap; }
 .app-shell .weekly-board .daily-timeline.timeline-full-day {
   --timeline-head-height: 72px;
@@ -128,7 +106,6 @@
   border-radius: 50%;
   background: #d30935;
 }
-@media (pointer: coarse) { .daily-timeline-toolbar > .current-time-control { min-height: 44px; } }
 @media (max-width: 600px) {
   .app-shell .weekly-board .daily-timeline-toolbar,
   .app-shell .weekly-board .daily-timeline-footer { padding-left: 4px; padding-right: 4px; font-size: 11px; }

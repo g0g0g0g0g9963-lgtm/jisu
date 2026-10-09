@@ -3,7 +3,7 @@
 import { CSSProperties, FocusEvent as ReactFocusEvent, FormEvent, KeyboardEvent as ReactKeyboardEvent, PointerEvent as ReactPointerEvent, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import siteConfig from "./config/site.json";
 import officeTeams from "./config/teams.json";
-import { EmployeePicker, FavoriteButton, MicrosoftPanel, useFavorites } from "./convenience";
+import { EmployeePicker, FavoriteButton, FavoriteIcon, MicrosoftPanel, useFavorites } from "./convenience";
 import { type CurrentUser, deleteBookingRequest, fetchBookings, fetchMe, patchBookingRequest, postBookings } from "./lib/api";
 import {
   type Booking,
@@ -765,6 +765,7 @@ export default function Home() {
   const [showMap, setShowMap] = useState(false);
   const [allDay, setAllDay] = useState(false);
   const [roomPickerOpen, setRoomPickerOpen] = useState(false);
+  const [roomPickerFavoritesOnly, setRoomPickerFavoritesOnly] = useState(false);
   const [timePickerOpen, setTimePickerOpen] = useState<"start" | "end" | null>(null);
   const [bookingDateCalendarOpen, setBookingDateCalendarOpen] = useState(false);
   const [repeatWeekly, setRepeatWeekly] = useState(false);
@@ -1084,6 +1085,8 @@ export default function Home() {
   const roomPickerChoices = useMemo(() => [...roomChoices].sort((a, b) => (
     rooms.findIndex((room) => room.id === a.room.id) - rooms.findIndex((room) => room.id === b.room.id)
   )), [roomChoices]);
+  const visibleRoomPickerChoices = roomPickerFavoritesOnly
+    ? roomPickerChoices.filter(({ room }) => favorites.ids.includes(room.id)) : roomPickerChoices;
 
   const availableStartOptions = useMemo(() => {
     // 프리셋(1/2/4시간)에 없는 길이(드래그로 잡은 30분·90분 등)도 실제 길이 그대로 써야 한다.
@@ -2331,21 +2334,6 @@ export default function Home() {
               {scheduleView === "day" && floorRooms.length > 0 && <>
               <div className="daily-timeline-toolbar">
                 <span>{formatMinutes(timelineStart)}–{formatMinutes(timelineEnd)} <small>24시간 보기</small></span>
-                <button
-                  type="button"
-                  className="current-time-control"
-                  onClick={jumpToCurrentTime}
-                  disabled={nowMinutes === null}
-                  aria-label={nowMinutes === null ? "현재 시각 불러오는 중" : `현재 ${formatMinutes(nowMinutes)}, 오늘 현재 시간으로 이동`}
-                  title="오늘 현재 시간으로 이동"
-                >
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <circle cx="12" cy="12" r="8.25" />
-                    <path d="M12 7.5v4.8l3.2 2" />
-                  </svg>
-                  <span>현재</span>
-                  <time dateTime={nowMinutes === null ? undefined : formatMinutes(nowMinutes)}>{nowMinutes === null ? "--:--" : formatMinutes(nowMinutes)}</time>
-                </button>
               </div>
               <div className="week-timeline daily-timeline timeline-full-day" data-floor={floor} ref={dailyGridRef} role="region" aria-label="24시간 일간 시간표, 위아래로 스크롤" tabIndex={0} style={{ "--room-count": floorRooms.length, "--timeline-hour-height": `${siteConfig.timeline.hourHeightPx}px`, "--timeline-slot-height": `${siteConfig.timeline.hourHeightPx * bookingDefaults.slotMinutes / 60}px`, "--timeline-body-height": `${(timelineEnd - timelineStart) / 60 * siteConfig.timeline.hourHeightPx}px` } as CSSProperties}>
                 <div className="time-axis">
@@ -2354,7 +2342,7 @@ export default function Home() {
                     {timelineHours.map((hour) => <time key={hour} style={{ top: `${((hour * 60 - timelineStart) / (timelineEnd - timelineStart)) * 100}%` }}>{String(hour).padStart(2, "0")}:00</time>)}
                   </div>
                 </div>
-                {/* 시각은 툴바에 표시하고, 예약 영역에는 카드 아래의 가는 안내선만 둔다. */}
+                {/* 예약 영역에는 현재 시간의 가는 안내선만 유지한다. */}
                 {showCurrentTime && currentTimePercent !== null && dailyGridMetrics && (
                   <span
                     className="current-time-line current-time-line-all"
@@ -2615,23 +2603,25 @@ export default function Home() {
               </span>
               <i aria-hidden="true" />
             </button>
-            {roomPickerOpen && <div className="room-picker-options room-picker-popover" role="dialog" aria-label="회의실 선택" onPointerDown={(event) => event.stopPropagation()}>
-              <div className="favorite-shortcuts">
-                <small>즐겨찾기 {currentUser ? "· 내 계정에 저장" : "· 이 브라우저에 저장"}</small>
-                {favorites.ids.length ? rooms.filter(room => favorites.ids.includes(room.id)).map(room => <button type="button" key={room.id} onClick={() => selectRoom(room)}>{room.floor}층 · {room.name}</button>) : <span className="convenience-hint">별을 눌러 자주 쓰는 회의실을 모아보세요.</span>}
+            {roomPickerOpen && <div className="room-picker-options room-picker-popover" role="dialog" aria-label="회의실 선택" onPointerDown={(event) => event.stopPropagation()} onClick={(event) => event.stopPropagation()}>
+              <div className="room-picker-filters" role="group" aria-label="회의실 목록 필터">
+                <button type="button" aria-label="전체 회의실 보기" aria-pressed={!roomPickerFavoritesOnly} onClick={() => setRoomPickerFavoritesOnly(false)}>전체 회의실</button>
+                <button type="button" aria-label="즐겨찾기만 보기" aria-pressed={roomPickerFavoritesOnly} aria-describedby="favorite-storage-hint" title={currentUser ? "즐겨찾기는 내 계정에 저장됩니다" : "즐겨찾기는 이 브라우저에 저장됩니다"} onClick={() => setRoomPickerFavoritesOnly(true)}><FavoriteIcon />즐겨찾기{!!favorites.ids.length && <span className="favorite-count">{favorites.ids.length}</span>}</button>
               </div>
+              <p id="favorite-storage-hint" className="sr-only">{currentUser ? "즐겨찾기는 내 계정에 저장됩니다." : "즐겨찾기는 이 브라우저에 저장됩니다."}</p>
               {favorites.message && <p className="favorites-hint" role="status">{favorites.message}</p>}
-              {floors.map((item) => (
+              {roomPickerFavoritesOnly && !visibleRoomPickerChoices.length && <div className="room-picker-empty" role="status"><FavoriteIcon /><strong>{favorites.loaded ? "즐겨찾는 회의실이 없어요" : "즐겨찾기를 확인하고 있어요"}</strong><p>전체 목록에서 별을 눌러 추가하세요.</p><button type="button" onClick={() => setRoomPickerFavoritesOnly(false)}>전체 회의실 보기</button></div>}
+              {floors.filter(item => visibleRoomPickerChoices.some(({ room }) => room.floor === item)).map((item) => (
                 <div className="room-picker-floor-group" key={item}>
                   <small>{item}F</small>
-                  {roomPickerChoices.filter(({ room }) => room.floor === item).map(({ room }) => {
+                  {visibleRoomPickerChoices.filter(({ room }) => room.floor === item).map(({ room }) => {
                     const status = statusOf(room);
                     return <div className="room-picker-row" key={room.id}>
-                      <button type="button" className={selected.id === room.id ? "selected" : ""} onClick={() => selectRoom(room)}>
+                      <button type="button" className={selected.id === room.id ? "selected" : ""} title={`${room.floor}층 · ${room.name} · ${formatCapacity(room.capacity)} · ${room.equipment.join(" · ")}`} onClick={() => selectRoom(room)}>
                         {/* 점과 이름을 한 덩어리로 묶는다. 따로 두면 좁을 때 점만 남고
                             이름이 다음 줄로 떨어져 나갈 자리가 없다. */}
                         <span className="room-picker-name"><span className={`status-dot ${status.status}`} /><strong>{room.name}</strong></span>
-                        <em>{room.floor}층 · {formatCapacity(room.capacity)} · {room.equipment.join(" · ")}</em>
+                        <em>{formatCapacity(room.capacity)} · {room.equipment.slice(0, 2).join(" · ")}</em>
                       </button>
                       <FavoriteButton roomId={room.id} active={favorites.ids.includes(room.id)} disabled={!favorites.loaded || favorites.pending.includes(room.id)} onClick={() => void favorites.toggle(room.id)} />
                       <button

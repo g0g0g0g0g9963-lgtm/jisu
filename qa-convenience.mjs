@@ -82,7 +82,9 @@ try{
   const context=await browser.newContext({viewport:{width:1440,height:1100},timezoneId:'Asia/Seoul'});await context.addCookies([{name:'bdo-session',value:alice.split('=')[1],url:base}]);const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto(base);await page.getByRole('button',{name:'빠른 예약 펼치기'}).click();await page.locator('.room-picker-toggle').click();
   await page.getByRole('button',{name:`${rooms[1].floor}층 ${rooms[1].name} 즐겨찾기 추가`,exact:true}).click();await page.getByRole('button',{name:`${rooms[1].floor}층 ${rooms[1].name} 즐겨찾기 해제`,exact:true}).waitFor();
-  check('favorite star works in real browser',await page.locator('.favorite-shortcuts button').count()===2);await page.screenshot({path:resolve(run,'favorites-desktop.png'),fullPage:true});
+  await page.getByRole('button',{name:'즐겨찾기만 보기',exact:true}).click();
+  check('favorite star works in real browser',await page.locator('.room-picker-row').count()===2);await page.screenshot({path:resolve(run,'favorites-desktop.png'),fullPage:true});
+  await page.getByRole('button',{name:'전체 회의실 보기',exact:true}).click();
   await page.locator('.room-picker-toggle').click();await page.locator('.booking-extra-details > summary').click();
   await page.locator('#employee-search').fill('김민수');await page.getByRole('option',{name:'김민수 minsu.one@example.invalid'}).click();await page.locator('#employee-search').fill('김민수');await page.getByRole('option',{name:'김민수 minsu.two@example.invalid'}).click();
   check('same-name people render as separate email-labelled chips',await page.locator('.employee-chip').count()===2);await page.locator('.employee-picker').scrollIntoViewIfNeeded();await page.screenshot({path:resolve(run,'employees-desktop.png'),fullPage:true});

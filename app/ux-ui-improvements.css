@@ -366,44 +366,7 @@
 .app-shell .booking-panel .room-picker-card,
 .app-shell .booking-panel .room-picker-toggle { animation: none; }
 
-/* Keep the selected room prominent at the start of the booking form. */
-.app-shell .booking-panel:not(.is-collapsed) .room-picker-card {
-  background: #eaf2ff;
-  border-color: #b7c9e4;
-  border-left: 3px solid var(--selected);
-  box-shadow: 0 2px 8px rgb(48 75 120 / 6%);
-}
-.app-shell .booking-panel:not(.is-collapsed) .room-picker-card .room-picker-toggle {
-  background: #eaf2ff;
-  color: var(--selected);
-  box-shadow: none;
-}
-.app-shell .booking-panel:not(.is-collapsed) .room-picker-card .room-picker-toggle:hover,
-.app-shell .booking-panel:not(.is-collapsed) .room-picker-card .room-picker-toggle.open {
-  background: #e0ecfc;
-}
-.app-shell .booking-panel:not(.is-collapsed) .room-picker-card:has(.room-picker-toggle.open) {
-  border-color: #7797c3;
-  border-left-color: var(--selected);
-  box-shadow: 0 0 0 3px rgb(48 75 120 / 10%);
-}
-.app-shell .booking-panel:not(.is-collapsed) .room-picker-card .room-picker-toggle:focus-visible {
-  outline: 2px solid var(--selected);
-  outline-offset: 2px;
-}
-.app-shell .booking-panel:not(.is-collapsed) .room-picker-field-title > strong { color: #203f6b; }
-.app-shell .booking-panel:not(.is-collapsed) .room-picker-field-floor {
-  gap: 0;
-  padding: 2px 6px;
-  border-radius: 4px;
-  background: var(--selected);
-  color: #fff;
-  font-size: 11px;
-  line-height: 1.4;
-}
-.app-shell .booking-panel:not(.is-collapsed) .room-picker-field-floor::before { display: none; }
-.app-shell .booking-panel:not(.is-collapsed) .room-picker-field-specs > em { color: #4c6383; }
-.app-shell .booking-panel:not(.is-collapsed) .room-picker-card .room-picker-toggle > i { border-color: var(--selected); }
+.app-shell .booking-panel .room-picker-toggle:hover { box-shadow: inset 0 0 0 1px #b3bfce; }
 .app-shell .booking-panel .booking-submit .reserve-button:not(:disabled) {
   background: var(--cta);
   color: #fff;

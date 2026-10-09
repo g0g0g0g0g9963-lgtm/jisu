@@ -1963,19 +1963,19 @@ button {
   display: grid;
   place-items: center;
   width: 44px;
-  height: auto !important;
-  min-height: 58px !important;
+  height: auto;
+  min-height: 58px;
   padding: 0;
-  color: #ed1639 !important;
-  background: transparent !important;
+  color: #78869a;
+  background: transparent;
   border: 0 !important;
   border-radius: 0;
   box-shadow: none !important;
 }
 
 .booking-panel .room-picker-options .room-picker-row-map:hover {
-  color: #b90f2f !important;
-  background: transparent !important;
+  color: #304b78;
+  background: transparent;
   border-color: transparent !important;
 }
 
@@ -3141,17 +3141,22 @@ button {
   line-height: 1;
 }
 
-/* 첫 회의실 필드만 길어 보이지 않도록 정보 두 줄을 유지한 채 높이를 맞춘다. */
+/* 회의실명과 상세 정보 두 줄에 충분한 여백을 주고 좁은 화면에서는 높이가 늘어나게 한다. */
 .booking-panel:not(.is-collapsed) .room-picker-card .room-picker-toggle,
 .booking-panel:not(.is-collapsed) .room-picker-card .room-picker-toggle:hover,
 .booking-panel:not(.is-collapsed) .room-picker-card .room-picker-toggle.open {
-  height: 48px;
-  min-height: 48px;
-  padding: 5px 10px 5px 12px;
+  height: auto;
+  min-height: 68px;
+  padding: 12px 14px;
 }
 
 .booking-panel:not(.is-collapsed) .room-picker-card .room-picker-field-copy {
-  gap: 2px;
+  gap: 5px;
+}
+
+.booking-panel:not(.is-collapsed) .room-picker-card .room-picker-field-title > strong {
+  white-space: normal;
+  line-height: 1.35;
 }
 
 /* 빠른예약 단계 번호는 제목과 한 묶음으로 읽히도록 간격을 좁힌다. */

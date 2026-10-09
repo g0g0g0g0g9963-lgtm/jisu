@@ -1,14 +1,36 @@
-.booking-panel .room-favorite { display:grid; place-items:center; flex:0 0 36px; width:36px; min-width:36px; height:36px; min-height:36px; padding:8px; border:1px solid #dfe6ef; border-radius:9px; background:#fff; color:#63748d; }
-.booking-panel .room-favorite.is-favorite { color:#a56800; background:#fff8e7; border-color:#e9c77b; }
-.booking-panel .room-picker-options .room-picker-row .room-favorite.is-favorite { color:#a56800; background:#fff8e7; }
-.room-favorite svg { width:19px; height:19px; }
-.room-favorite:focus-visible,.favorite-shortcuts button:focus-visible,.employee-results button:focus-visible { outline:2px solid #2355a5; outline-offset:2px; }
-.booking-panel .room-picker-options .room-picker-row { display:grid; grid-template-columns:minmax(0,1fr) 36px 36px; gap:4px; }
-.booking-panel .room-picker-options .room-picker-row > button:first-child { padding-right:6px; }
-.booking-panel .room-picker-options .room-picker-row .room-favorite,.booking-panel .room-picker-options .room-picker-row .room-picker-row-map { position:static; transform:none; width:36px; height:36px; min-height:36px; margin:0; }
-.favorite-shortcuts { padding:10px 12px; border-bottom:1px solid #dfe6ef; background:#fffcf5; display:flex; flex-wrap:wrap; gap:6px; }
-.favorite-shortcuts > small { flex-basis:100%; color:#84621e; font-weight:700; }
-.booking-panel .favorite-shortcuts button { width:auto; padding:7px 9px; min-height:34px; border:1px solid #ecdbb4; background:#fff; border-radius:7px; font-size:12px; color:#253a56; }
+/* One calm list, with a favorites filter instead of duplicate shortcut cards. */
+.booking-panel .room-picker-options.room-picker-popover { padding:8px 10px 10px; border-radius:12px; box-shadow:0 12px 32px #15243b18; }
+.booking-panel .room-picker-options .room-picker-filters { display:flex; align-items:center; gap:16px; position:sticky; top:-8px; z-index:5; margin:-8px 0 8px; padding:6px 4px 0; background:#fff; border-bottom:1px solid #e8edf3; }
+.booking-panel .room-picker-options .room-picker-filters > button { display:inline-flex; align-items:center; justify-content:center; gap:6px; width:auto; min-height:42px; padding:8px 0; border:0; border-bottom:2px solid transparent; border-radius:0; box-shadow:none; background:transparent; color:#68778b; font-size:12px; font-weight:600; white-space:nowrap; }
+.booking-panel .room-picker-options .room-picker-filters > button[aria-pressed="true"] { color:var(--selected); border-bottom-color:var(--selected); }
+.room-picker-filters svg { width:15px; height:15px; }
+.favorite-count { color:inherit; font-size:11px; font-weight:650; font-variant-numeric:tabular-nums; }
+.booking-panel .room-picker-options .room-picker-floor-group > small { position:static; display:block; margin:0; padding:10px 9px 4px; background:transparent; border:0; color:#738196; font-size:11px; font-weight:600; letter-spacing:.04em; }
+.booking-panel .room-picker-options .room-picker-floor-group + .room-picker-floor-group { margin-top:6px; }
+.booking-panel .room-picker-options .room-picker-row { display:grid; grid-template-columns:minmax(0,1fr) 36px 36px; align-items:center; gap:0; margin:2px 0; border:0; border-radius:8px; box-shadow:none; }
+.booking-panel .room-picker-options .room-picker-row:hover { background:#f7f9fc; }
+.booking-panel .room-picker-options .room-picker-row:has(> button.selected) { background:#eff3f8; box-shadow:none; }
+.app-shell .booking-panel:not(.is-collapsed) .room-picker-options .room-picker-row > button:first-child { min-height:62px; border:0; background:transparent; box-shadow:none; }
+.booking-panel .room-picker-options .room-picker-name strong { color:#26364d; font-size:13px; font-weight:650; }
+.booking-panel .room-picker-options .room-picker-row > button:first-child > em { color:#738196; font-size:11px; font-weight:450; }
+.booking-panel:not(.is-collapsed) .room-picker-options .room-picker-row .room-favorite,
+.booking-panel:not(.is-collapsed) .room-picker-options .room-picker-row .room-picker-row-map { display:grid; place-items:center; position:static; transform:none; width:36px; min-width:36px; height:40px; min-height:40px; margin:0; padding:8px; border:0; border-radius:7px; background:transparent; box-shadow:none; color:#78869a; }
+.booking-panel:not(.is-collapsed) .room-picker-options .room-picker-row .room-favorite.is-favorite { color:var(--selected); background:transparent; }
+.booking-panel:not(.is-collapsed) .room-picker-options .room-picker-row .room-favorite:hover,
+.booking-panel:not(.is-collapsed) .room-picker-options .room-picker-row .room-picker-row-map:hover { color:var(--selected); background:#e8eef6; }
+.booking-panel .room-picker-options .room-picker-row .room-favorite:disabled { opacity:.45; cursor:wait; }
+.room-favorite svg,.booking-panel .room-picker-options .room-picker-row-map svg { width:18px; height:18px; }
+.booking-panel .room-picker-row-map svg path,.booking-panel .room-picker-row-map svg circle { fill:none; stroke:currentColor; stroke-width:1.5; }
+.room-favorite:focus-visible,.room-picker-row-map:focus-visible,.room-picker-filters button:focus-visible,.room-picker-empty button:focus-visible,.employee-results button:focus-visible { outline:2px solid var(--selected); outline-offset:-2px; }
+.room-picker-empty { display:grid; justify-items:center; gap:9px; padding:28px 12px; color:#69788d; text-align:center; }
+.room-picker-empty > svg { width:24px; height:24px; color:#94a2b4; }
+.room-picker-empty > strong { color:#34465f; font-size:13px; font-weight:600; }
+.room-picker-empty > p { margin:0; font-size:12px; }
+.booking-panel .room-picker-options .room-picker-empty > button { width:auto; padding:6px 10px; min-height:36px; border:0; border-radius:6px; background:#eff3f8; color:var(--selected); font-size:12px; }
+@media (pointer:coarse) {
+  .booking-panel .room-picker-options .room-picker-row { grid-template-columns:minmax(0,1fr) 44px 44px; }
+  .booking-panel:not(.is-collapsed) .room-picker-options .room-picker-row .room-favorite,.booking-panel:not(.is-collapsed) .room-picker-options .room-picker-row .room-picker-row-map { width:44px; min-width:44px; height:44px; min-height:44px; }
+}
 .favorites-hint,.convenience-hint { margin:5px 0 8px; color:#5c6f87; font-size:12px; line-height:1.6; overflow-wrap:anywhere; }
 .favorites-hint { padding:0 8px; }
 .employee-picker { margin:14px 0; padding-top:8px; border-top:1px solid #e0e7ef; }

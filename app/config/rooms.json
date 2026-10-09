@@ -55,7 +55,6 @@
     "capacity": 16,
     "location": "서쪽 하단, 문서보관실 옆",
     "equipment": [
-      "글라스보드",
       "대형 모니터"
     ],
     "mapClass": "map-12-big"
@@ -67,7 +66,6 @@
     "capacity": 16,
     "location": "12층 배치도 오른쪽",
     "equipment": [
-      "글라스보드",
       "대형 모니터"
     ],
     "mapClass": "map-12-w"

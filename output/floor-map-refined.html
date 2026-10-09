@@ -119,8 +119,8 @@
   {id:'r3',name:'Conference Room 3',short:'Room 3',capacity:4,equipment:''},
   {id:'r2',name:'Conference Room 2',short:'Room 2',capacity:4,equipment:''},
   {id:'r1',name:'Conference Room 1',short:'Room 1',capacity:6,equipment:'모니터 · 화이트보드'},
-  {id:'large',name:'대회의실',short:'대회의실',capacity:16,equipment:'글라스보드 · 대형 모니터'},
-  {id:'w',name:'W Room',short:'W Room',capacity:16,equipment:'글라스보드 · 대형 모니터'}
+  {id:'large',name:'대회의실',short:'대회의실',capacity:16,equipment:'대형 모니터'},
+  {id:'w',name:'W Room',short:'W Room',capacity:16,equipment:'대형 모니터'}
  ];
  const selected={original:'large',separated:'large'};
  function restore(saved) { const data=saved?.privateContent?.selected; if(data) for(const key of Object.keys(selected)) if(rooms.some(r=>r.id===data[key])) selected[key]=data[key]; }

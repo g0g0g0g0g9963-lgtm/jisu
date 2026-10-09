@@ -41,14 +41,29 @@ try {
   page.on('pageerror', e => errors.push(e.message));
   await page.clock.setFixedTime(new Date(instant));
   await page.goto(base);
-  for (const [width, floor, view] of [[1440,9,'일간'],[1280,12,'일간'],[1440,9,'주간'],[1280,12,'주간']]) {
-    await page.setViewportSize({ width, height: 900 });
+  for (const [width, height, floor, view, expanded] of [[1440,900,9,'일간',false],[1280,720,9,'일간',false],[1280,720,12,'일간',false],[1366,768,9,'일간',true],[1280,720,12,'일간',true],[1440,900,9,'주간',false],[1280,720,12,'주간',false]]) {
+    await page.setViewportSize({ width, height });
+    await page.goto(base);
     await page.getByRole('button', { name: `${floor}층`, exact: true }).click();
     await page.getByRole('button', { name: view, exact: true }).click();
+    if (expanded) await page.getByRole('button', { name: '빠른 예약 펼치기' }).click();
     await page.mouse.move(0, 0);
     const items = page.locator('.room-equipment-chip:visible');
     await items.first().waitFor();
-    const key = `${width}-${floor}-${view === '일간' ? 'day' : 'week'}`;
+    const key = `${width}-${height}-${floor}-${view === '일간' ? 'day' : 'week'}-${expanded ? 'expanded' : 'collapsed'}`;
+    if (view === '일간') {
+      check(`compact headers retain all three information rows ${key}`, await page.locator('.daily-room-head').evaluateAll(headers => headers.every(head => {
+        const box = head.getBoundingClientRect();
+        const content = [...head.querySelectorAll('.daily-room-title strong,.daily-room-meta,.room-equipment-chip')].filter(el => el.getClientRects().length);
+        return box.height === 92 && content.every(el => { const r = el.getBoundingClientRect(); return r.top >= box.top && r.bottom <= box.bottom && r.left >= box.left && r.right <= box.right && el.scrollWidth <= el.clientWidth + 1; });
+      })));
+      check(`time axis and room headers remain aligned ${key}`, await page.locator('.daily-timeline').evaluate(grid => {
+        const head = grid.querySelector('.daily-room-head').getBoundingClientRect();
+        const axis = grid.querySelector('.axis-corner').getBoundingClientRect();
+        const bodies = [...grid.querySelectorAll('.timeline-day-body')].map(el => el.getBoundingClientRect().top);
+        return head.height === axis.height && Math.abs(head.bottom-axis.bottom) < 1 && bodies.every(top => Math.abs(top-bodies[0])<1);
+      }));
+    }
     check(`transparent blue equipment ${key}`, await items.evaluateAll(items => items.every(el => {
       const css = getComputedStyle(el);
       return css.backgroundColor === 'rgba(0, 0, 0, 0)' && css.color === 'rgb(59, 99, 151)';

@@ -1,0 +1,191 @@
+<div id="bdo-floor-designs" class="viz-carousel viz-dotted-background" aria-label="회의실 배치도 디자인 비교" data-previous-label="이전 시안" data-next-label="다음 시안">
+  <section data-variant="클린 도면형" aria-label="클린 도면형"><div class="fm-stage"><div class="fm-product fm-clean" data-design="clean" aria-label="클린 도면형 설정"></div></div></section>
+  <section data-variant="포커스 안내형" aria-label="포커스 안내형" hidden><div class="fm-stage"><div class="fm-product fm-focus" data-design="focus" aria-label="포커스 안내형 설정"></div></div></section>
+  <section data-variant="사인보드형" aria-label="사인보드형" hidden><div class="fm-stage"><div class="fm-product fm-sign" data-design="sign" aria-label="사인보드형 설정"></div></div></section>
+</div>
+<style>
+#bdo-floor-designs .fm-stage { min-height:542px; padding:24px 10px 12px; display:flex; align-items:flex-start; }
+#bdo-floor-designs .fm-product {
+  --fm-paper:light-dark(#ffffff,#172031); --fm-ink:light-dark(#192740,#edf2fc);
+  --fm-muted:light-dark(#586981,#a6b4cc); --fm-line:light-dark(#dce4ef,#3c4a63);
+  --fm-floor:light-dark(#f7f9fc,#111b2b); --fm-room:light-dark(#ffffff,#202d42);
+  --fm-soft:light-dark(#edf3fb,#2a3a55); --fm-accent:light-dark(#315681,#a4c9ff);
+  --fm-strong:light-dark(#1b2d4b,#bfd5f5); --fm-on-strong:light-dark(#ffffff,#10213b);
+  --fm-green:light-dark(#0e8063,#6cddba); --fm-shadow:light-dark(#22365010,#00000030);
+  --fm-radius:18px;
+  width:100%; min-width:0; box-sizing:border-box; overflow:hidden;
+  border:1px solid var(--fm-line); border-radius:var(--fm-radius); background:var(--fm-paper);
+  box-shadow:0 8px 24px var(--fm-shadow); color:var(--fm-ink);
+  font-family:"Segoe UI","Malgun Gothic",sans-serif; font-size:14px; line-height:1.45;
+}
+#bdo-floor-designs .fm-product * { box-sizing:border-box; }
+#bdo-floor-designs .fm-product button { font:inherit; color:inherit; }
+#bdo-floor-designs .fm-product [hidden] { display:none!important; }
+#bdo-floor-designs .fm-head { display:flex; align-items:center; gap:12px; padding:18px 22px; border-bottom:1px solid var(--fm-line); }
+#bdo-floor-designs .fm-heading { flex:1; min-width:0; }
+#bdo-floor-designs .fm-heading h3 { margin:0; color:var(--fm-ink); font-size:20px; font-weight:750; line-height:1.3; letter-spacing:-.7px; }
+#bdo-floor-designs .fm-kicker { color:var(--fm-muted); font-size:11px; letter-spacing:1.4px; font-weight:650; margin-bottom:3px; }
+#bdo-floor-designs .fm-floor-tag { padding:6px 12px; border:1px solid var(--fm-line); border-radius:7px; font-size:14px; font-weight:700; white-space:nowrap; }
+#bdo-floor-designs .fm-close { display:grid; place-items:center; width:44px; height:44px; padding:0; border:0; background:transparent; border-radius:8px; color:var(--fm-muted); }
+#bdo-floor-designs .fm-close:hover { background:var(--fm-soft); }
+#bdo-floor-designs .fm-close svg { width:20px; height:20px; }
+#bdo-floor-designs .fm-map-wrap { padding:16px 20px 0; }
+#bdo-floor-designs .fm-map {
+  position:relative; height:286px; border:1px solid var(--fm-line); border-radius:3px;
+  background:var(--fm-floor); isolation:isolate;
+}
+#bdo-floor-designs .fm-map:after { content:""; position:absolute; bottom:-1px; left:60%; width:58px; height:2px; background:var(--fm-paper); z-index:0; }
+#bdo-floor-designs .fm-room-button {
+  position:absolute; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:5px; min-height:44px; min-width:0; padding:10px 4px;
+  border:1px solid var(--fm-line); border-radius:5px; background:var(--fm-room);
+  box-shadow:0 2px 4px var(--fm-shadow); text-align:center; z-index:1;
+}
+#bdo-floor-designs .fm-room-button[data-room="r3"] { left:4%; top:18%; width:18%; height:34%; }
+#bdo-floor-designs .fm-room-button[data-room="r2"] { left:23%; top:18%; width:18%; height:34%; }
+#bdo-floor-designs .fm-room-button[data-room="r1"] { left:42%; top:11%; width:20%; height:41%; }
+#bdo-floor-designs .fm-room-button[data-room="large"] { left:4%; top:54%; width:37%; height:34%; }
+#bdo-floor-designs .fm-room-button[data-room="w"] { left:76%; top:7%; width:20%; height:76%; }
+#bdo-floor-designs .fm-room-button:hover { background:var(--fm-soft); border-color:var(--fm-accent); }
+#bdo-floor-designs .fm-room-button[aria-pressed="true"] { background:var(--fm-soft); border:2px solid var(--fm-accent); box-shadow:none; }
+#bdo-floor-designs .fm-room-name { font-size:15px; line-height:1.2; font-weight:750; letter-spacing:-.35px; }
+#bdo-floor-designs .fm-room-prefix { display:block; font-size:11px; font-weight:500; margin-bottom:3px; letter-spacing:0; }
+#bdo-floor-designs .fm-capacity { font-size:12px; color:var(--fm-muted); white-space:nowrap; }
+#bdo-floor-designs .fm-check { display:none; position:absolute; top:5px; right:5px; width:16px; height:16px; border-radius:50%; background:var(--fm-accent); color:var(--fm-paper); align-items:center; justify-content:center; }
+#bdo-floor-designs .fm-check svg { width:11px; height:11px; }
+#bdo-floor-designs .fm-room-button[aria-pressed="true"] .fm-check { display:flex; }
+#bdo-floor-designs .fm-entry { position:absolute; bottom:6px; left:55%; display:flex; align-items:center; gap:5px; color:var(--fm-muted); font-size:12px; font-weight:650; }
+#bdo-floor-designs .fm-entry svg { width:15px; height:15px; }
+#bdo-floor-designs .fm-map-note { margin:8px 0 0; color:var(--fm-muted); font-size:11px; text-align:right; }
+#bdo-floor-designs .fm-details { display:flex; flex-wrap:wrap; gap:10px 18px; align-items:center; min-height:82px; padding:15px 22px 18px; }
+#bdo-floor-designs .fm-detail-title { display:flex; gap:8px; align-items:center; font-size:17px; font-weight:750; }
+#bdo-floor-designs .fm-detail-copy { flex:1; min-width:150px; }
+#bdo-floor-designs .fm-meta { display:flex; gap:5px; flex-wrap:wrap; color:var(--fm-muted); font-size:12px; margin-top:4px; }
+#bdo-floor-designs .fm-status { color:var(--fm-green); font-size:12px; display:flex; align-items:center; gap:6px; white-space:nowrap; }
+#bdo-floor-designs .fm-status:before { content:""; width:6px; height:6px; border-radius:50%; background:currentColor; }
+#bdo-floor-designs .fm-status small { color:var(--fm-muted); font-size:11px; }
+#bdo-floor-designs .fm-selected { color:var(--fm-accent); font-size:11px; font-weight:650; border-left:1px solid var(--fm-line); padding-left:8px; }
+#bdo-floor-designs .fm-room-code { display:none; }
+#bdo-floor-designs .fm-reopen-area { min-height:440px; display:grid; place-items:center; }
+#bdo-floor-designs .fm-reopen { border:1px solid var(--fm-line); border-radius:9px; padding:12px 18px; background:var(--fm-room); font-weight:650; min-height:44px; }
+
+/* 포커스 안내: 상세 정보를 왼쪽에 고정하고 선택한 방만 채운다. */
+#bdo-floor-designs .fm-focus .fm-head { border:0; padding-bottom:14px; }
+#bdo-floor-designs .fm-focus-layout { display:grid; grid-template-columns:170px minmax(0,1fr); min-height:330px; margin:0 20px 16px; border:1px solid var(--fm-line); border-radius:12px; overflow:hidden; }
+#bdo-floor-designs .fm-focus .fm-details { display:flex; flex-direction:column; align-items:flex-start; justify-content:center; gap:13px; padding:20px 18px; color:var(--fm-on-strong); background:var(--fm-strong); }
+#bdo-floor-designs .fm-focus .fm-detail-copy { flex:0; min-width:0; }
+#bdo-floor-designs .fm-focus .fm-detail-title { flex-wrap:wrap; font-size:22px; gap:6px; }
+#bdo-floor-designs .fm-focus .fm-selected { display:block; order:-1; flex-basis:100%; border:0; padding:0; margin-bottom:6px; color:var(--fm-on-strong); opacity:.75; font-weight:500; }
+#bdo-floor-designs .fm-focus .fm-meta { color:var(--fm-on-strong); opacity:.8; font-size:12px; margin-top:10px; }
+#bdo-floor-designs .fm-focus .fm-status { color:var(--fm-on-strong); font-size:12px; }
+#bdo-floor-designs .fm-focus .fm-status small { color:var(--fm-on-strong); opacity:.7; }
+#bdo-floor-designs .fm-focus .fm-map-wrap { align-self:center; padding:14px 12px 10px; }
+#bdo-floor-designs .fm-focus .fm-map { height:275px; border:0; background:var(--fm-floor); border-radius:7px; }
+#bdo-floor-designs .fm-focus .fm-map:after { display:none; }
+#bdo-floor-designs .fm-focus .fm-room-button { border:1px solid var(--fm-line); box-shadow:none; border-radius:7px; }
+#bdo-floor-designs .fm-focus .fm-room-button[aria-pressed="true"] { background:var(--fm-strong); color:var(--fm-on-strong); border-color:var(--fm-strong); }
+#bdo-floor-designs .fm-focus .fm-room-button[aria-pressed="true"] .fm-capacity { color:var(--fm-on-strong); opacity:.8; }
+#bdo-floor-designs .fm-focus .fm-check { background:var(--fm-on-strong); color:var(--fm-strong); }
+#bdo-floor-designs .fm-focus .fm-room-prefix { display:none; }
+#bdo-floor-designs .fm-focus .fm-room-name { font-size:13px; }
+#bdo-floor-designs .fm-focus .fm-room-button[data-room="large"] .fm-room-name { font-size:16px; }
+#bdo-floor-designs .fm-focus .fm-map-note { font-size:11px; text-align:center; }
+
+/* 사인보드: 지도에는 짧은 실명, 오른쪽에는 전체 명칭을 둔다. */
+#bdo-floor-designs .fm-sign .fm-head { align-items:flex-start; }
+#bdo-floor-designs .fm-sign .fm-floor-tag { border:0; padding:0; font-size:28px; line-height:1.5; letter-spacing:-1px; }
+#bdo-floor-designs .fm-sign-layout { display:grid; grid-template-columns:minmax(0,1fr) 192px; gap:18px; padding:18px 20px 4px; }
+#bdo-floor-designs .fm-sign .fm-map-wrap { padding:0; }
+#bdo-floor-designs .fm-sign .fm-map { height:268px; border:0; background:var(--fm-floor); border-radius:6px; }
+#bdo-floor-designs .fm-sign .fm-map:after { display:none; }
+#bdo-floor-designs .fm-sign .fm-room-button { background:var(--fm-room); box-shadow:none; border:1px solid var(--fm-line); border-radius:3px; }
+#bdo-floor-designs .fm-sign .fm-room-button[aria-pressed="true"] { border-color:var(--fm-accent); border-left-width:4px; background:var(--fm-soft); }
+#bdo-floor-designs .fm-sign .fm-room-name,#bdo-floor-designs .fm-sign .fm-capacity,#bdo-floor-designs .fm-sign .fm-check { display:none; }
+#bdo-floor-designs .fm-sign .fm-room-code { display:block; font-size:20px; font-weight:750; letter-spacing:-.8px; }
+#bdo-floor-designs .fm-sign .fm-room-code small { display:block; font-size:11px; letter-spacing:.3px; font-weight:500; margin-bottom:3px; }
+#bdo-floor-designs .fm-sign .fm-room-button[data-room="large"] .fm-room-code { font-size:17px; letter-spacing:-.5px; }
+#bdo-floor-designs .fm-roster { display:flex; flex-direction:column; justify-content:center; gap:2px; }
+#bdo-floor-designs .fm-roster-button { min-height:48px; display:flex; gap:10px; align-items:center; border:0; border-radius:6px; background:transparent; text-align:left; padding:5px 8px; }
+#bdo-floor-designs .fm-roster-button:hover,#bdo-floor-designs .fm-roster-button[aria-pressed="true"] { background:var(--fm-soft); }
+#bdo-floor-designs .fm-list-code { color:var(--fm-accent); font-size:13px; font-weight:750; width:24px; text-align:center; flex:none; }
+#bdo-floor-designs .fm-list-name { font-size:12px; font-weight:650; line-height:1.3; }
+#bdo-floor-designs .fm-list-name small { display:block; color:var(--fm-muted); font-size:11px; font-weight:400; margin-top:3px; }
+#bdo-floor-designs .fm-sign .fm-details { margin:8px 20px 0; padding:13px 0 17px; border-top:1px solid var(--fm-line); min-height:76px; }
+
+@media(max-width:570px) {
+ #bdo-floor-designs .fm-stage { min-height:640px; padding:24px 4px 8px; }
+ #bdo-floor-designs .fm-head { padding:15px 14px; gap:6px; }
+ #bdo-floor-designs .fm-heading h3 { font-size:18px; }
+ #bdo-floor-designs .fm-map-wrap { padding:14px 12px 0; }
+ #bdo-floor-designs .fm-map { height:290px; }
+ #bdo-floor-designs .fm-room-prefix { display:none; }
+ #bdo-floor-designs .fm-room-name { font-size:13px; }
+ #bdo-floor-designs .fm-room-button { padding:12px 3px; }
+ #bdo-floor-designs .fm-capacity { font-size:11px; }
+ #bdo-floor-designs .fm-check { width:12px; height:12px; top:3px; right:3px; }
+ #bdo-floor-designs .fm-details { padding:14px; }
+ #bdo-floor-designs .fm-entry { left:48%; font-size:11px; }
+ #bdo-floor-designs .fm-map-note { font-size:11px; }
+ #bdo-floor-designs .fm-focus-layout { display:flex; flex-direction:column-reverse; margin:0 12px 14px; }
+ #bdo-floor-designs .fm-focus .fm-map-wrap { width:100%; padding:12px 8px 10px; }
+ #bdo-floor-designs .fm-focus .fm-details { width:100%; flex-direction:row; align-items:center; justify-content:space-between; padding:13px 14px; }
+ #bdo-floor-designs .fm-focus .fm-detail-title { font-size:18px; }
+ #bdo-floor-designs .fm-focus .fm-meta { margin-top:4px; }
+ #bdo-floor-designs .fm-focus .fm-selected { flex-basis:auto; order:0; margin:0; }
+ #bdo-floor-designs .fm-sign-layout { display:block; padding:14px 12px 0; }
+ #bdo-floor-designs .fm-sign .fm-map { height:258px; }
+ #bdo-floor-designs .fm-roster { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); margin-top:10px; gap:1px 4px; }
+ #bdo-floor-designs .fm-roster-button { min-height:44px; padding:4px; gap:4px; }
+ #bdo-floor-designs .fm-list-name { font-size:11px; }
+ #bdo-floor-designs .fm-list-name small { display:none; }
+ #bdo-floor-designs .fm-sign .fm-details { margin:8px 12px 0; }
+}
+</style>
+<script>
+(() => {
+  const root = document.getElementById('bdo-floor-designs');
+  const rooms = [
+    { id:'r3', name:'Conference Room 3', short:'Room 3', code:'03', capacity:4, equipment:'' },
+    { id:'r2', name:'Conference Room 2', short:'Room 2', code:'02', capacity:4, equipment:'' },
+    { id:'r1', name:'Conference Room 1', short:'Room 1', code:'01', capacity:6, equipment:'모니터 · 화이트보드' },
+    { id:'large', name:'대회의실', short:'대회의실', code:'대회의실', capacity:16, equipment:'글라스보드 · 대형 모니터' },
+    { id:'w', name:'W Room', short:'W Room', code:'W', capacity:16, equipment:'글라스보드 · 대형 모니터' }
+  ];
+  const states = {clean:'large',focus:'large',sign:'large'};
+  function restore(saved) {
+    const selections = saved?.privateContent?.selections;
+    if (selections) for (const key of Object.keys(states)) if (rooms.some(r => r.id === selections[key])) states[key] = selections[key];
+  }
+  restore(window.openai?.widgetState);
+  const roomMarkup = room => `<button type="button" class="fm-room-button cursor-interaction" data-room="${room.id}" aria-label="${room.name}, 최대 ${room.capacity}명" aria-pressed="false"><span class="fm-check"><i data-lucide="check" aria-hidden="true"></i></span><span class="fm-room-name">${room.id[0] === 'r' ? '<span class="fm-room-prefix">Conference</span>' : ''}${room.short}</span><span class="fm-capacity">${room.capacity}명</span><span class="fm-room-code">${room.id[0] === 'r' ? '<small>ROOM</small>' : ''}${room.code}</span></button>`;
+  const mapMarkup = `<div class="fm-map-wrap"><div class="fm-map" role="group" aria-label="12층 위치 관계 시안. 왼쪽 위부터 Room 3, Room 2, Room 1, 아래 대회의실, 오른쪽 W Room, 아래 출입구">${rooms.map(roomMarkup).join('')}<span class="fm-entry"><i data-lucide="log-in" aria-hidden="true"></i>출입구</span></div><div class="fm-map-note">위치 관계 기준 · 실측 도면 아님</div></div>`;
+  const detailsMarkup = '<div class="fm-details" aria-live="polite"><div class="fm-detail-copy"><div class="fm-detail-title"><span data-detail-name></span><span class="fm-selected">선택됨</span></div><div class="fm-meta" data-detail-meta></div></div><div class="fm-status">사용 가능 <small>예시</small></div></div>';
+  for (const product of root.querySelectorAll('.fm-product')) {
+    const key = product.dataset.design;
+    const roster = `<div class="fm-roster" role="group" aria-label="회의실 이름으로 선택">${[rooms[3],rooms[4],rooms[2],rooms[1],rooms[0]].map(r=>`<button type="button" class="fm-roster-button cursor-interaction" data-room="${r.id}" aria-pressed="false"><span class="fm-list-code">${r.id === 'large' ? 'L' : r.code}</span><span class="fm-list-name">${r.name}<small>최대 ${r.capacity}명</small></span></button>`).join('')}</div>`;
+    product.innerHTML = `<div class="fm-dialog-content"><div class="fm-head"><div class="fm-heading"><div class="fm-kicker">SEOUL OFFICE · DESIGN PREVIEW</div><h3>회의실 위치</h3></div><span class="fm-floor-tag">12F</span><button type="button" class="fm-close cursor-interaction" aria-label="배치도 시안 닫기"><i data-lucide="x" aria-hidden="true"></i></button></div>${key === 'focus' ? `<div class="fm-focus-layout">${detailsMarkup}${mapMarkup}</div>` : key === 'sign' ? `<div class="fm-sign-layout">${mapMarkup}${roster}</div>${detailsMarkup}` : `${mapMarkup}${detailsMarkup}`}</div><div class="fm-reopen-area" hidden><button type="button" class="fm-reopen cursor-interaction">배치도 다시 보기</button></div>`;
+    product.querySelector('.fm-close').addEventListener('click',()=>{ product.querySelector('.fm-dialog-content').hidden=true; product.querySelector('.fm-reopen-area').hidden=false; product.querySelector('.fm-reopen').focus(); });
+    product.querySelector('.fm-reopen').addEventListener('click',()=>{ product.querySelector('.fm-dialog-content').hidden=false; product.querySelector('.fm-reopen-area').hidden=true; product.querySelector('.fm-close').focus(); });
+    product.querySelectorAll('[data-room]').forEach(button => button.addEventListener('click',()=> {
+      states[key]=button.dataset.room; render(product);
+      window.openai?.setWidgetState?.({modelContent:{selectedRoom:rooms.find(r=>r.id===states[key]).name,interactedDesign:product.getAttribute('aria-label').replace(' 설정','')},privateContent:{selections:{...states}}})?.catch(()=>{});
+    }));
+    if(globalThis.Tweak) {
+      const design={radius:18};
+      const tweak=new Tweak({container:product,onChange:()=>product.style.setProperty('--fm-radius',`${design.radius}px`)});
+      tweak.addSlider(design,'radius',{label:'창 모서리 둥글기',min:4,max:24,step:2,unit:'px'});
+    }
+    render(product);
+  }
+  function render(product) {
+    const room=rooms.find(r=>r.id===states[product.dataset.design]);
+    product.querySelectorAll('[data-room]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.room===room.id)));
+    product.querySelector('[data-detail-name]').textContent=room.name;
+    product.querySelector('[data-detail-meta]').textContent=`최대 ${room.capacity}명${room.equipment ? ' · '+room.equipment : ''}`;
+  }
+  window.addEventListener('openai:set_globals',event=>{
+    if (event.detail?.globals?.widgetState) { restore(event.detail.globals.widgetState); root.querySelectorAll('.fm-product').forEach(render); }
+  });
+  if(globalThis.lucide) lucide.createIcons({attrs:{width:16,height:16}});
+})();
+</script>

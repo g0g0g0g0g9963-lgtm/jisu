@@ -83,8 +83,8 @@
 }
 .app-shell .schedule-design-cards .daily-timeline.timeline-full-day .timeline-day-body {
   background-image:
-    repeating-linear-gradient(to bottom, #dce4ef 0 1px, transparent 1px var(--timeline-hour-height)),
-    repeating-linear-gradient(to bottom, #edf1f7 0 1px, transparent 1px var(--timeline-slot-height));
+    repeating-linear-gradient(to bottom, #e6ecf3 0 1px, transparent 1px var(--timeline-hour-height)),
+    repeating-linear-gradient(to bottom, #f1f4f9 0 1px, transparent 1px var(--timeline-slot-height));
 }
 .app-shell .schedule-design-cards .daily-timeline.timeline-full-day .timeline-day-body::before { display: none; }
 .app-shell .schedule-design-cards .daily-timeline.timeline-full-day .daily-room-head,

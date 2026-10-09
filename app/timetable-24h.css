@@ -14,6 +14,7 @@
 .app-shell .weekly-board .daily-timeline.timeline-full-day {
   --timeline-head-height: 120px;
   --timeline-top-gap: 24px;
+  --current-time-accent: #d80c3b;
   flex: 1 1 0%;
   min-height: 0 !important;
   height: auto !important;
@@ -87,20 +88,54 @@
 }
 .app-shell .schedule-design-cards .daily-timeline.timeline-full-day > .current-time-line-all {
   height: 1px !important;
-  background: #d3093573;
+  background: var(--current-time-accent);
   z-index: 1;
   right: auto;
   pointer-events: none;
 }
 .app-shell .schedule-design-cards .daily-timeline.timeline-full-day > .current-time-line-all::before {
+  content: none;
+}
+.app-shell .daily-timeline.timeline-full-day .current-time-axis-marker {
+  position: absolute;
+  left: 0;
+  height: 1px;
+  z-index: 1;
+  pointer-events: none;
+}
+.app-shell .daily-timeline.timeline-full-day .current-time-pointer {
+  position: absolute;
+  top: 0;
+  right: 8px;
+  display: grid;
+  place-items: center;
+  width: min(62px, calc(var(--current-time-gutter) - 12px));
+  height: 26px;
+  padding: 0;
+  border: 0;
+  border-radius: 5px 0 0 5px;
+  color: #fff;
+  background: var(--current-time-accent);
+  box-shadow: none;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .02em;
+  white-space: nowrap;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+.app-shell .daily-timeline.timeline-full-day .current-time-pointer::after {
   content: "";
   position: absolute;
-  top: -2px;
-  left: 0;
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: #d30935;
+  top: 0;
+  left: 100%;
+  width: 0;
+  height: 0;
+  border-top: 13px solid transparent;
+  border-bottom: 13px solid transparent;
+  border-left: 8px solid var(--current-time-accent);
 }
 @media (max-width: 600px) {
   .app-shell .weekly-board .daily-timeline-footer { padding-left: 4px; padding-right: 4px; font-size: 11px; }

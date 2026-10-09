@@ -1203,7 +1203,9 @@ export default function Home() {
     if (!grid || !dailyGridMetrics) return;
     const { bodyTop, bodyHeight, headerHeight } = dailyGridMetrics;
     const position = bodyTop + ((minute - timelineStart) / (timelineEnd - timelineStart)) * bodyHeight;
-    const target = position - headerHeight - Math.max(0, grid.clientHeight - headerHeight) * siteConfig.timeline.initialViewportRatio;
+    const markerHeight = grid.querySelector<HTMLElement>(".current-time-pointer")?.offsetHeight ?? 0;
+    const topInset = Math.max(markerHeight / 2 + 4, Math.max(0, grid.clientHeight - headerHeight) * siteConfig.timeline.initialViewportRatio);
+    const target = position - headerHeight - topInset;
     const motion = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : behavior;
     grid.scrollTo({ top: Math.max(0, Math.min(grid.scrollHeight - grid.clientHeight, target)), behavior: motion });
   }, [dailyGridMetrics]);
@@ -2378,11 +2380,27 @@ export default function Home() {
                 <div className="time-axis">
                   <span className="axis-corner">TIME</span>
                   <div className="time-axis-body">
-                    {timelineHours.map((hour) => <time key={hour} style={{ top: `${((hour * 60 - timelineStart) / (timelineEnd - timelineStart)) * 100}%` }}>{String(hour).padStart(2, "0")}:00</time>)}
+                    {timelineHours.map((hour) => {
+                      // 포인터 라벨과 겹치는 정각 글자만 숨겨 두 시간이 섞여 보이지 않게 한다.
+                      const coveredByCurrentTime = showCurrentTime && nowMinutes !== null &&
+                        Math.abs(hour * 60 - nowMinutes) * siteConfig.timeline.hourHeightPx / 60 < 26;
+                      return <time key={hour} aria-hidden={coveredByCurrentTime || undefined} style={{ top: `${((hour * 60 - timelineStart) / (timelineEnd - timelineStart)) * 100}%`, visibility: coveredByCurrentTime ? "hidden" : undefined }}>{String(hour).padStart(2, "0")}:00</time>;
+                    })}
                   </div>
+                  {showCurrentTime && currentTimePercent !== null && nowMinutes !== null && dailyGridMetrics && (
+                    <span className="current-time-axis-marker" style={{
+                      "--current-time-gutter": `${dailyGridMetrics.left}px`,
+                      width: dailyGridMetrics.left,
+                      top: dailyGridMetrics.bodyTop + (currentTimePercent / 100) * dailyGridMetrics.bodyHeight,
+                    } as CSSProperties}>
+                      <time className="current-time-pointer" dateTime={formatMinutes(nowMinutes)} aria-label={`현재 시간 ${formatMinutes(nowMinutes)}`}>
+                        {formatMinutes(nowMinutes)}
+                      </time>
+                    </span>
+                  )}
                 </div>
-                {/* 예약 영역에는 현재 시간의 가는 안내선만 유지한다. */}
-                {showCurrentTime && currentTimePercent !== null && dailyGridMetrics && (
+                {/* 포인터 라벨은 왼쪽 시간 축에, 가는 안내선만 예약 영역에 둔다. */}
+                {showCurrentTime && currentTimePercent !== null && nowMinutes !== null && dailyGridMetrics && (
                   <span
                     className="current-time-line current-time-line-all"
                     aria-hidden="true"

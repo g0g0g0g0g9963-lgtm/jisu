@@ -73,6 +73,7 @@ try {
   check('single booking uses compact table row with room and time',await dialog.locator('table.my-bookings-list').count()===1&&await listRows.count()===1&&(await listRows.locator('.my-booking-room').textContent()).includes('Conference Room 3')&&/21:30.*23:00/.test(await listRows.textContent()));
   check('active row exposes selection edit delete without standalone early-end',await listRows.getByRole('checkbox',{name:/예약 선택$/}).count()===1&&await listRows.locator('.edit-booking').textContent()==='수정'&&await listRows.locator('.delete-booking').textContent()==='삭제'&&await dialog.getByRole('button',{name:/일찍 끝내기/}).count()===0);
   check('selection deletion starts disabled',await toolbarDelete.isDisabled()&&(await toolbarDelete.textContent()).includes('선택 삭제'));
+  check('disabled selection deletion uses a neutral surface',await toolbarDelete.evaluate(el=>{const s=getComputedStyle(el);return s.backgroundColor==='rgb(248, 250, 252)'&&s.color==='rgb(104, 119, 142)';}));
   await listRows.locator('.edit-booking').click(); await editor.waitFor();
   check('editor opens the chosen booking',await editor.getByLabel('회의 목적',{exact:true}).inputValue()==='회의'&&await editor.locator('.edit-time-row select').first().inputValue()==='21:30');
   await editor.getByLabel('회의 목적',{exact:true}).fill('저장하지 않을 수정');
@@ -110,9 +111,11 @@ try {
   check('past row stays read-only and last',await listRows.last().evaluate(el=>el.classList.contains('is-past')&&!el.querySelector('button,input')));
   const running=listRows.filter({has:page.locator('.booking-status',{hasText:'진행 중'})});
   check('running row has selection edit delete but no early-end button',await running.locator('.edit-booking').count()===1&&await running.locator('.delete-booking').count()===1&&await running.getByRole('checkbox').count()===1&&await dialog.getByRole('button',{name:/일찍 끝내기/}).count()===0);
-  check('running badge renders calm green instead of legacy red',await running.locator('.booking-status').evaluate(el=>{const s=getComputedStyle(el);return s.color==='rgb(8, 116, 91)'&&s.backgroundColor==='rgb(233, 245, 240)';}));
-  check('all upcoming badges consistently render soft blue',await listRows.locator('.booking-status').evaluateAll(nodes=>{const planned=nodes.filter(el=>el.textContent==='예정');return planned.length===5&&planned.every(el=>{const s=getComputedStyle(el);return s.color==='rgb(48, 75, 120)'&&s.backgroundColor==='rgb(237, 242, 248)';});}));
-  check('past badge renders muted gray',await listRows.last().locator('.booking-status').evaluate(el=>{const s=getComputedStyle(el);return s.backgroundColor==='rgb(243, 245, 248)'&&s.color==='rgb(104, 119, 142)';}));
+  check('running status uses bold navy text and a small navy dot without colored fill',await running.locator('.booking-status').evaluate(el=>{const s=getComputedStyle(el),dot=getComputedStyle(el,'::before');return s.color==='rgb(23, 36, 61)'&&s.backgroundColor==='rgba(0, 0, 0, 0)'&&Number(s.fontWeight)>=700&&dot.backgroundColor==='rgb(23, 36, 61)'&&dot.width==='5px'&&dot.height==='5px';}));
+  check('all upcoming statuses use muted text without colored fills',await listRows.locator('.booking-status').evaluateAll(nodes=>{const planned=nodes.filter(el=>el.textContent==='예정');return planned.length===5&&planned.every(el=>{const s=getComputedStyle(el);return s.color==='rgb(104, 119, 142)'&&s.backgroundColor==='rgba(0, 0, 0, 0)';});}));
+  check('past status uses muted text without a gray badge fill',await listRows.last().locator('.booking-status').evaluate(el=>{const s=getComputedStyle(el);return s.backgroundColor==='rgba(0, 0, 0, 0)'&&s.color==='rgb(104, 119, 142)';}));
+  check('floor labels use a separator instead of colored chips',await listRows.locator('.booking-confirm-floor').evaluateAll(nodes=>nodes.length===7&&nodes.every(el=>{const s=getComputedStyle(el);return s.backgroundColor==='rgba(0, 0, 0, 0)'&&s.borderLeftWidth==='1px'&&s.borderLeftStyle==='solid'&&s.borderLeftColor==='rgb(230, 235, 242)';})));
+  check('row actions share white bordered surfaces with red only on delete text',await listRows.locator('.edit-booking,.delete-booking').evaluateAll(nodes=>nodes.length===12&&nodes.every(el=>{const s=getComputedStyle(el);return s.backgroundColor==='rgb(255, 255, 255)'&&s.borderTopWidth==='1px'&&s.borderTopStyle==='solid'&&s.borderTopColor==='rgb(230, 235, 242)'&&s.color===(el.classList.contains('delete-booking')?'rgb(215, 12, 57)':'rgb(23, 36, 61)');})));
   await running.locator('.edit-booking').click(); await editor.waitFor();
   check('running editor preserves original start without standalone early-end action',await editor.locator('.edit-time-row select').first().inputValue()==='14:00'&&await editor.getByRole('button',{name:/일찍 끝내기/}).count()===0);
   await editor.getByRole('button',{name:'닫기',exact:true}).click(); await editor.waitFor({state:'hidden'});
@@ -135,6 +138,9 @@ try {
   const repeated=listRows.filter({has:page.locator('.my-booking-purpose',{hasText:'반복 회의'})});
   await repeated.first().getByRole('checkbox').check();
   check('selection keeps every per-row action available',await listRows.locator('.edit-booking').count()===6&&await listRows.locator('.delete-booking').count()===6&&await listRows.getByRole('checkbox').count()===6&&(await toolbarDelete.textContent()).includes('1건 삭제'));
+  // Wait for any inherited color transition after enabling the primary action.
+  await until(()=>toolbarDelete.evaluate(el=>{const s=getComputedStyle(el);return s.backgroundColor==='rgb(23, 36, 61)'&&s.color==='rgb(255, 255, 255)';}));
+  check('enabled selection deletion uses the single navy primary color',await toolbarDelete.evaluate(el=>{const s=getComputedStyle(el);return s.backgroundColor==='rgb(23, 36, 61)'&&s.color==='rgb(255, 255, 255)';}));
   await dialog.locator('.pick-series').click();
   check('series selection picks exactly four repeated reservations',await listRows.locator('input:checked').count()===4&&(await toolbarDelete.textContent()).includes('4건 삭제'));
   await toolbarDelete.click(); await confirm.waitFor();
@@ -172,7 +178,7 @@ try {
   check('mixed delete requests each selection once and reports partial failure',writes===9&&mutations.slice(3).every(m=>m.method==='DELETE')&&new Set(mutations.slice(3).map(m=>m.path)).size===6&&injectedFailure===1&&(await dialog.getByRole('alert').textContent()).includes('시험용 일시 오류'));
   check('running delete preserves used interval and explicit endedAt',ended&&ended.start==='14:00'&&ended.end==='15:00'&&ended.endedAt&&new Date(ended.endedAt).getTime()===new Date(instant).getTime()&&afterMixed.length===initialRows.length-5);
   check('ended booking is read-only history before rounded release boundary',await history.evaluate(el=>el.classList.contains('is-past')&&!el.querySelector('button,input'))&&(await dialog.locator('.my-bookings-summary').textContent()).includes('최근 1개월 2'));
-  check('newly ended booking switches from green to history gray',await history.locator('.booking-status').evaluate(el=>{const s=getComputedStyle(el);return s.backgroundColor==='rgb(243, 245, 248)'&&s.color==='rgb(104, 119, 142)';}));
+  check('newly ended booking uses plain muted history text without colored fill',await history.locator('.booking-status').evaluate(el=>{const s=getComputedStyle(el),dot=getComputedStyle(el,'::before');return s.backgroundColor==='rgba(0, 0, 0, 0)'&&s.color==='rgb(104, 119, 142)'&&(dot.content==='none'||dot.content==='normal'||dot.display==='none');}));
   check('only failed future row remains selected and actionable',await listRows.locator('input:checked').count()===1&&await listRows.locator('.edit-booking').count()===1&&await listRows.locator('.delete-booking').count()===1&&(await toolbarDelete.textContent()).includes('1건 삭제')&&afterMixed.some(b=>b.id===retryFixture.id));
   await page.screenshot({path:resolve(run,'my-bookings-partial-failure-history.png')});
   await toolbarDelete.click(); await confirm.waitFor();
@@ -187,15 +193,22 @@ try {
   check('another booking can reserve the released remainder from displayed boundary',freed.status===201);
   // Final API fixture stays only in this disposable database.
   const sso=await browser.newPage({viewport:{width:1280,height:720},timezoneId:'Asia/Seoul'});
+  let ssoWrites=0; sso.on('request',req=>{if(['POST','PATCH','DELETE'].includes(req.method())&&new URL(req.url()).pathname.startsWith('/api/bookings'))ssoWrites++;});
   sso.on('pageerror',e=>errors.push(e.message)); await sso.clock.setFixedTime(new Date(instant));
   await sso.route('**/api/me',route=>route.fulfill({json:{user:{name:'QA Signed In',email:'qa@example.invalid'}}}));
   await sso.route('**/api/bookings',async route=>{const response=await route.fetch(),data=await response.json();await route.fulfill({json:{bookings:data.bookings.map((b,i)=>({...b,isMine:i===0,...(i===0?{attendeeAccounts:[{id:'fixture-person',name:'QA Attendee',email:'attendee@example.invalid'}]}:{})}))}});});
-  await sso.goto(base); await sso.getByRole('button',{name:/^내 예약 열기/}).click();
+  await sso.goto(base+'/#my-bookings');
   const signedDialog=sso.getByRole('dialog',{name:'내 예약',exact:true}); await signedDialog.locator('.my-booking-row').waitFor();
+  check('my-bookings deep link automatically opens the list',await signedDialog.isVisible()&&new URL(sso.url()).hash==='#my-bookings');
   check('SSO removes manual name search and respects server ownership flags',await signedDialog.locator('.my-bookings-search').count()===0&&await signedDialog.locator('.my-booking-row').count()===1);
   await signedDialog.locator('.booking-attendee-detail summary').click();
   check('owner can inspect employee attendee identities from row',(await signedDialog.locator('.booking-attendee-detail').textContent()).includes('attendee@example.invalid'));
   await signedDialog.screenshot({path:resolve(run,'my-bookings-signed-in.png')});
+  await signedDialog.getByRole('button',{name:'내 예약 닫기'}).click(); await signedDialog.waitFor({state:'hidden'}); await pause(200);
+  check('closing a deep-linked list does not immediately reopen it',!(await signedDialog.isVisible()));
+  await sso.evaluate(()=>{window.location.hash='schedule';}); await sso.waitForURL('**/#schedule');
+  await sso.evaluate(()=>{window.location.hash='my-bookings';}); await signedDialog.waitFor();
+  check('changing the hash to my bookings reopens the list without writes',await signedDialog.isVisible()&&writes===10&&ssoWrites===0);
   check('no browser errors',errors.length===0);
   writeFileSync(resolve(run,'results.json'),JSON.stringify({passed:results.length,results,errors,mutations,deleteResponses:responseResults,geometry},null,2));
   console.log('RESULT '+results.length+' passed; '+run);

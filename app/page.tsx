@@ -770,6 +770,15 @@ export default function Home() {
     moveDate(todayKey(clock ?? undefined), bookingDefaults.defaultRepeatSpanDays),
   );
   const [myBookingsOpen, setMyBookingsOpen] = useState(false);
+  // A direct link opens the same authenticated list, without changing its owner.
+  useEffect(() => {
+    const openLinkedBookings = () => {
+      if (window.location.hash === "#my-bookings") setMyBookingsOpen(true);
+    };
+    openLinkedBookings();
+    window.addEventListener("hashchange", openLinkedBookings);
+    return () => window.removeEventListener("hashchange", openLinkedBookings);
+  }, []);
   const [myBookingOwner, setMyBookingOwner] = useStoredText(OWNER_STORAGE_KEY);
   // '내 예약'도 시험용 이름으로 바로 채워 둔다. 예전에 다른 이름으로 예약한
   // 기록이 남아 있으면 그것을 그대로 쓴다.

@@ -48,7 +48,7 @@ for(const fixture of fixtures) {
   if(!result.ok) throw Error('Synthetic booking collision.');
 }
 console.log(`[preview] Isolated synthetic bookings: ${fixtures.length}; owner: ${common.owner}`);
-console.log(`[preview] URL: http://127.0.0.1:${port}/`);
+console.log(`[preview] URL: http://127.0.0.1:${port}/#my-bookings`);
 console.log('[preview] Open My bookings. Editing/deleting here affects only this disposable preview.');
 console.log(`[preview] Data directory: ${directory}`);
 await import('./server/index.mjs');

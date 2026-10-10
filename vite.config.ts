@@ -11,10 +11,26 @@ export default defineConfig({
   root: resolveFromRepo("standalone"),
   publicDir: resolveFromRepo("public"),
   css: { postcss: resolveFromRepo(".") },
-  plugins: [react()],
+  plugins: [react(), {
+    name: "kiosk-entry-alias",
+    configureServer(server) {
+      server.middlewares.use((req, _res, next) => {
+        if (/^\/kiosk\/?(?:\?|$)/.test(req.url || "")) {
+          req.url = (req.url || "").replace(/^\/kiosk\/?(?=\?|$)/, "/kiosk.html");
+        }
+        next();
+      });
+    },
+  }],
   build: {
     outDir: resolveFromRepo("dist"),
     emptyOutDir: true,
+    rollupOptions: {
+      input: {
+        main: resolveFromRepo("standalone/index.html"),
+        kiosk: resolveFromRepo("standalone/kiosk.html"),
+      },
+    },
   },
   server: {
     host: "127.0.0.1",

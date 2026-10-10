@@ -6,9 +6,11 @@ import { registerAuthRoutes, ssoEnabled } from "./auth.mjs";
 import { ROOM_IDS, siteConfig } from "./config.mjs";
 import { countBookings, createBookings, deleteBooking, listBookings, updateBooking, listAudit } from "./db.mjs";
 import { isAdminUser, requireAdmin } from "./admin-policy.mjs";
+import { registerAdminUsageRoute } from "./admin-usage.mjs";
 import { initializeOperations, monitorRequests, operationsStatus, startBackup, startVerification, recordDatabaseError } from "./operations.mjs";
 import { seedDemoBookings } from "./seed.mjs";
 import { registerConvenienceRoutes, selectedEmployees, rememberEmployee } from "./microsoft.mjs";
+import { registerKioskRoutes } from "./kiosk.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const clientDir = resolve(process.env.CLIENT_DIR ?? join(here, "..", "dist"));
@@ -31,10 +33,31 @@ app.use("/api", (_req, res, next) => {
 });
 app.use(express.json({ limit: "64kb" }));
 
-// SSO가 켜져 있으면 /auth/* 라우트 + 로그인 강제 미들웨어가 여기서 걸린다.
-registerAuthRoutes(app);
 initializeOperations(clientDir);
 app.use(monitorRequests);
+// Kiosk has its own device credential and narrow API; a staff session never grants access.
+registerKioskRoutes(app, { validateCreate });
+// Only the empty shell and compiled public assets are available before staff sign-in.
+// Reservation data remains behind the kiosk device or existing Microsoft authentication.
+app.get(["/kiosk", "/kiosk/", "/kiosk.html"], (_req, res, next) => {
+  res.setHeader("Cache-Control", "no-store");
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("Referrer-Policy", "no-referrer");
+  res.setHeader("Content-Security-Policy", "frame-ancestors 'none'; base-uri 'self'; form-action 'self'");
+  res.sendFile(join(clientDir, "kiosk.html"), (error) => { if (error) next(error); });
+});
+for (const directory of ["assets", "fonts"]) {
+  app.use(`/${directory}`, express.static(join(clientDir, directory), {
+    dotfiles: "deny", index: false,
+    setHeaders(res) { res.setHeader("X-Content-Type-Options", "nosniff"); },
+  }));
+}
+app.get("/bdo-logo.png", (_req, res, next) => {
+  res.sendFile(join(clientDir, "bdo-logo.png"), (error) => { if (error) next(error); });
+});
+
+// SSO가 켜져 있으면 /auth/* 라우트 + 로그인 강제 미들웨어가 여기서 걸린다.
+registerAuthRoutes(app);
 registerConvenienceRoutes(app);
 app.use("/admin", requireAdmin);
 app.use("/api/admin", requireAdmin);
@@ -178,6 +201,7 @@ app.get("/api/me", (req, res) => {
 });
 
 app.get("/api/admin/status", (_req,res)=>res.json(operationsStatus()));
+registerAdminUsageRoute(app);
 app.get("/api/admin/audit", (req,res)=>{
   const before=req.query.before===undefined?Number.MAX_SAFE_INTEGER:Number(req.query.before);
   const action=typeof req.query.action==="string"?req.query.action:"";

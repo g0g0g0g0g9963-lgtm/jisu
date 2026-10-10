@@ -1,0 +1,181 @@
+<div id="past-drag-current-time-design">
+  <style>
+    #past-drag-current-time-design { --pd-surface: light-dark(#ffffff,#1d293b); --pd-background: light-dark(#f8fafc,#152032); --pd-ink: light-dark(#17243d,#e6edf8); --pd-muted: light-dark(#60738d,#a5b6ce); --pd-border: light-dark(#dce5f0,#3a4960); --pd-grid: light-dark(#e9eff6,#2c3c53); --pd-half: light-dark(#f1f4f8,#233249); --pd-red: light-dark(#dc0836,#ff7894); --pd-red-border: light-dark(#f4beca,#87465c); --pd-navy: light-dark(#243d64,#b9cbea); --pd-on-navy: light-dark(#ffffff,#142039); --pd-green: light-dark(#087d61,#7bcbb0); --pd-selected: light-dark(#ecf2fa,#2d4059); font-family: "Pretendard","Malgun Gothic","Segoe UI",sans-serif; color: var(--pd-ink); font-size: 14px; line-height: 1.5; }
+    #past-drag-current-time-design * { box-sizing: border-box; }
+    #past-drag-current-time-design .pd-app { background: var(--pd-background); border: 1px solid var(--pd-border); border-radius: 10px; overflow: hidden; }
+    #past-drag-current-time-design .pd-topbar { display: flex; align-items: center; gap: 16px; padding: 13px 20px; padding-right: 114px; background: var(--pd-surface); border-bottom: 1px solid var(--pd-border); }
+    #past-drag-current-time-design .pd-logo { color: var(--pd-navy); border-bottom: 4px solid var(--pd-red); font-family: Georgia,serif; font-size: 31px; font-weight: 700; line-height: 1; letter-spacing: -2px; }
+    #past-drag-current-time-design .pd-brand { border-left: 1px solid var(--pd-border); padding-left: 16px; }
+    #past-drag-current-time-design .pd-brand small { display: block; color: var(--pd-red); letter-spacing: .12em; font-size: 10px; font-weight: 600; }
+    #past-drag-current-time-design .pd-brand strong { font-size: 13px; }
+    #past-drag-current-time-design .pd-topbar-right { margin-left: auto; color: var(--pd-muted); font-size: 12px; }
+    #past-drag-current-time-design .pd-main { padding: 17px 18px 10px; }
+    #past-drag-current-time-design .pd-hero { display: flex; align-items: flex-end; gap: 26px; padding: 0 2px 14px; border-bottom: 2px solid var(--pd-navy); }
+    #past-drag-current-time-design .pd-day { color: var(--pd-muted); letter-spacing: .13em; font-size: 11px; font-weight: 700; }
+    #past-drag-current-time-design .pd-day em { font-style: normal; color: var(--pd-red); letter-spacing: 0; margin-left: 8px; }
+    #past-drag-current-time-design .pd-date { display: block; color: var(--pd-ink); font-family: "Arial Narrow",sans-serif; font-size: 48px; font-weight: 800; line-height: 1.1; letter-spacing: -2px; }
+    #past-drag-current-time-design .pd-switch { display: flex; gap: 3px; padding: 3px; border: 1px solid var(--pd-border); border-radius: 9px; background: var(--pd-background); margin-bottom: 3px; color: var(--pd-muted); font-size: 12px; }
+    #past-drag-current-time-design .pd-switch span { display: inline-block; min-width: 46px; text-align: center; padding: 7px 10px; }
+    #past-drag-current-time-design .pd-switch .pd-active { border-radius: 6px; background: var(--pd-surface); color: var(--pd-ink); font-weight: 700; text-decoration: underline; text-decoration-color: var(--pd-red); text-underline-offset: 8px; }
+    #past-drag-current-time-design .pd-view-switch { margin-left: auto; }
+    #past-drag-current-time-design .pd-today { border: 1px solid var(--pd-border); border-radius: 7px; background: var(--pd-surface); color: var(--pd-ink); font: inherit; font-size: 12px; min-height: 36px; padding: 8px 22px; margin-left: auto; margin-bottom: 3px; }
+    #past-drag-current-time-design .pd-headings, #past-drag-current-time-design .pd-time-body { display: grid; grid-template-columns: 84px repeat(4,minmax(0,1fr)); column-gap: 8px; }
+    #past-drag-current-time-design .pd-headings { margin-top: 20px; padding-right: 10px; }
+    #past-drag-current-time-design .pd-axis-heading { display: grid; place-items: center; font-size: 11px; font-weight: 600; background: var(--pd-surface); }
+    #past-drag-current-time-design .pd-room-heading { min-width: 0; padding: 13px 12px; background: var(--pd-surface); border-bottom: 1px solid var(--pd-border); }
+    #past-drag-current-time-design .pd-room-title { display: flex; justify-content: space-between; align-items: baseline; gap: 5px; }
+    #past-drag-current-time-design .pd-room-title b { font-size: 13px; line-height: 1.3; }
+    #past-drag-current-time-design .pd-room-title span { font-size: 11px; color: var(--pd-muted); }
+    #past-drag-current-time-design .pd-room-status { margin-top: 6px; color: var(--pd-green); font-size: 11px; }
+    #past-drag-current-time-design .pd-room-status::before { content: ""; width: 6px; height: 6px; display: inline-block; background: currentColor; border-radius: 50%; margin-right: 5px; }
+    #past-drag-current-time-design .pd-equipment { margin-top: 5px; color: var(--pd-muted); font-size: 11px; }
+    #past-drag-current-time-design .pd-viewport { height: 328px; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--pd-muted) var(--pd-background); position: relative; }
+    #past-drag-current-time-design .pd-time-body { height: 2160px; position: relative; }
+    #past-drag-current-time-design .pd-axis { position: relative; background: var(--pd-surface); }
+    #past-drag-current-time-design .pd-axis time { position: absolute; right: 12px; transform: translateY(-50%); color: var(--pd-muted); font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
+    #past-drag-current-time-design .pd-slot { position: relative; user-select: none; background: repeating-linear-gradient(to bottom,var(--pd-grid) 0,var(--pd-grid) 1px,transparent 1px,transparent 45px,var(--pd-half) 45px,var(--pd-half) 46px,transparent 46px,transparent 90px); }
+    #past-drag-current-time-design .pd-now { position: absolute; left: 0; right: 0; top: 1308px; height: 1px; z-index: 3; pointer-events: none; }
+    #past-drag-current-time-design .pd-now::after { content: ""; position: absolute; left: 92px; right: 0; height: 1px; background: var(--pd-red); }
+    #past-drag-current-time-design .pd-now::before { content: ""; position: absolute; left: 89px; top: -2px; width: 5px; height: 5px; border-radius: 50%; background: var(--pd-red); }
+    #past-drag-current-time-design .pd-now-label { position: absolute; left: 24px; top: -14px; width: 58px; height: 28px; display: flex; align-items: center; justify-content: center; gap: 5px; border: 1px solid var(--pd-red-border); border-radius: 6px; color: var(--pd-red); background: var(--pd-surface); font-size: 11px; font-weight: 500; box-shadow: 0 0 0 3px var(--pd-surface); }
+    #past-drag-current-time-design .pd-now-label b { font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; }
+    #past-drag-current-time-design .pd-selection { position: absolute; left: 5px; right: 5px; border: 1px dashed var(--pd-navy); border-radius: 5px; background: var(--pd-selected); padding: 8px; font-size: 11px; color: var(--pd-navy); }
+    #past-drag-current-time-design .pd-cursor { position: absolute; z-index: 5; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: var(--pd-surface); color: var(--pd-navy); box-shadow: 0 0 0 7px var(--pd-selected); pointer-events: none; }
+    #past-drag-current-time-design .pd-cursor svg { width: 19px; height: 19px; }
+    #past-drag-current-time-design .pd-cursor[hidden], #past-drag-current-time-design .pd-selection[hidden] { display: none; }
+    #past-drag-current-time-design .pd-foot { display: flex; justify-content: space-between; gap: 12px; color: var(--pd-muted); font-size: 11px; padding-top: 10px; }
+    #past-drag-current-time-design .pd-demo { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 12px; padding: 0 2px; }
+    #past-drag-current-time-design .pd-demo button { display: inline-flex; align-items: center; gap: 7px; min-height: 38px; padding: 8px 13px; background: var(--pd-surface); border: 1px solid var(--pd-border); border-radius: 8px; color: var(--pd-ink); font: inherit; font-size: 12px; }
+    #past-drag-current-time-design .pd-demo button svg { width: 14px; height: 14px; }
+    #past-drag-current-time-design .pd-demo button:disabled { opacity: .55; }
+    #past-drag-current-time-design .pd-demo output { color: var(--pd-muted); font-size: 12px; }
+    #past-drag-current-time-design .pd-demo small { margin-left: auto; color: var(--pd-muted); font-size: 11px; }
+    @media(max-width:760px) { #past-drag-current-time-design .pd-headings, #past-drag-current-time-design .pd-time-body { grid-template-columns: 84px repeat(2,minmax(0,1fr)); } #past-drag-current-time-design [data-room="2"], #past-drag-current-time-design [data-room="3"] { display: none; } #past-drag-current-time-design .pd-topbar-right { display: none; } #past-drag-current-time-design .pd-hero { gap: 10px; } #past-drag-current-time-design .pd-topbar { padding-left: 14px; padding-right: 100px; } #past-drag-current-time-design .pd-main { padding-left: 8px; padding-right: 8px; } #past-drag-current-time-design .pd-switch span { min-width: 35px; padding: 7px; } }
+  </style>
+  <div class="pd-app" aria-label="현재 시간 표시와 과거 드래그 자동 이동 시안">
+    <div class="pd-topbar">
+      <span class="pd-logo">BDO</span>
+      <div class="pd-brand"><small>SEOUL OFFICE</small><strong>MEETING ROOMS</strong></div>
+      <span class="pd-topbar-right">회의실 예약</span>
+    </div>
+    <div class="pd-main">
+      <div class="pd-hero">
+        <div><div class="pd-day">FRIDAY <em>한글날</em></div><strong class="pd-date">10/9</strong></div>
+        <div class="pd-switch" aria-label="9층 선택됨"><span class="pd-active">9F</span><span>12F</span></div>
+        <button class="pd-today cursor-interaction" type="button">오늘</button>
+        <div class="pd-switch pd-view-switch" aria-label="일간 보기"><span class="pd-active">일간</span><span>주간</span></div>
+      </div>
+      <div class="pd-headings">
+        <div class="pd-axis-heading">TIME</div>
+        <div class="pd-room-heading" data-room="0"><div class="pd-room-title"><b>Conference Room 1</b><span>9F</span></div><div class="pd-room-status">지금 사용 가능 · 최대 10명</div><div class="pd-equipment">프로젝터 · 화이트보드 +1</div></div>
+        <div class="pd-room-heading" data-room="1"><div class="pd-room-title"><b>Conference Room 2</b><span>9F</span></div><div class="pd-room-status">지금 사용 가능 · 최대 4명</div><div class="pd-equipment">화이트보드</div></div>
+        <div class="pd-room-heading" data-room="2"><div class="pd-room-title"><b>Conference Room 3</b><span>9F</span></div><div class="pd-room-status">지금 사용 가능 · 최대 6명</div><div class="pd-equipment">프로젝터 · 화이트보드 +1</div></div>
+        <div class="pd-room-heading" data-room="3"><div class="pd-room-title"><b>Conference Room 4</b><span>9F</span></div><div class="pd-room-status">지금 사용 가능 · 최대 12명</div><div class="pd-equipment">프로젝터 · 스크린</div></div>
+      </div>
+      <div class="pd-viewport" aria-label="스크롤해서 과거를 보고 빈 시간 칸을 드래그할 수 있는 시간표">
+        <div class="pd-time-body">
+          <div class="pd-axis"></div>
+          <div class="pd-slot" data-room="0"></div><div class="pd-slot" data-room="1"></div><div class="pd-slot" data-room="2"></div><div class="pd-slot" data-room="3"></div>
+          <div class="pd-now" aria-label="예시 현재 시간 14시 32분"><span class="pd-now-label"><b>14:32</b></span></div>
+          <span class="pd-cursor" hidden><i data-lucide="mouse-pointer-2" aria-hidden="true"></i></span>
+        </div>
+      </div>
+      <div class="pd-foot"><span data-range></span><span>시간표 안에서 위아래로 스크롤 ↕</span></div>
+    </div>
+  </div>
+  <div class="pd-demo">
+    <button type="button" class="cursor-interaction" data-demo><i data-lucide="play" aria-hidden="true"></i>과거 드래그 동작 보기</button>
+    <output aria-live="polite">일반 스크롤은 유지 · 과거 드래그만 현재로 이동</output>
+    <small>디자인 시안 · 예시 시각 14:32</small>
+  </div>
+  <script>
+    (() => {
+      const root = document.getElementById('past-drag-current-time-design');
+      const viewport = root.querySelector('.pd-viewport');
+      const body = root.querySelector('.pd-time-body');
+      const axis = root.querySelector('.pd-axis');
+      const cursor = root.querySelector('.pd-cursor');
+      const demo = root.querySelector('[data-demo]');
+      const output = root.querySelector('output');
+      const range = root.querySelector('[data-range]');
+      const now = 14 * 60 + 32, scale = 1.5;
+      const format = minute => `${String(Math.floor(minute / 60)).padStart(2,'0')}:${String(minute % 60).padStart(2,'0')}`;
+      const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+      let gesture = null, selection = null, previewing = false, storeTimer;
+      for (let hour = 0; hour <= 24; hour++) {
+        const label = document.createElement('time'); label.textContent = format(hour * 60);
+        label.style.top = `${hour * 90}px`; axis.append(label);
+      }
+      function save() {
+        window.openai?.setWidgetState?.({modelContent: null, privateContent: {scroll: viewport.scrollTop}}).catch(() => {});
+      }
+      function rangeLabel() {
+        range.textContent = `${format(Math.floor(viewport.scrollTop / 90) * 60)}–${format(Math.min(1440, Math.ceil((viewport.scrollTop + viewport.clientHeight) / 90) * 60))} 보는 중`;
+      }
+      function clearSelection() { selection?.remove(); selection = null; }
+      function toNow(animate = true) {
+        gesture = null; clearSelection();
+        viewport.scrollTo({top: now * scale - 36, behavior: animate && !reduced() ? 'smooth' : 'instant'});
+      }
+      function restore(snapshot) {
+        const scroll = snapshot?.privateContent?.scroll;
+        if (typeof scroll === 'number' && Number.isFinite(scroll)) viewport.scrollTop = Math.max(0, Math.min(body.clientHeight - viewport.clientHeight, scroll));
+        else toNow(false);
+        rangeLabel();
+      }
+      viewport.addEventListener('scroll', () => {
+        gesture = null; rangeLabel(); clearTimeout(storeTimer); storeTimer = setTimeout(save, 180);
+      }, {passive: true});
+      viewport.addEventListener('wheel', () => { gesture = null; }, {passive: true});
+      viewport.addEventListener('pointerdown', event => {
+        if (previewing || event.button !== 0 || event.pointerType !== 'mouse') return;
+        const column = event.target.closest('.pd-slot');
+        if (!column) return;
+        gesture = {id: event.pointerId, x: event.clientX, y: event.clientY, minute: (event.clientY - body.getBoundingClientRect().top) / scale, column};
+        viewport.setPointerCapture(event.pointerId);
+      });
+      viewport.addEventListener('pointermove', event => {
+        if (!gesture || event.pointerId !== gesture.id || !(event.buttons & 1)) return;
+        if (Math.hypot(event.clientX - gesture.x, event.clientY - gesture.y) < 8) return;
+        if (gesture.minute < now) {
+          toNow(); output.textContent = '현재 시간으로 이동 · 예약 선택은 만들지 않음'; return;
+        }
+        const moving = (event.clientY - body.getBoundingClientRect().top) / scale;
+        const start = Math.max(Math.ceil(now / 30) * 30, Math.floor(Math.min(gesture.minute, moving) / 30) * 30);
+        const end = Math.min(1440, Math.max(start + 30, Math.ceil(Math.max(gesture.minute, moving) / 30) * 30));
+        if (!selection) { selection = document.createElement('div'); selection.className = 'pd-selection'; gesture.column.append(selection); }
+        selection.style.top = `${start * scale}px`; selection.style.height = `${(end - start) * scale}px`;
+        selection.textContent = `${format(start)}–${format(end)} 선택 예시`;
+      });
+      const release = event => { if (viewport.hasPointerCapture(event.pointerId)) viewport.releasePointerCapture(event.pointerId); gesture = null; };
+      viewport.addEventListener('pointerup', release); viewport.addEventListener('pointercancel', release);
+      root.querySelector('.pd-today').addEventListener('click', () => { toNow(); output.textContent = '현재 시간이 시간표 위쪽에 표시됩니다'; });
+      demo.addEventListener('click', async () => {
+        if (previewing) return;
+        previewing = true; demo.disabled = true; clearSelection(); gesture = null;
+        viewport.scrollTop = 12 * 60 * scale;
+        output.textContent = '과거 시간에서 드래그 시작';
+        const column = root.querySelector('.pd-slot[data-room="1"]');
+        const position = column.getBoundingClientRect(), origin = body.getBoundingClientRect();
+        cursor.style.left = `${position.left - origin.left + position.width / 2}px`;
+        cursor.style.top = `${(12 * 60 + 45) * scale}px`; cursor.hidden = false;
+        if (!reduced()) {
+          await new Promise(resolve => setTimeout(resolve, 650));
+          await cursor.animate([{transform:'translateY(0)'},{transform:'translateY(20px)'}], {duration:250,fill:'forwards'}).finished;
+        }
+        cursor.hidden = true; cursor.getAnimations().forEach(animation => animation.cancel());
+        toNow(); output.textContent = '현재 시간으로 이동 · 예약 선택은 만들지 않음';
+        await new Promise(resolve => setTimeout(resolve, reduced() ? 0 : 550));
+        previewing = false; demo.disabled = false; save();
+      });
+      toNow(false); restore(window.openai?.widgetState);
+      window.addEventListener('openai:set_globals', event => { if (event.detail?.globals?.widgetState) restore(event.detail.globals.widgetState); });
+      if (globalThis.Tweak) {
+        const settings = {radius: 6};
+        const label = root.querySelector('.pd-now-label');
+        const tweak = new Tweak({container: label, onChange: () => { label.style.borderRadius = `${settings.radius}px`; }});
+        tweak.addSlider(settings, 'radius', {label:'현재 시간 표시 모서리',min:0,max:14,step:1,unit:'px'});
+      }
+    })();
+  </script>
+</div>

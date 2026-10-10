@@ -1074,8 +1074,8 @@ export default function Home() {
     || Number(b.room.floor === floor) - Number(a.room.floor === floor)
     || a.room.capacity - b.room.capacity), [bookings, date, end, floor, slotIsBookable, start]);
 
-  // 선택 팝업은 상태가 바뀌어도 위치가 움직이지 않게 설정 파일의 고정 순서를 쓴다.
-  // 층별 회의실 순서는 rooms.json에서 관리한다. 예약 ID와 표시 순서는 독립적이다.
+  // 선택 팝업은 상태가 바뀌어도 위치가 움직이지 않게 공통 표시 순서를 쓴다.
+  // lib/rooms의 순서를 두 화면에 동일하게 적용한다. 예약 ID와 표시 순서는 독립적이다.
   const roomPickerChoices = useMemo(() => [...roomChoices].sort((a, b) => (
     rooms.findIndex((room) => room.id === a.room.id) - rooms.findIndex((room) => room.id === b.room.id)
   )), [roomChoices]);
@@ -2109,7 +2109,7 @@ export default function Home() {
           {/* 시계와 날짜는 뺐다. 보고 있는 날짜가 왼쪽에 크게 있고,
               현재 시각은 일정표의 빨간 선이 알려 준다. */}
           <nav className="header-nav" aria-label="사용자 메뉴">
-            {currentUser?.isAdmin === true && <a className="header-nav-item" href="/admin">관리자</a>}
+            {currentUser?.isAdmin === true && <a className="header-nav-item" href="/admin" title="예약 이용 통계·운영 현황·변경 이력">관리자 모드</a>}
             <a className="header-nav-item" href="/회의실예약_매뉴얼.pdf" target="_blank" rel="noopener noreferrer">이용가이드</a>
             <span className="header-bookings-wrap">
               <button

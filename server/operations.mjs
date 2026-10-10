@@ -50,7 +50,7 @@ export function initializeOperations(clientDir) {
 }
 
 export function monitorRequests(req,res,next) {
-  if (!/^\/api\/bookings(?:\/|$)/.test(req.path)) {next();return;}
+  if (!/^\/api\/(?:kiosk\/)?bookings(?:\/|$)/.test(req.path)) {next();return;}
   const started=performance.now();
   res.once("finish",()=>{
     samples.push({at:Date.now(),ms:performance.now()-started,write:req.method!=="GET",status:res.statusCode});

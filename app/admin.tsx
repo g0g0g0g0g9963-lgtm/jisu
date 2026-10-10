@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { fetchMe, requestApi, type CurrentUser } from "./lib/api";
 import rooms from "./config/rooms.json";
 import site from "./config/site.json";
+import AdminUsage from "./admin-usage";
 import "./admin.css";
 
 type Backup = {name:string;at:string;bytes?:number;bookings?:number};
@@ -22,10 +23,15 @@ const labels = {create:"생성",update:"변경",cancel:"취소"};
 const fields:Record<string,string>={room_id:"회의실",date:"날짜",start:"시작",end:"종료",team:"본부",purpose:"목적",attendees:"참석자"};
 const roomName = (id:string) => {const room=rooms.find(room=>room.id===id);return room?`${room.floor}층 · ${room.name}`:"회의실 정보 없음";};
 async function adminRequest<T>(path:string,init?:RequestInit):Promise<T> {
-  const {response,payload}=await requestApi<T & {error?:string}>(path,init);
-  if(response.status===403){const error=new Error("관리자 계정만 접근할 수 있습니다.");error.name="AdminAccessDenied";throw error;}
-  if(!response.ok||!payload)throw new Error(payload?.error || "관리자 정보를 불러오지 못했습니다.");
-  return payload;
+  try {
+    const {response,payload}=await requestApi<T & {error?:string}>(path,init);
+    if(response.status===401||response.status===403){const error=new Error("관리자 계정만 접근할 수 있습니다.");error.name="AdminAccessDenied";throw error;}
+    if(!response.ok||!payload)throw new Error(payload?.error || "관리자 정보를 불러오지 못했습니다.");
+    return payload;
+  } catch(error) {
+    if(error instanceof Error&&error.message==="로그인이 필요해 로그인 화면으로 이동합니다.")error.name="AdminAccessDenied";
+    throw error;
+  }
 }
 function Icon({kind}:{kind:"shield"|"database"|"history"|"activity"}) {
   return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.65" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -39,7 +45,8 @@ function Icon({kind}:{kind:"shield"|"database"|"history"|"activity"}) {
 export default function Admin() {
   const [user,setUser]=useState<CurrentUser|null>(null);
   const [auth,setAuth]=useState<"loading"|"allowed"|"denied"|"error">("loading");
-  const [tab,setTab]=useState<"overview"|"audit"|"response">("overview");
+  const [tab,setTab]=useState<"overview"|"usage"|"audit"|"response">("overview");
+  const [usageRefresh,setUsageRefresh]=useState(0);
   const [status,setStatus]=useState<Status|null>(null);
   const [error,setError]=useState("");
   const [auditError,setAuditError]=useState("");
@@ -49,7 +56,7 @@ export default function Admin() {
   const [working,setWorking]=useState(false);
   const [notice,setNotice]=useState("");
   const statusSeq=useRef(0);const auditSeq=useRef(0);
-  const deny = useCallback(()=>{setAuth("denied");setUser(null);setStatus(null);setAudit({items:[],nextCursor:null});},[]);
+  const deny = useCallback(()=>{statusSeq.current++;auditSeq.current++;setAuth("denied");setUser(null);setStatus(null);setAudit({items:[],nextCursor:null});setNotice("");setError("");setAuditError("");},[]);
   useEffect(()=>{let active=true;void fetchMe().then(current=>{if(!active)return;if(current?.isAdmin){setUser(current);setAuth("allowed");}else setAuth("denied");}).catch(()=>{if(active)setAuth("error");});return()=>{active=false;};},[]);
   const refreshStatus=useCallback(async()=>{
     const seq=++statusSeq.current;
@@ -72,15 +79,16 @@ export default function Admin() {
     catch(e){if(e instanceof Error&&e.name==="AdminAccessDenied")deny();else setNotice(e instanceof Error&&e.name==="TimeoutError"?"응답이 지연되었습니다. 다시 실행하기 전에 작업 상태를 확인해 주세요.":e instanceof Error?e.message:"요청 결과를 확인해 주세요.");}
     finally {await refreshStatus();setWorking(false);}
   }
-  if(auth!=="allowed")return <main className="admin-gate"><Icon kind="shield"/><h1>{auth==="loading"?"관리자 권한 확인 중…":auth==="error"?"로그인 상태를 확인하지 못했습니다":"관리자 전용 페이지입니다"}</h1><p>{auth==="denied"?"허용된 Microsoft 계정으로 로그인해 주세요.":"계정과 접근 권한을 서버에서 확인합니다."}</p><a href="/">예약 화면으로 돌아가기</a>{auth==="error"&&<button onClick={()=>window.location.reload()}>다시 확인</button>}</main>;
+  if(auth!=="allowed")return <main className="admin-gate"><Icon kind="shield"/><h1>{auth==="loading"?"관리자 권한 확인 중…":auth==="error"?"로그인 상태를 확인하지 못했습니다":"관리자 전용 페이지입니다"}</h1><p>{auth==="denied"?"허용된 Microsoft 계정으로 로그인해 주세요.":"계정과 접근 권한을 서버에서 확인합니다."}</p>{auth==="denied"&&<p className="admin-access-help">회사 Microsoft 로그인과 관리자 계정 설정이 완료되면, 예약 화면 오른쪽 위의 ‘관리자 모드’에서 열 수 있습니다. 메뉴가 보이지 않으면 전산담당자에게 설정을 확인해 주세요.</p>}<a href="/">예약 화면으로 돌아가기</a>{auth==="error"&&<button onClick={()=>window.location.reload()}>다시 확인</button>}</main>;
   return <div className="admin-shell">
     <header className="admin-header"><a href="/" className="admin-brand"><img src="/bdo-logo.png" alt="BDO"/><span>MEETING ROOMS<small>운영 관리</small></span></a><div className="admin-account"><span>{user?.name}님<small>{user?.email}</small></span><a href="/">예약 화면</a><a href="/auth/logout">로그아웃</a></div></header>
     <main className="admin-main">
-      <div className="admin-title"><div><p className="admin-eyebrow">ADMIN ONLY</p><h1>회의실 운영 관리</h1><p>예약 데이터와 서비스 상태를 한곳에서 확인하세요.</p></div><button className="admin-button" onClick={()=>{void refreshStatus();if(tab==="audit")void refreshAudit();}}>새로고침</button></div>
-      <nav className="admin-tabs" aria-label="관리자 메뉴">{([['overview','운영 현황'],['audit','변경 이력'],['response','복구·대응 안내']] as const).map(([value,label])=><button key={value} onClick={()=>setTab(value)} aria-current={tab===value?"page":undefined}>{label}</button>)}</nav>
+      <div className="admin-title"><div><p className="admin-eyebrow">ADMIN ONLY</p><h1>회의실 운영 관리</h1><p>예약 데이터와 서비스 상태를 한곳에서 확인하세요.</p></div><button className="admin-button" onClick={()=>{void refreshStatus();if(tab==="usage")setUsageRefresh(value=>value+1);if(tab==="audit")void refreshAudit();}}>새로고침</button></div>
+      <nav className="admin-tabs" aria-label="관리자 메뉴">{([['overview','운영 현황'],['usage','이용 통계'],['audit','변경 이력'],['response','복구·대응 안내']] as const).map(([value,label])=><button key={value} onClick={()=>setTab(value)} aria-current={tab===value?"page":undefined}>{label}</button>)}</nav>
       {error&&<div role="alert" className="admin-banner danger">{error}</div>}
       {notice&&<div role="status" className="admin-banner">{notice}</div>}
-      {!status&&!error&&<p role="status">실제 운영 상태를 조회하고 있습니다…</p>}
+      {!status&&!error&&tab!=="usage"&&<p role="status">실제 운영 상태를 조회하고 있습니다…</p>}
+      {tab==="usage"&&<AdminUsage refreshKey={usageRefresh} onAccessDenied={deny}/>}
       {tab==="overview"&&status&&<>
         <div className="admin-summary"><div><span>예약 데이터베이스</span><strong>{status.databaseOk?"조회 정상":"확인 필요"}</strong><small>{status.bookings===null?"예약 건수 확인 불가":`저장된 예약 ${status.bookings.toLocaleString()}건`}</small></div><div><span>마지막 정상 백업</span><strong>{clock(status.backup.last?.at)}</strong><small>{status.backup.last&&!status.backup.lastFilePresent?"기존 백업 파일을 찾을 수 없음":status.backup.intervalMinutes?`${status.backup.intervalMinutes}분마다 자동 백업`:"자동 백업 미설정"}</small></div><div><span>운영 점검</span><strong>{status.alerts.length?`${status.alerts.length}개 항목 확인`:"화면 내 경고 없음"}</strong><small>외부 장애 감시·알림은 미연결</small></div></div>
         {status.alerts.length>0&&<section className="admin-alerts" aria-label="운영 확인 항목">{status.alerts.map((item,i)=><p key={i} className={item.level}><b>{item.level==="setup"?"설정":item.level==="danger"?"오류":"주의"}</b>{item.text}</p>)}</section>}

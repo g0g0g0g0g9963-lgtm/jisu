@@ -56,6 +56,29 @@ if (!bookingColumns.includes("revision")) {
 if (!bookingColumns.includes("ended_at")) {
   db.exec("ALTER TABLE bookings ADD COLUMN ended_at TEXT");
 }
+// A kiosk name is self-reported, never a verified employee identity.
+if (!bookingColumns.includes("source")) {
+  db.exec("ALTER TABLE bookings ADD COLUMN source TEXT NOT NULL DEFAULT 'site'");
+}
+db.exec(`CREATE TABLE IF NOT EXISTS kiosk_requests (
+  device_id TEXT NOT NULL, request_key TEXT NOT NULL, request_hash TEXT NOT NULL,
+  result_json TEXT NOT NULL, created_at TEXT NOT NULL,
+  PRIMARY KEY(device_id, request_key)
+)`);
+db.exec(`CREATE TABLE IF NOT EXISTS kiosk_devices (
+  device_id TEXT PRIMARY KEY, expires_at INTEGER NOT NULL, revoked INTEGER NOT NULL DEFAULT 0
+)`);
+
+export function createKioskDevice(deviceId, expiresAt) {
+  db.prepare("INSERT INTO kiosk_devices(device_id,expires_at) VALUES(?,?)").run(deviceId, expiresAt);
+}
+export function kioskDeviceActive(deviceId, expiresAt, now) {
+  const row = db.prepare("SELECT expires_at,revoked FROM kiosk_devices WHERE device_id=?").get(deviceId);
+  return Boolean(row && !row.revoked && row.expires_at === expiresAt && row.expires_at > now);
+}
+export function revokeKioskDevice(deviceId) {
+  db.prepare("UPDATE kiosk_devices SET revoked=1 WHERE device_id=?").run(deviceId);
+}
 db.exec(`CREATE TABLE IF NOT EXISTS calendar_jobs (
   booking_id TEXT PRIMARY KEY, owner_id TEXT NOT NULL, desired_json TEXT,
   version INTEGER NOT NULL DEFAULT 1, synced_version INTEGER NOT NULL DEFAULT 0,
@@ -140,8 +163,8 @@ const auditInsert = db.prepare("INSERT INTO booking_audit(at, action, booking_id
 const auditSnapshot = (row) => row ? ({roomId:row.room_id, date:row.date, start:row.start, end:row.end,
   ...(row.ended_at ? {endedAt:row.ended_at} : {})}) : null;
 const writeAudit = (action, row, after, identity, changed = []) => auditInsert.run(
-  new Date().toISOString(), action, row.id, identity?.sso ? identity.ownerId : "development",
-  identity?.ownerName || row.owner || "개발용 사용자",
+  new Date().toISOString(), action, row.id, identity?.kiosk ? `kiosk:${identity.deviceId}` : identity?.sso ? identity.ownerId : "development",
+  identity?.kiosk ? "공용 모니터 (예약자 이름 직접 입력)" : identity?.ownerName || row.owner || "개발용 사용자",
   action === "create" ? null : JSON.stringify(auditSnapshot(row)),
   after ? JSON.stringify(auditSnapshot(after)) : null, JSON.stringify(changed),
 );
@@ -178,6 +201,7 @@ const toBooking = (row, identity) => ({
   end: row.end,
   endedAt: row.ended_at || null,
   owner: row.owner,
+  source: row.source || "site",
   team: row.team || undefined,
   purpose: row.purpose,
   attendees: parseAttendees(row.attendees),
@@ -202,12 +226,28 @@ export function countBookings() {
  * (프런트엔드도 같은 검사를 하지만, 두 사람이 동시에 누르는 경우의
  *  최종 판정은 반드시 서버가 한다.)
  */
-export function createBookings({ roomId, dates, start, end, owner, ownerId = "", ownerEmail = "", team = "", purpose, attendees = [], attendeeAccounts = [], identity }) {
+export function getKioskRequest(deviceId, requestKey) {
+  const row = db.prepare("SELECT request_hash, result_json FROM kiosk_requests WHERE device_id=? AND request_key=?").get(deviceId, requestKey);
+  return row ? { hash: row.request_hash, result: JSON.parse(row.result_json) } : null;
+}
+
+export function createBookings({ roomId, dates, start, end, owner, ownerId = "", ownerEmail = "", team = "", purpose, attendees = [], attendeeAccounts = [], identity, kioskRequest }) {
   const createdAt = new Date().toISOString();
   const attendeesJson = JSON.stringify(attendees);
   const seriesId = dates.length > 1 ? "series-" + crypto.randomUUID() : null;
   db.exec("BEGIN IMMEDIATE");
   try {
+    if (kioskRequest) {
+      const previous = getKioskRequest(kioskRequest.deviceId, kioskRequest.key);
+      if (previous) {
+        db.exec("ROLLBACK");
+        return previous.hash === kioskRequest.hash ? { ...previous.result, replayed: true } : { ok: false, reason: "idempotency-conflict" };
+      }
+      // Never allow a typed kiosk name to acquire a personal account's privileges.
+      if (!identity?.kiosk || !identity.deviceId || identity.deviceId !== kioskRequest.deviceId || ownerId || ownerEmail) {
+        throw new Error("Invalid kiosk booking identity");
+      }
+    }
     // 먼저 모든 날짜를 훑어 안 되는 날을 전부 모은다. 첫 번째만 알려 주면
     // 반복 예약에서 사용자가 몇 번이고 다시 시도해야 한다.
     const blocked = [];
@@ -226,15 +266,21 @@ export function createBookings({ roomId, dates, start, end, owner, ownerId = "",
     for (const date of dates) {
       const id = `bk-${crypto.randomUUID()}`;
       insertBooking.run(id, roomId, date, start, end, owner, ownerId, ownerEmail, seriesId, team, purpose, attendeesJson, createdAt);
+      const source = kioskRequest ? "kiosk" : "site";
+      if (source === "kiosk") db.prepare("UPDATE bookings SET source='kiosk' WHERE id=?").run(id);
       db.prepare("UPDATE bookings SET attendee_accounts=? WHERE id=?").run(JSON.stringify(attendeeAccounts),id);
       queueCalendar({id,room_id:roomId,date,start,end,owner_id:ownerId,purpose});
       const auditRow = {id,room_id:roomId,date,start,end,owner};
       writeAudit("create", auditRow, auditRow, identity);
       created.push(toBooking({ id, room_id: roomId, date, start, end, owner, owner_id: ownerId,
-        owner_email: ownerEmail, series_id: seriesId, revision: 1, team, purpose, attendees: attendeesJson, attendee_accounts: JSON.stringify(attendeeAccounts) }, identity));
+        owner_email: ownerEmail, source, series_id: seriesId, revision: 1, team, purpose, attendees: attendeesJson, attendee_accounts: JSON.stringify(attendeeAccounts) }, identity));
     }
+    const result = { ok: true, created };
+    if (kioskRequest) db.prepare("INSERT INTO kiosk_requests(device_id,request_key,request_hash,result_json,created_at) VALUES(?,?,?,?,?)")
+      .run(kioskRequest.deviceId, kioskRequest.key, kioskRequest.hash, JSON.stringify({ ok: true,
+        created: created.map(({ id, roomId, date, start, end, owner }) => ({ id, roomId, date, start, end, owner })) }), createdAt);
     db.exec("COMMIT");
-    return { ok: true, created };
+    return result;
   } catch (error) {
     db.exec("ROLLBACK");
     throw error;
@@ -244,6 +290,7 @@ export function createBookings({ roomId, dates, start, end, owner, ownerId = "",
 /** SSO identity never falls back to a display name. Email is only for rows without an ID. */
 const normalized = (value) => typeof value === "string" ? value.trim().toLowerCase() : "";
 const isOwner = (row, { owner = "", ownerId = "", ownerEmail = "", sso = false } = {}) => {
+  if (row.source === "kiosk") return false;
   if (sso) {
     const storedId = normalized(row.owner_id);
     if (storedId) return Boolean(normalized(ownerId)) && storedId === normalized(ownerId);

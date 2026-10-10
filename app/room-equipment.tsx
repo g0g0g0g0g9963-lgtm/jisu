@@ -2,7 +2,7 @@ import { type MouseEvent as ReactMouseEvent, useEffect, useId, useLayoutEffect, 
 import siteConfig from "./config/site.json";
 import { equipmentIcon, type Room } from "./lib/rooms";
 
-function EquipmentSymbol({ item }: { item: string }) {
+export function EquipmentSymbol({ item }: { item: string }) {
   const kind = equipmentIcon(item);
   return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
     {kind === "BEAM" ? <><rect x="3" y="10" width="18" height="10" rx="2" /><circle cx="16" cy="15" r="2.5" /><path d="M6 14h3M6 17h2M7 6 5 4m7 2V3m5 3 2-2" /></>

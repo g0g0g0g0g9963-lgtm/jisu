@@ -1,0 +1,105 @@
+<div id="current-time-marker-design">
+  <style>
+    #current-time-marker-design .tm-stage { padding: 58px 12px 18px; min-height: 390px; }
+    #current-time-marker-design .tm-product { --tm-paper: light-dark(#ffffff,#1f2b3f); --tm-cell: light-dark(#f9fbfd,#192539); --tm-ink: light-dark(#17243d,#e8edf6); --tm-muted: light-dark(#687b95,#a3b5cd); --tm-rule: light-dark(#e6edf5,#344158); --tm-red: light-dark(#d80c3b,#ff7798); --tm-fill: light-dark(#d80c3b,#ef6889); --tm-on-fill: light-dark(#ffffff,#21151e); width: 100%; max-width: 680px; margin: 0 auto; color: var(--tm-ink); background: var(--tm-paper); font-family: "Pretendard","Malgun Gothic","Segoe UI",sans-serif; border: 1px solid var(--tm-rule); border-radius: 10px; overflow: hidden; box-sizing: border-box; }
+    #current-time-marker-design .tm-head { display: grid; grid-template-columns: 84px 1fr 1fr; border-bottom: 1px solid var(--tm-rule); }
+    #current-time-marker-design .tm-head > div { padding: 17px 15px; min-width: 0; }
+    #current-time-marker-design .tm-head .tm-axis-title { display: grid; place-items: center; font-size: 11px; font-weight: 600; padding: 0; }
+    #current-time-marker-design .tm-head strong { display: block; font-size: 13px; line-height: 1.4; font-weight: 650; }
+    #current-time-marker-design .tm-head span { display: block; margin-top: 5px; font-size: 11px; color: var(--tm-muted); }
+    #current-time-marker-design .tm-grid { height: 240px; position: relative; background: var(--tm-cell); }
+    #current-time-marker-design .tm-axis { position: absolute; inset: 0 auto 0 0; width: 84px; background: var(--tm-paper); }
+    #current-time-marker-design .tm-hour { position: absolute; right: 14px; color: var(--tm-muted); font-size: 13px; font-weight: 500; font-variant-numeric: tabular-nums; transform: translateY(-50%); }
+    #current-time-marker-design .tm-gridlines { position: absolute; inset: 0 12px 0 94px; background: repeating-linear-gradient(to bottom,transparent 0,transparent 23px,var(--tm-rule) 23px,var(--tm-rule) 24px,transparent 24px,transparent 83px,var(--tm-rule) 83px,var(--tm-rule) 84px,transparent 84px,transparent 120px); }
+    #current-time-marker-design .tm-column { position: absolute; inset: 0 0 0 calc(84px + (100% - 84px) / 2); border-left: 8px solid var(--tm-paper); }
+    #current-time-marker-design .tm-marker { position: absolute; left: 0; right: 12px; top: 88px; height: 1px; color: var(--tm-red); }
+    #current-time-marker-design .tm-marker::after { content: ""; position: absolute; left: 94px; right: 0; top: 0; height: 1px; background: currentColor; }
+    #current-time-marker-design .tm-time { position: absolute; top: 0; left: 12px; width: 62px; display: grid; place-items: center; height: 26px; transform: translateY(-50%); font-size: 14px; line-height: 1; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: .02em; white-space: nowrap; }
+    #current-time-marker-design .tm-minimal .tm-time { left: 20px; width: 54px; color: var(--tm-red); background: var(--tm-paper); }
+    #current-time-marker-design .tm-minimal .tm-marker::before { content: ""; position: absolute; left: 91px; top: -2px; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+    #current-time-marker-design .tm-pointer .tm-time { color: var(--tm-on-fill); background: var(--tm-fill); border-radius: 5px 0 0 5px; }
+    #current-time-marker-design .tm-pointer .tm-time::after { content: ""; position: absolute; left: 100%; top: 0; width: 0; height: 0; border-top: 13px solid transparent; border-bottom: 13px solid transparent; border-left: 7px solid var(--tm-fill); }
+    #current-time-marker-design .tm-pointer .tm-marker::before { content: ""; position: absolute; left: 81px; right: 0; top: 0; height: 1px; background: currentColor; }
+    #current-time-marker-design .tm-stamp .tm-time { left: 96px; top: -7px; width: 54px; height: 20px; transform: translateY(-100%); color: var(--tm-red); }
+    #current-time-marker-design .tm-stamp .tm-marker::before { content: ""; position: absolute; left: 94px; top: -7px; width: 2px; height: 8px; background: currentColor; }
+    #current-time-marker-design .tm-underline .tm-time { left: 21px; top: -5px; width: 54px; height: 23px; transform: translateY(-100%); color: var(--tm-ink); }
+    #current-time-marker-design .tm-underline .tm-time::after { content: ""; position: absolute; left: 4px; right: 4px; bottom: -6px; height: 3px; border-radius: 2px; background: var(--tm-red); }
+    #current-time-marker-design .tm-underline .tm-marker::before { content: ""; position: absolute; left: 75px; width: 19px; top: 0; height: 1px; background: currentColor; }
+    #current-time-marker-design .tm-navy .tm-time { color: light-dark(#ffffff,#1b2940); background: light-dark(#213554,#d4dfef); border-radius: 4px; box-sizing: border-box; border-left: 3px solid var(--tm-red); }
+    #current-time-marker-design .tm-navy .tm-marker::before { content: ""; position: absolute; left: 74px; width: 20px; top: 0; height: 1px; background: currentColor; }
+    @media(max-width:540px) { #current-time-marker-design .tm-head { grid-template-columns: 84px 1fr; } #current-time-marker-design .tm-head > div:last-child { display: none; } #current-time-marker-design .tm-column { display: none; } }
+  </style>
+  <div class="viz-carousel viz-dotted-background" aria-label="빨간 현재 시간 표시 디자인 비교" data-previous-label="이전 시안" data-next-label="다음 시안">
+    <section data-variant="라인 위 타임스탬프">
+      <div class="tm-stage">
+        <div class="tm-product tm-stamp" aria-label="빨간 줄 바로 위에 놓인 시간 표시">
+          <div class="tm-head"><div class="tm-axis-title">TIME</div><div><strong>Conference Room 1</strong><span>9F · 최대 10명</span></div><div><strong>Conference Room 2</strong><span>9F · 최대 4명</span></div></div>
+          <div class="tm-grid">
+            <div class="tm-axis"><time class="tm-hour" style="top:24px">14:00</time><time class="tm-hour" style="top:144px">15:00</time></div>
+            <div class="tm-gridlines"></div><div class="tm-column"></div>
+            <div class="tm-marker" aria-label="예시 현재 시간 14시 32분"><time class="tm-time">14:32</time></div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section data-variant="언더라인 타임" hidden>
+      <div class="tm-stage">
+        <div class="tm-product tm-underline" aria-label="짧은 붉은 밑줄로 강조한 시간 표시">
+          <div class="tm-head"><div class="tm-axis-title">TIME</div><div><strong>Conference Room 1</strong><span>9F · 최대 10명</span></div><div><strong>Conference Room 2</strong><span>9F · 최대 4명</span></div></div>
+          <div class="tm-grid">
+            <div class="tm-axis"><time class="tm-hour" style="top:24px">14:00</time><time class="tm-hour" style="top:144px">15:00</time></div>
+            <div class="tm-gridlines"></div><div class="tm-column"></div>
+            <div class="tm-marker" aria-label="예시 현재 시간 14시 32분"><time class="tm-time">14:32</time></div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section data-variant="네이비 태그" hidden>
+      <div class="tm-stage">
+        <div class="tm-product tm-navy" aria-label="붉은 포인트가 있는 네이비 시간 라벨">
+          <div class="tm-head"><div class="tm-axis-title">TIME</div><div><strong>Conference Room 1</strong><span>9F · 최대 10명</span></div><div><strong>Conference Room 2</strong><span>9F · 최대 4명</span></div></div>
+          <div class="tm-grid">
+            <div class="tm-axis"><time class="tm-hour" style="top:24px">14:00</time><time class="tm-hour" style="top:144px">15:00</time></div>
+            <div class="tm-gridlines"></div><div class="tm-column"></div>
+            <div class="tm-marker" aria-label="예시 현재 시간 14시 32분"><time class="tm-time">14:32</time></div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section data-variant="미니멀 타임라인" hidden>
+      <div class="tm-stage">
+        <div class="tm-product tm-minimal" aria-label="테두리 없는 미니멀 시간 표시">
+          <div class="tm-head"><div class="tm-axis-title">TIME</div><div><strong>Conference Room 1</strong><span>9F · 최대 10명</span></div><div><strong>Conference Room 2</strong><span>9F · 최대 4명</span></div></div>
+          <div class="tm-grid">
+            <div class="tm-axis"><time class="tm-hour" style="top:24px">14:00</time><time class="tm-hour" style="top:144px">15:00</time></div>
+            <div class="tm-gridlines"></div><div class="tm-column"></div>
+            <div class="tm-marker" aria-label="예시 현재 시간 14시 32분"><time class="tm-time">14:32</time></div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section data-variant="포인터 라벨" hidden>
+      <div class="tm-stage">
+        <div class="tm-product tm-pointer" aria-label="기준선을 가리키는 포인터 시간 표시">
+          <div class="tm-head"><div class="tm-axis-title">TIME</div><div><strong>Conference Room 1</strong><span>9F · 최대 10명</span></div><div><strong>Conference Room 2</strong><span>9F · 최대 4명</span></div></div>
+          <div class="tm-grid">
+            <div class="tm-axis"><time class="tm-hour" style="top:24px">14:00</time><time class="tm-hour" style="top:144px">15:00</time></div>
+            <div class="tm-gridlines"></div><div class="tm-column"></div>
+            <div class="tm-marker" aria-label="예시 현재 시간 14시 32분"><time class="tm-time">14:32</time></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+    (() => {
+      const root = document.getElementById('current-time-marker-design');
+      if (globalThis.Tweak) root.querySelectorAll('.tm-product').forEach(product => {
+        const settings = {size: 14};
+        const time = product.querySelector('.tm-time');
+        const tweak = new Tweak({container:product,onChange:()=>{time.style.fontSize=`${settings.size}px`;}});
+        tweak.addSlider(settings,'size',{label:'시간 글자 크기',min:12,max:16,step:1,unit:'px'});
+      });
+    })();
+  </script>
+</div>

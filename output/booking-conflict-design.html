@@ -1,0 +1,143 @@
+<div id="booking-conflict-design">
+  <style>
+    #booking-conflict-design .conflict-stage { padding: 52px 12px 16px; }
+    #booking-conflict-design .conflict-app { --c-surface: light-dark(#ffffff,#202a39); --c-ink: light-dark(#17253e,#e9eef7); --c-muted: light-dark(#687992,#adbbcf); --c-border: light-dark(#dce4ef,#405069); --c-soft: light-dark(#f5f7fa,#2a3547); --c-navy: light-dark(#233858,#b8cdf0); --c-on-navy: light-dark(#ffffff,#17253e); --c-red: light-dark(#d30935,#f48099); --c-on-red: light-dark(#ffffff,#29131a); --c-warning: light-dark(#ae7119,#e8bb70); --c-warning-bg: light-dark(#fff5e4,#423727); --c-dim: light-dark(#18233753,#060d1999); --c-shadow: light-dark(#182b4225,#00000055); position: relative; width: min(100%,620px); margin: 0 auto; background: var(--c-surface); color: var(--c-ink); border: 1px solid var(--c-border); border-radius: 14px; font-family: "Pretendard","Malgun Gothic","Segoe UI",sans-serif; font-size: 14px; line-height: 1.5; box-sizing: border-box; }
+    #booking-conflict-design .conflict-editor { min-height: 470px; box-sizing: border-box; padding: 25px 28px; display: flex; flex-direction: column; }
+    #booking-conflict-design .conflict-editor-head { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 24px; }
+    #booking-conflict-design .conflict-editor-head h2 { font-size: 22px; font-weight: 700; margin: 0; }
+    #booking-conflict-design .conflict-close { display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 6px; color: var(--c-muted); background: transparent; flex: none; }
+    #booking-conflict-design .conflict-close:hover { background: var(--c-soft); }
+    #booking-conflict-design .conflict-close svg { width: 18px; height: 18px; }
+    #booking-conflict-design .conflict-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 14px; }
+    #booking-conflict-design .conflict-fields label { display: grid; gap: 7px; min-width: 0; color: var(--c-muted); font-size: 12px; }
+    #booking-conflict-design .conflict-fields .conflict-wide { grid-column: 1 / -1; }
+    #booking-conflict-design .conflict-fields input, #booking-conflict-design .conflict-fields select { box-sizing: border-box; width: 100%; min-width: 0; padding: 10px 12px; border: 1px solid var(--c-border); border-radius: 7px; background: var(--c-soft); color: var(--c-ink); font: inherit; font-size: 14px; }
+    #booking-conflict-design .conflict-editor-foot { display: flex; justify-content: flex-end; gap: 9px; margin-top: auto; padding-top: 26px; }
+    #booking-conflict-design .conflict-button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 42px; padding: 10px 16px; border: 1px solid var(--c-border); border-radius: 7px; background: var(--c-surface); color: var(--c-ink); font: inherit; font-size: 13px; font-weight: 600; }
+    #booking-conflict-design .conflict-button.primary { border-color: var(--c-navy); background: var(--c-navy); color: var(--c-on-navy); }
+    #booking-conflict-design .conflict-button.save { border-color: var(--c-red); background: var(--c-red); color: var(--c-on-red); }
+    #booking-conflict-design .conflict-button svg { width: 15px; height: 15px; }
+    #booking-conflict-design .conflict-layer { position: absolute; inset: 0; z-index: 2; display: grid; align-items: center; justify-items: center; padding: 20px; background: var(--c-dim); border-radius: 13px; box-sizing: border-box; }
+    #booking-conflict-design .conflict-layer[hidden], #booking-conflict-design [data-content][hidden] { display: none; }
+    #booking-conflict-design .conflict-dialog { width: 100%; max-width: 480px; padding: 26px; box-sizing: border-box; background: var(--c-surface); border: 1px solid var(--c-border); border-radius: 12px; box-shadow: 0 16px 45px var(--c-shadow); }
+    #booking-conflict-design .conflict-dialog-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; }
+    #booking-conflict-design .conflict-symbol { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 12px; color: var(--c-warning); background: var(--c-warning-bg); }
+    #booking-conflict-design .conflict-symbol svg { width: 23px; height: 23px; stroke-width: 1.7; }
+    #booking-conflict-design .conflict-dialog h3 { margin: 0 0 11px; color: var(--c-ink); font-size: 20px; line-height: 1.4; font-weight: 700; letter-spacing: -.035em; }
+    #booking-conflict-design .conflict-copy { margin: 0; color: var(--c-muted); font-size: 14px; line-height: 1.8; word-break: keep-all; }
+    #booking-conflict-design .conflict-note { margin: 18px 0 0; padding: 11px 12px; color: var(--c-muted); background: var(--c-soft); border-radius: 7px; font-size: 12px; }
+    #booking-conflict-design .conflict-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 24px; }
+    #booking-conflict-design .conflict-compare { width: 100%; margin-top: 18px; border-collapse: collapse; table-layout: fixed; font-size: 12px; text-align: left; }
+    #booking-conflict-design .conflict-compare th, #booking-conflict-design .conflict-compare td { padding: 11px 7px; border-bottom: 1px solid var(--c-border); vertical-align: top; overflow-wrap: anywhere; }
+    #booking-conflict-design .conflict-compare th { color: var(--c-muted); font-weight: 500; }
+    #booking-conflict-design .conflict-compare th:first-child { width: 18%; padding-left: 0; }
+    #booking-conflict-design .conflict-compare td:nth-child(2) { color: var(--c-navy); font-weight: 600; background: var(--c-soft); }
+    #booking-conflict-design .conflict-form-status { margin: 16px 0 0; color: var(--c-muted); font-size: 12px; }
+    @media(max-width:520px) { #booking-conflict-design .conflict-stage { padding-left: 0; padding-right: 0; } #booking-conflict-design .conflict-editor { padding: 20px; min-height: 520px; } #booking-conflict-design .conflict-layer { padding: 12px; } #booking-conflict-design .conflict-dialog { padding: 20px; } #booking-conflict-design .conflict-dialog h3 { font-size: 18px; } #booking-conflict-design .conflict-actions { flex-wrap: wrap; } #booking-conflict-design .conflict-actions .conflict-button { flex: 1; white-space: nowrap; } }
+  </style>
+  <div class="conflict-stage viz-dotted-background">
+    <div class="conflict-app" aria-label="예약 수정 충돌 안내 시안">
+      <div class="conflict-editor" inert>
+        <div class="conflict-editor-head"><h2>예약 수정</h2><button type="button" class="conflict-close cursor-interaction" aria-label="수정창 닫기" data-action="cancel"><i data-lucide="x" aria-hidden="true"></i></button></div>
+        <div class="conflict-fields">
+          <label class="conflict-wide">회의실<input value="9층 · Conference Room 1" readonly></label>
+          <label class="conflict-wide">예약 날짜<input value="2026년 10월 12일 (월)" readonly></label>
+          <label>시작 시간<select data-field="start"><option>14:00</option><option selected>15:00</option><option>16:00</option></select></label>
+          <label>종료 시간<select data-field="end"><option>15:00</option><option selected>16:00</option><option>17:00</option></select></label>
+          <label class="conflict-wide">회의 목적<input data-field="purpose" value="주간회의"></label>
+        </div>
+        <p class="conflict-form-status" role="status" hidden></p>
+        <div class="conflict-editor-foot"><button type="button" class="conflict-button cursor-interaction" data-action="cancel">취소</button><button type="button" class="conflict-button save cursor-interaction" data-action="save">변경사항 저장</button></div>
+      </div>
+      <div class="conflict-layer">
+        <section class="conflict-dialog" role="dialog" aria-modal="true" aria-labelledby="conflict-title" aria-describedby="conflict-description" aria-label="예약 변경 안내창">
+          <div class="conflict-dialog-top"><span class="conflict-symbol"><i data-lucide="refresh-cw" aria-hidden="true"></i></span><button type="button" class="conflict-close cursor-interaction" aria-label="안내 닫고 입력 내용으로 돌아가기" data-action="back"><i data-lucide="x" aria-hidden="true"></i></button></div>
+          <div data-content="warning">
+            <h3 id="conflict-title">예약 내용이 변경되었어요</h3>
+            <p class="conflict-copy" id="conflict-description">다른 창에서 이 예약이 변경되었습니다.<br>최신 내용을 확인한 뒤 다시 수정해 주세요.</p>
+            <p class="conflict-note">이 창에서 입력한 변경사항은 아직 저장되지 않았습니다.</p>
+            <div class="conflict-actions"><button type="button" class="conflict-button cursor-interaction" data-action="back">돌아가기</button><button type="button" class="conflict-button primary cursor-interaction" data-action="compare"><i data-lucide="refresh-cw" aria-hidden="true"></i>최신 내용 확인</button></div>
+          </div>
+          <div data-content="comparison" hidden>
+            <h3 id="conflict-compare-title">최신 내용을 확인해 주세요</h3>
+            <p class="conflict-copy" id="conflict-compare-description">9층 · Conference Room 1</p>
+            <table class="conflict-compare"><thead><tr><th scope="col">항목</th><th scope="col">현재 저장된 내용</th><th scope="col">이 창의 입력</th></tr></thead><tbody><tr><th scope="row">회의 목적</th><td>예산회의</td><td data-draft="purpose">주간회의</td></tr><tr><th scope="row">시간</th><td>14:00–15:00</td><td data-draft="time">15:00–16:00</td></tr></tbody></table>
+            <p class="conflict-note">아래 버튼을 누르면 최신 내용으로 수정창을 다시 엽니다. 변경하려던 항목을 다시 입력해 주세요.</p>
+            <div class="conflict-actions"><button type="button" class="conflict-button cursor-interaction" data-action="back">돌아가기</button><button type="button" class="conflict-button primary cursor-interaction" data-action="reload">최신 내용으로 다시 수정</button></div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+  <script>
+    (() => {
+      const root = document.getElementById('booking-conflict-design');
+      const editor = root.querySelector('.conflict-editor');
+      const layer = root.querySelector('.conflict-layer');
+      const dialog = root.querySelector('.conflict-dialog');
+      const formStatus = root.querySelector('.conflict-form-status');
+      const purpose = root.querySelector('[data-field="purpose"]');
+      const start = root.querySelector('[data-field="start"]');
+      const end = root.querySelector('[data-field="end"]');
+      let state = 'warning';
+      let latestLoaded = false;
+      function render(focus = false) {
+        const open = state !== 'edit';
+        layer.hidden = !open;
+        editor.inert = open;
+        root.querySelector('[data-content="warning"]').hidden = state !== 'warning';
+        root.querySelector('[data-content="comparison"]').hidden = state !== 'comparison';
+        dialog.setAttribute('aria-labelledby', state === 'comparison' ? 'conflict-compare-title' : 'conflict-title');
+        dialog.setAttribute('aria-describedby', state === 'comparison' ? 'conflict-compare-description' : 'conflict-description');
+        root.querySelector('[data-draft="purpose"]').textContent = purpose.value;
+        root.querySelector('[data-draft="time"]').textContent = `${start.value}–${end.value}`;
+        if (focus) (open ? dialog.querySelector('[data-action="back"]') : purpose).focus({ preventScroll: true });
+      }
+      function saveState() {
+        if (window.openai?.setWidgetState) window.openai.setWidgetState({ modelContent: null, privateContent: { state, latestLoaded, purpose: purpose.value, start: start.value, end: end.value } }).catch(() => {});
+      }
+      function restore(snapshot) {
+        const saved = snapshot?.privateContent;
+        if (!saved) return;
+        state = ['warning','comparison','edit'].includes(saved.state) ? saved.state : 'warning';
+        latestLoaded = saved.latestLoaded === true;
+        if (typeof saved.purpose === 'string') purpose.value = saved.purpose.slice(0, 100);
+        if (['14:00','15:00','16:00'].includes(saved.start)) start.value = saved.start;
+        if (['15:00','16:00','17:00'].includes(saved.end)) end.value = saved.end;
+        render();
+      }
+      root.querySelectorAll('[data-action]').forEach(button => button.addEventListener('click', () => {
+        const action = button.dataset.action;
+        if (action === 'compare') state = 'comparison';
+        if (action === 'back') state = 'edit';
+        if (action === 'reload') {
+          purpose.value = '예산회의'; start.value = '14:00'; end.value = '15:00';
+          latestLoaded = true; state = 'edit';
+          formStatus.hidden = false; formStatus.textContent = '최신 내용을 불러왔습니다. 확인 후 필요한 항목을 수정해 주세요.';
+        }
+        if (action === 'cancel') { state = 'warning'; latestLoaded = false; formStatus.hidden = true; }
+        if (action === 'save') {
+          if (!latestLoaded) state = 'warning';
+          else { formStatus.hidden = false; formStatus.textContent = '시안에서 저장 동작을 확인했습니다. 실제 예약은 변경되지 않았습니다.'; }
+        }
+        render(true); saveState();
+      }));
+      root.querySelectorAll('[data-field]').forEach(field => field.addEventListener('change', saveState));
+      dialog.addEventListener('keydown', event => {
+        if (event.key === 'Escape') { state = 'edit'; render(true); saveState(); return; }
+        if (event.key !== 'Tab') return;
+        const buttons = [...dialog.querySelectorAll('button')].filter(button => button.getClientRects().length);
+        const first = buttons[0], last = buttons[buttons.length - 1];
+        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+      });
+      render(); restore(window.openai?.widgetState);
+      window.addEventListener('openai:set_globals', event => { if (event.detail?.globals?.widgetState) restore(event.detail.globals.widgetState); });
+      if (globalThis.Tweak) {
+        const settings = { width: 480 };
+        const tweak = new Tweak({ container: dialog, onChange: () => { dialog.style.maxWidth = settings.width + 'px'; } });
+        tweak.addSlider(settings, 'width', { label: '안내창 너비', min: 400, max: 540, step: 10, unit: 'px' });
+      }
+    })();
+  </script>
+</div>

@@ -14,7 +14,11 @@ export type Room = {
   mapClass: string;
 };
 
-export const rooms: Room[] = roomsConfig;
+// Shared display order only: preserve every room object/ID and the raw config.
+// Within 12F, put W Room first; stable sorting keeps all other rooms in order.
+export const rooms: Room[] = [...roomsConfig].sort((a, b) =>
+  a.floor - b.floor || Number(b.floor === 12 && b.id === "12-w") - Number(a.floor === 12 && a.id === "12-w"),
+);
 
 export const floors: number[] = [...new Set(rooms.map((room) => room.floor))].sort(
   (a, b) => a - b,

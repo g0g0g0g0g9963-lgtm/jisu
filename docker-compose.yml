@@ -39,6 +39,9 @@ services:
       APP_BASE_URL: ${APP_BASE_URL:-}
       ADMIN_MS_EMAIL: ${ADMIN_MS_EMAIL:-}
       ADMIN_MS_OBJECT_ID: ${ADMIN_MS_OBJECT_ID:-}
+      # Shared monitor is a separately authorized surface, not a staff menu.
+      KIOSK_ENABLED: ${KIOSK_ENABLED:-0}
+      KIOSK_PAIRING_CODE: ${KIOSK_PAIRING_CODE:-}
       # Configure an existing private persistent path inside the container.
       # /app/data/backups is local-only; it does NOT replace an offsite backup.
       BACKUP_DIR: ${BACKUP_DIR:-}

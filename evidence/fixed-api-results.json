@@ -1,40 +1,40 @@
 {
-  "testedAt": "2026-10-09T13:19:08.016Z",
+  "testedAt": "2026-10-09T15:57:34.443Z",
   "appClock": "2026-10-08T10:15:00+09:00",
   "isolation": "Loopback only; synthetic SQLite; OIDC response mocked; no real Microsoft network",
   "counts": {
     "total": 96,
-    "pass": 96,
-    "fail": 0
+    "pass": 92,
+    "fail": 4
   },
   "results": [
     {
       "id": "AUTH-CONFIG-unconfigured",
       "title": "Unsafe configuration fails closed: unconfigured",
-      "status": "PASS",
+      "status": "FAIL",
       "listened": false,
-      "exitCode": 1
+      "exitCode": null
     },
     {
       "id": "AUTH-CONFIG-partial",
       "title": "Unsafe configuration fails closed: partial",
-      "status": "PASS",
+      "status": "FAIL",
       "listened": false,
-      "exitCode": 1
+      "exitCode": null
     },
     {
       "id": "AUTH-CONFIG-production-anonymous",
       "title": "Unsafe configuration fails closed: production-anonymous",
-      "status": "PASS",
+      "status": "FAIL",
       "listened": false,
-      "exitCode": 1
+      "exitCode": null
     },
     {
       "id": "AUTH-CONFIG-production-http",
       "title": "Unsafe configuration fails closed: production-http",
-      "status": "PASS",
+      "status": "FAIL",
       "listened": false,
-      "exitCode": 1
+      "exitCode": null
     },
     {
       "id": "C01",

@@ -9,3 +9,13 @@ data-*/
 # NAS 자동 업데이트
 auto-update.log
 .auto-update.lock/
+
+# Local QA databases, rendered previews, and private handoff documents
+tmp/
+evidence/fixed-run-*/
+output/pdf/
+output/visuals/
+output/imagegen/
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal

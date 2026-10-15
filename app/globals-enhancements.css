@@ -4326,8 +4326,6 @@ button {
   -webkit-backdrop-filter: blur(16px) saturate(120%);
 }
 
-}
-
 .booking-panel:not(.is-collapsed) .booking-section-heading > span {
   display: grid;
   place-items: center;

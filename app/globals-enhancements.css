@@ -4481,3 +4481,7 @@ button {
 /* 예약 알림은 빨간 점 없이 종 버튼 외곽선만 강조한다. */
 .header-account .header-nav .header-bookings-bell.booking-arrival{border:1px solid #ed1639;background:#fff;color:#ed1639;animation:booking-bell-shake .72s ease-in-out both}
 .header-account .header-nav .header-bookings-bell.booking-arrival::after{display:none!important}
+
+/* 선택안 4: 네모 대신 원형 빨간 테두리와 살짝 커지는 종 애니메이션. */
+.header-account .header-nav .header-bookings-bell.booking-arrival{border-radius:50%;animation:booking-bell-pulse 1.2s ease-in-out both}
+@keyframes booking-bell-pulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 #ed163940}50%{transform:scale(1.08);box-shadow:0 0 0 8px #ed163900}}

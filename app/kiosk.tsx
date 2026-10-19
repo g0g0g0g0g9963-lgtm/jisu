@@ -509,7 +509,16 @@ export default function Kiosk() {
             <div className="kiosk-time-axis" style={{ gridColumn: 1, gridRow: 2, height: gridHeight }}>{hourSlots.map(time => <span key={time} style={{ top: (time - START) / SLOT * SLOT_HEIGHT }} className="kiosk-hour-label">{formatMinutes(time)}</span>)}<span className="kiosk-hour-label is-end" style={{ top: gridHeight }}>{formatMinutes(END)}</span>{dates.includes(today) && minuteNow >= START && minuteNow <= END && <span className="kiosk-now-label" style={{ top: (minuteNow - START) / SLOT * SLOT_HEIGHT }}>{formatMinutes(minuteNow)}</span>}</div>
             {currentRooms.map((room, index) => <div className={`kiosk-room-body${index === currentRooms.length - 1 ? " is-last-room" : ""}`} key={room.id} style={{ gridColumn: index + 2, gridRow: 2 }}>{dates.map(date => <div className={`kiosk-day-column${date === today ? " is-today" : ""}${date < today ? " is-past" : ""}`} key={date} style={{ height: gridHeight }}>
               {timeSlots.map(start => <button type="button" key={start} className={`kiosk-slot${start % 60 === 0 ? " is-hour" : ""}`} data-testid="kiosk-slot" data-room={room.id} data-date={date} data-start={formatMinutes(start)} aria-label={`${room.name} ${formatDateLabel(date)} ${formatMinutes(start)} 예약`} tabIndex={-1} onPointerDown={event => beginSlotDrag(room, date, start, event)} onContextMenu={event => event.preventDefault()} onClick={() => pickSlot(room, date, start)} />)}
-              {slotDrag && slotDrag.roomId === room.id && slotDrag.date === date && <div className="kiosk-drag-preview" aria-hidden="true" style={{ top: (slotDrag.start - START) / SLOT * SLOT_HEIGHT + 2, height: (slotDrag.end - slotDrag.start) / SLOT * SLOT_HEIGHT - 4 }}><strong>{formatMinutes(slotDrag.start)}–{formatMinutes(Math.min(END, slotDrag.end))}</strong></div>}
+              {(() => {
+                // Same "작성 중" block as the employee site: while dragging, and afterwards while the draft is open.
+                const block = slotDrag ? (slotDrag.roomId === room.id && slotDrag.date === date ? { start: slotDrag.start, end: Math.min(END, slotDrag.end) } : null)
+                  : draft && draft.roomId === room.id && draft.date === date && minutesOf(draft.end) > minutesOf(draft.start) ? { start: minutesOf(draft.start), end: minutesOf(draft.end) } : null;
+                if (!block) return null;
+                return <div className="kiosk-draft-block" aria-hidden="true" style={{ top: (block.start - START) / SLOT * SLOT_HEIGHT + 2, height: (block.end - block.start) / SLOT * SLOT_HEIGHT - 4 }}>
+                  <b>작성 중 <strong>총 {spokenDuration(block.end - block.start)}</strong></b>
+                  <em>{formatMinutes(block.start)}–{formatMinutes(block.end)} · 오른쪽에서 이어서</em>
+                </div>;
+              })()}
               {loadedRange === rangeKey && (bookingGroups.get(`${room.id}/${date}`) ?? []).map(booking => {
                 const duration = minutesOf(booking.end) - minutesOf(booking.start);
                 const ended = date < today || date === today && minutesOf(booking.end) <= minuteNow;

@@ -1,4 +1,4 @@
-@font-face{font-family:KioskPretendard;src:url('/fonts/PretendardVariable.woff2') format('woff2');font-weight:100 900;font-display:swap}
+﻿@font-face{font-family:KioskPretendard;src:url('/fonts/PretendardVariable.woff2') format('woff2');font-weight:100 900;font-display:swap}
 @font-face{font-family:KioskOswald;src:url('/fonts/Oswald-Variable.woff2') format('woff2');font-weight:500 700;font-style:normal;font-display:swap}
 :root{font-family:KioskPretendard,Pretendard,"Malgun Gothic",sans-serif;color:#18253e;background:#f4f6f9;font-synthesis:none;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased;font-weight:450;font-size:15px;--kiosk-navy:#18253e;--kiosk-blue:#285691;--kiosk-red:#e50037;--kiosk-muted:#65758e;--kiosk-border:#dce3ec}
 *{box-sizing:border-box}body{margin:0}button,input,select{font:inherit}button{cursor:pointer}button:disabled{cursor:default;opacity:.45}button,input,select{-webkit-tap-highlight-color:transparent}button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #6d96d0;outline-offset:3px}button{color:inherit}svg{flex-shrink:0}button svg{pointer-events:none}h1,h2,h3,p{margin:0}button,input,select{touch-action:manipulation}button{user-select:none}input,select{min-width:0;color:var(--kiosk-navy)}
@@ -153,20 +153,20 @@
 .kiosk-scroll{scroll-padding-top:var(--kiosk-timeline-head-height,146px)}
 .kiosk-room-header{height:var(--kiosk-timeline-head-height,146px);background:#f8fafc;box-shadow:0 3px 5px #1c304405}
 .kiosk-room-heading{height:100px;min-width:0;padding:13px 16px;align-items:center;gap:0}
-.kiosk-room-heading>div{display:flex;flex-direction:column;gap:6px;width:100%;min-width:0}
+.kiosk-room-heading>div{position:relative;display:flex;flex-direction:column;gap:6px;width:100%;min-width:0}
 .kiosk-room-title-row{display:flex;align-items:center;justify-content:space-between;gap:9px;min-width:0}
-.kiosk-room-title-row h2{min-width:0;margin:0;color:#18273e;font-size:18px;font-weight:750;line-height:23px;letter-spacing:-.45px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kiosk-room-title-row h2{min-width:0;max-width:calc(100% - 78px);margin:0;color:#18273e;font-size:19px;font-weight:750;line-height:22px;letter-spacing:-.45px;overflow:hidden;text-overflow:ellipsis;white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2}
 .kiosk-room-title-row>.kiosk-floor-tag{height:12px;min-width:25px;padding:0 0 0 9px;background:transparent;border-radius:0;border-left:1px solid #d3dce9;color:#7c8da6;font-size:11px;font-weight:600;line-height:1;flex-shrink:0}
-.kiosk-room-heading .kiosk-room-status{display:flex;align-items:center;gap:6px;margin:0;min-width:0;min-height:15px;color:#6d7f98;font-size:12px;line-height:15px;white-space:nowrap}
+.kiosk-room-heading .kiosk-room-status{display:flex;align-items:center;gap:6px;margin:0;min-width:0;min-height:15px;position:absolute;top:2px;right:0;color:#6d7f98;font-size:12px;line-height:15px;white-space:nowrap}
 .kiosk-room-status>i,.kiosk-room-status>.dot{display:block;flex:0 0 8px;width:8px;height:8px;background:currentColor;border-radius:50%;font-style:normal}
 .kiosk-room-status>b{font-size:12px;font-weight:650;letter-spacing:-.2px;line-height:15px}
 .kiosk-room-heading .kiosk-room-status>span{font-size:11px;font-weight:450;color:inherit;line-height:15px}
 .kiosk-room-heading .kiosk-room-status.is-available{color:#087e64}
 .kiosk-room-heading .kiosk-room-status.is-busy{color:#68778e}
 .kiosk-room-heading .kiosk-room-status.is-unknown{color:#8694a8}
-.kiosk-room-heading .kiosk-room-equipment{display:flex;align-items:center;gap:10px;min-width:0;min-height:19px;color:#5074a0;font-size:11px;font-weight:450;line-height:17px;overflow:hidden}
+.kiosk-room-heading .kiosk-room-equipment{display:flex;align-items:center;gap:10px;min-width:0;min-height:19px;color:#5074a0;font-size:12px;font-weight:450;line-height:17px;overflow:visible;flex-wrap:wrap;padding-right:4px}
 .kiosk-room-equipment .kiosk-equipment-item{display:inline-flex;align-items:center;gap:4px;flex:0 1 auto;min-width:0;white-space:nowrap}
-.kiosk-room-equipment .kiosk-equipment-item>span{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.kiosk-room-equipment .kiosk-equipment-item>span{min-width:0;overflow:visible;text-overflow:clip}
 .kiosk-room-equipment .kiosk-equipment-item>svg{width:14px;height:14px;flex-shrink:0}
 .kiosk-equipment-more{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;min-width:22px;min-height:22px;padding:2px 3px;border:0;border-radius:4px;background:transparent;color:#587aa4;font-size:11px;font-weight:500;line-height:1;white-space:nowrap}
 .kiosk-equipment-more:hover{background:#edf3fb;color:#244e84}

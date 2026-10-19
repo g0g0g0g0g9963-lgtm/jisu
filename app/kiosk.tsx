@@ -12,6 +12,7 @@ const SLOT = siteConfig.booking.slotMinutes;
 const START = minutesOf(siteConfig.booking.openingTime);
 const END = minutesOf(siteConfig.booking.closingTime);
 const SLOT_HEIGHT = 40;
+const KIOSK_TOUCH_HOLD_MS = 360;
 const ROOM_GAP = 10;
 const WEEK_HEADER_HEIGHT = 146;
 const DAY_HEADER_HEIGHT = 106;
@@ -118,6 +119,8 @@ export default function Kiosk() {
   const initialScrolled = useRef(false);
   const gesture = useRef<{ id: number; x: number; y: number; moved: boolean; scrollLeft: number; scrollTop: number } | null>(null);
   const suppressClick = useRef(false);
+  const [slotDrag, setSlotDrag] = useState<{ roomId: string; date: string; start: number; end: number } | null>(null);
+  const slotDragRef = useRef<{ room: Room; date: string; anchor: number; start: number; end: number; pointerId: number; touch: boolean; y: number; active: boolean; moved: boolean; timer: number | null; column: HTMLElement } | null>(null);
   const savingRef = useRef(false);
   const today = todayKey(now);
   const minuteNow = officeMinutesOfDay(now);
@@ -244,21 +247,83 @@ export default function Kiosk() {
     return () => { window.clearInterval(timer); document.removeEventListener("pointerdown", activity); document.removeEventListener("keydown", activity); document.removeEventListener("input", activity); };
   }, [openModal, clearModal]);
 
-  const pickSlot = (room: Room, date: string, start: number) => {
-    if (suppressClick.current) return;
-    if (savingRef.current || uncertain) { setToast("진행 중인 예약의 저장 결과를 먼저 확인해 주세요."); return; }
-    if (!fresh) { setToast("최신 예약을 확인한 후 다시 선택해 주세요."); return; }
+  const slotBlockReason = (date: string, start: number) => {
+    if (savingRef.current || uncertain) return "진행 중인 예약의 저장 결과를 먼저 확인해 주세요.";
+    if (!fresh) return "최신 예약을 확인한 후 다시 선택해 주세요.";
     const current = new Date();
-    if (date < todayKey(current) || date === todayKey(current) && start < officeMinutesOfDay(current)) { setToast("지난 시간에는 예약할 수 없습니다. 앞으로의 시간을 선택해 주세요."); return; }
-    if (date > maximumDate(todayKey(current))) { setToast("예약 가능한 기간을 벗어났습니다."); return; }
-    const list = bookingGroups.get(`${room.id}/${date}`) ?? [];
-    const next = list.filter(item => minutesOf(item.start) > start).reduce((earliest, item) => Math.min(earliest, minutesOf(item.start)), END);
-    const end = Math.min(END, next, start + siteConfig.booking.defaultDurationMinutes);
-    if (end <= start) return;
+    if (date < todayKey(current) || date === todayKey(current) && start < officeMinutesOfDay(current)) return "지난 시간에는 예약할 수 없습니다. 앞으로의 시간을 선택해 주세요.";
+    if (date > maximumDate(todayKey(current))) return "예약 가능한 기간을 벗어났습니다.";
+    return "";
+  };
+  const openDraftAt = (room: Room, date: string, start: number, end: number) => {
     requestIdentity.current = null; setFormError(""); setUncertain(false); setDetail(null);
     setSelectedDate(date);
     setDraft(value => ({ roomId: room.id, date, start: formatMinutes(start), end: formatMinutes(end), owner: value?.owner ?? "", team: value?.team ?? "", purpose: value?.purpose ?? "" }));
   };
+  const pickSlot = (room: Room, date: string, start: number) => {
+    if (suppressClick.current) return;
+    const reason = slotBlockReason(date, start);
+    if (reason) { setToast(reason); return; }
+    const list = bookingGroups.get(`${room.id}/${date}`) ?? [];
+    const next = list.filter(item => minutesOf(item.start) > start).reduce((earliest, item) => Math.min(earliest, minutesOf(item.start)), END);
+    const end = Math.min(END, next, start + siteConfig.booking.defaultDurationMinutes);
+    if (end <= start) return;
+    openDraftAt(room, date, start, end);
+  };
+
+  // Mouse: drag immediately. Touch: hold briefly, then drag, so a normal swipe still scrolls the timetable.
+  const beginSlotDrag = (room: Room, date: string, start: number, event: ReactPointerEvent<HTMLButtonElement>) => {
+    if (event.button !== 0 || slotBlockReason(date, start)) return;
+    const touch = event.pointerType === "touch";
+    const state = { room, date, anchor: start, start, end: start + SLOT, pointerId: event.pointerId, touch, y: event.clientY, active: !touch, moved: false, timer: null as number | null, column: event.currentTarget.parentElement as HTMLElement };
+    if (touch) state.timer = window.setTimeout(() => {
+      if (slotDragRef.current !== state) return;
+      state.active = true; state.timer = null;
+      setSlotDrag({ roomId: room.id, date, start: state.start, end: state.end });
+    }, KIOSK_TOUCH_HOLD_MS);
+    slotDragRef.current = state;
+  };
+  const dragActions = useRef({ slotBlockReason, openDraftAt });
+  dragActions.current = { slotBlockReason, openDraftAt };
+  useEffect(() => {
+    const stop = (state: NonNullable<typeof slotDragRef.current>) => {
+      if (state.timer !== null) window.clearTimeout(state.timer);
+      slotDragRef.current = null; setSlotDrag(null);
+    };
+    const move = (event: PointerEvent) => {
+      const state = slotDragRef.current;
+      if (!state || state.pointerId !== event.pointerId) return;
+      if (!state.active) { if (Math.abs(event.clientY - state.y) > 10) stop(state); return; }
+      if (!state.moved && Math.abs(event.clientY - state.y) < 8) return;
+      state.moved = true;
+      const rect = state.column.getBoundingClientRect();
+      const minutes = START + Math.max(0, Math.min(timeSlots.length - 1, Math.floor((event.clientY - rect.top) / SLOT_HEIGHT))) * SLOT;
+      state.start = Math.min(state.anchor, minutes); state.end = Math.max(state.anchor, minutes) + SLOT;
+      setSlotDrag({ roomId: state.room.id, date: state.date, start: state.start, end: state.end });
+    };
+    const finish = (event: PointerEvent) => {
+      const state = slotDragRef.current;
+      if (!state || state.pointerId !== event.pointerId) return;
+      stop(state);
+      if (event.type !== "pointerup" || !state.moved) return;
+      suppressClick.current = true;
+      window.setTimeout(() => { suppressClick.current = false; }, 450);
+      const reason = dragActions.current.slotBlockReason(state.date, state.start);
+      if (reason) { setToast(reason); return; }
+      dragActions.current.openDraftAt(state.room, state.date, state.start, Math.min(END, state.end));
+    };
+    const blockScroll = (event: TouchEvent) => { if (slotDragRef.current?.active && slotDragRef.current.touch) event.preventDefault(); };
+    document.addEventListener("pointermove", move);
+    document.addEventListener("pointerup", finish);
+    document.addEventListener("pointercancel", finish);
+    document.addEventListener("touchmove", blockScroll, { passive: false });
+    return () => {
+      document.removeEventListener("pointermove", move);
+      document.removeEventListener("pointerup", finish);
+      document.removeEventListener("pointercancel", finish);
+      document.removeEventListener("touchmove", blockScroll);
+    };
+  }, []);
 
   const startGesture = (event: ReactPointerEvent) => {
     const area = scrollRef.current;
@@ -388,7 +453,8 @@ export default function Kiosk() {
             })}
             <div className="kiosk-time-axis" style={{ gridColumn: 1, gridRow: 2, height: gridHeight }}>{hourSlots.map(time => <span key={time} style={{ top: (time - START) / SLOT * SLOT_HEIGHT }} className="kiosk-hour-label">{formatMinutes(time)}</span>)}<span className="kiosk-hour-label is-end" style={{ top: gridHeight }}>{formatMinutes(END)}</span>{dates.includes(today) && minuteNow >= START && minuteNow <= END && <span className="kiosk-now-label" style={{ top: (minuteNow - START) / SLOT * SLOT_HEIGHT }}>{formatMinutes(minuteNow)}</span>}</div>
             {currentRooms.map((room, index) => <div className={`kiosk-room-body${index === currentRooms.length - 1 ? " is-last-room" : ""}`} key={room.id} style={{ gridColumn: index + 2, gridRow: 2 }}>{dates.map(date => <div className={`kiosk-day-column${date === today ? " is-today" : ""}${date < today ? " is-past" : ""}`} key={date} style={{ height: gridHeight }}>
-              {timeSlots.map(start => <button type="button" key={start} className={`kiosk-slot${start % 60 === 0 ? " is-hour" : ""}`} data-testid="kiosk-slot" data-room={room.id} data-date={date} data-start={formatMinutes(start)} aria-label={`${room.name} ${formatDateLabel(date)} ${formatMinutes(start)} 예약`} tabIndex={-1} onClick={() => pickSlot(room, date, start)} />)}
+              {timeSlots.map(start => <button type="button" key={start} className={`kiosk-slot${start % 60 === 0 ? " is-hour" : ""}`} data-testid="kiosk-slot" data-room={room.id} data-date={date} data-start={formatMinutes(start)} aria-label={`${room.name} ${formatDateLabel(date)} ${formatMinutes(start)} 예약`} tabIndex={-1} onPointerDown={event => beginSlotDrag(room, date, start, event)} onContextMenu={event => event.preventDefault()} onClick={() => pickSlot(room, date, start)} />)}
+              {slotDrag && slotDrag.roomId === room.id && slotDrag.date === date && <div className="kiosk-drag-preview" aria-hidden="true" style={{ top: (slotDrag.start - START) / SLOT * SLOT_HEIGHT + 2, height: (slotDrag.end - slotDrag.start) / SLOT * SLOT_HEIGHT - 4 }}><strong>{formatMinutes(slotDrag.start)}–{formatMinutes(Math.min(END, slotDrag.end))}</strong></div>}
               {loadedRange === rangeKey && (bookingGroups.get(`${room.id}/${date}`) ?? []).map(booking => {
                 const duration = minutesOf(booking.end) - minutesOf(booking.start);
                 const ended = date < today || date === today && minutesOf(booking.end) <= minuteNow;

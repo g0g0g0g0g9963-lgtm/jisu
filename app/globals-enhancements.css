@@ -4466,3 +4466,9 @@ button {
 
 /* 작은 확인창은 동일한 중립 카드 스타일을 사용한다. */
 .early-dialog,.cancel-dialog,.booking-detail-dialog{border-top:1px solid var(--premium-line);}
+
+/* 예약 완료 시 빨간 종만 흔들고 기존 빨간 점 배지는 사용하지 않는다. */
+.header-account .header-nav .header-bookings-dot{display:none!important}
+.header-account .header-nav .header-bookings-bell.booking-arrival{color:#ed1639;animation:booking-bell-shake .72s ease-in-out both}
+.header-account .header-nav .header-bookings-bell.booking-arrival svg{color:#ed1639}
+@keyframes booking-bell-shake{0%,100%{transform:rotate(0)}15%{transform:rotate(-14deg)}30%{transform:rotate(12deg)}45%{transform:rotate(-9deg)}60%{transform:rotate(6deg)}75%{transform:rotate(-3deg)}}

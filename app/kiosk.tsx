@@ -260,8 +260,14 @@ export default function Kiosk() {
     setSelectedDate(date);
     setDraft(value => ({ roomId: room.id, date, start: formatMinutes(start), end: formatMinutes(end), owner: value?.owner ?? "", team: value?.team ?? "", purpose: value?.purpose ?? "" }));
   };
+  const isPastSlot = (date: string, start: number) => {
+    const current = new Date();
+    return date < todayKey(current) || date === todayKey(current) && start < officeMinutesOfDay(current);
+  };
   const pickSlot = (room: Room, date: string, start: number) => {
     if (suppressClick.current) return;
+    // Like the employee site: touching time that has already passed brings the view back to now.
+    if (isPastSlot(date, start)) { focusTime(); return; }
     const reason = slotBlockReason(date, start);
     if (reason) { setToast(reason); return; }
     const list = bookingGroups.get(`${room.id}/${date}`) ?? [];
@@ -273,7 +279,9 @@ export default function Kiosk() {
 
   // Mouse: drag immediately. Touch: hold briefly, then drag, so a normal swipe still scrolls the timetable.
   const beginSlotDrag = (room: Room, date: string, start: number, event: ReactPointerEvent<HTMLButtonElement>) => {
-    if (event.button !== 0 || slotBlockReason(date, start)) return;
+    if (event.button !== 0) return;
+    if (isPastSlot(date, start)) { if (event.pointerType !== "touch") focusTime(); return; }
+    if (slotBlockReason(date, start)) return;
     const touch = event.pointerType === "touch";
     const state = { room, date, anchor: start, start, end: start + SLOT, pointerId: event.pointerId, touch, y: event.clientY, active: !touch, moved: false, timer: null as number | null, column: event.currentTarget.parentElement as HTMLElement };
     if (touch) state.timer = window.setTimeout(() => {
@@ -283,6 +291,38 @@ export default function Kiosk() {
     }, KIOSK_TOUCH_HOLD_MS);
     slotDragRef.current = state;
   };
+  // Same cursor hint as the employee site. Mouse/pen only: touch screens have no hover.
+  useEffect(() => {
+    const tip = document.createElement("div");
+    tip.className = "kiosk-drag-tip";
+    tip.textContent = "＋ 드래그해서 예약";
+    document.body.appendChild(tip);
+    let pressing = false;
+    const hide = () => tip.classList.remove("on");
+    const move = (event: PointerEvent) => {
+      if (pressing || event.pointerType === "touch") return hide();
+      const slot = (event.target as HTMLElement | null)?.closest?.(".kiosk-day-column:not(.is-past) .kiosk-slot");
+      if (!slot) return hide();
+      tip.classList.add("on");
+      tip.style.left = `${event.clientX + 14}px`;
+      tip.style.top = `${event.clientY + 16}px`;
+    };
+    const press = () => { pressing = true; hide(); };
+    const release = () => { pressing = false; };
+    document.addEventListener("pointermove", move);
+    document.addEventListener("pointerdown", press);
+    document.addEventListener("pointerup", release);
+    document.addEventListener("pointercancel", release);
+    window.addEventListener("blur", hide);
+    return () => {
+      document.removeEventListener("pointermove", move);
+      document.removeEventListener("pointerdown", press);
+      document.removeEventListener("pointerup", release);
+      document.removeEventListener("pointercancel", release);
+      window.removeEventListener("blur", hide);
+      tip.remove();
+    };
+  }, []);
   const dragActions = useRef({ slotBlockReason, openDraftAt });
   dragActions.current = { slotBlockReason, openDraftAt };
   useEffect(() => {
@@ -471,7 +511,6 @@ export default function Kiosk() {
         </div>
         {!loadedRange && loading && <div className="kiosk-calendar-loading" role="status"><span className="kiosk-spinner" />예약을 불러오고 있습니다.</div>}
       </div>
-      <footer className="kiosk-footer"><span><span className="kiosk-legend-booked" />예약됨<span className="kiosk-legend-now" />현재 시간</span><p>예약자 이름은 매번 직접 입력합니다.</p></footer>
     </main>
     {!draft ? <button type="button" className="kiosk-quick-rail" data-testid="kiosk-quick-open" aria-label="빠른 예약 펼치기" aria-expanded={false} aria-controls="kiosk-quick-booking" onClick={openQuickBooking}>
       <span className="kiosk-quick-rail-main"><Icon name="calendar" /><i aria-hidden="true" /><span>빠른 예약</span></span><span className="kiosk-quick-rail-arrow" aria-hidden="true"><Icon name="left" /></span>

@@ -888,7 +888,7 @@ export default function Home() {
       setToast(null);
       setToastFlight(null);
       setBellArrival(true);
-    }, reduceMotion ? 2200 : 2500);
+    }, reduceMotion ? 3000 : 3000);
 
     return () => {
       window.clearTimeout(flyTimer);

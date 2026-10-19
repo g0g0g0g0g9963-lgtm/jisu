@@ -17,8 +17,10 @@ const monthShift = (value: string, direction: number) => {
   return date.toISOString().slice(0, 10);
 };
 
-/** Calendar navigation for viewing reservations, independent of booking date limits. */
-export function KioskDatePicker({ value, onChange }: { value: string; onChange: (date: string) => void }) {
+/** Calendar navigation for viewing reservations, independent of booking date limits.
+ * `label` + `minDate`/`maxDate` turn the icon-only toggle into a date-field button
+ * (used by the quick-booking date field, which has real lower/upper bounds). */
+export function KioskDatePicker({ value, onChange, label, minDate, maxDate }: { value: string; onChange: (date: string) => void; label?: string; minDate?: string; maxDate?: string }) {
   const selected = dateKey(value);
   const [open, setOpen] = useState(false);
   const [month, setMonth] = useState(selected.slice(0, 7));
@@ -85,24 +87,25 @@ export function KioskDatePicker({ value, onChange }: { value: string; onChange: 
     event.preventDefault(); pendingFocus.current = true; setFocusedDay(next); setMonth(next.slice(0, 7));
   };
 
-  return <div className="kiosk-calendar-picker" ref={wrapper}>
-    <button type="button" className="kiosk-calendar-toggle" data-testid="kiosk-calendar-toggle" ref={toggle}
-      aria-label="날짜 선택" title="날짜 선택" aria-haspopup="dialog" aria-expanded={open} aria-controls={open ? id : undefined}
+  return <div className={`kiosk-calendar-picker${label ? " kiosk-date-field" : ""}`} ref={wrapper}>
+    <button type="button" className={label ? "kiosk-date-field-value" : "kiosk-calendar-toggle"} data-testid="kiosk-calendar-toggle" ref={toggle}
+      aria-label={label ? undefined : "날짜 선택"} title={label ? undefined : "날짜 선택"} aria-haspopup="dialog" aria-expanded={open} aria-controls={open ? id : undefined}
       onClick={() => {
         if (open) { close(); return; }
         setMonth(selected.slice(0, 7)); setFocusedDay(selected); pendingFocus.current = true; setOpen(true);
       }}>
+      {label && <span>{label}</span>}
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <rect x="4" y="5" width="16" height="16" rx="3" /><path d="M8 3v4m8-4v4M4 11h16" /><path d="M8 15h2" />
       </svg>
     </button>
     {open && <div className="kiosk-calendar-popover" id={id} role="dialog" aria-labelledby={`${id}-month`}>
       <div className="kiosk-calendar-head">
-        <button type="button" className="kiosk-calendar-month-prev" aria-label="이전 달" onClick={() => changeMonth(-1)}>
+        <button type="button" className="kiosk-calendar-month-prev" aria-label="이전 달" disabled={Boolean(minDate) && month <= minDate!.slice(0, 7)} onClick={() => changeMonth(-1)}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m14 6-6 6 6 6" /></svg>
         </button>
         <strong id={`${id}-month`} aria-live="polite">{year}년 {monthNumber}월</strong>
-        <button type="button" className="kiosk-calendar-month-next" aria-label="다음 달" onClick={() => changeMonth(1)}>
+        <button type="button" className="kiosk-calendar-month-next" aria-label="다음 달" disabled={Boolean(maxDate) && month >= maxDate!.slice(0, 7)} onClick={() => changeMonth(1)}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m10 6 6 6-6 6" /></svg>
         </button>
       </div>
@@ -114,8 +117,9 @@ export function KioskDatePicker({ value, onChange }: { value: string; onChange: 
           const weekday = (firstWeekday + index) % 7;
           const holiday = publicHolidayOf(key);
           const isToday = key === today;
-          const classes = [key === selected && "is-selected", isToday && "is-today", weekday === 0 && "is-sun", weekday === 6 && "is-sat", holiday && "is-holiday"].filter(Boolean).join(" ");
-          return <button type="button" key={key} data-date-key={key} className={classes} aria-pressed={key === selected}
+          const outOfRange = Boolean(minDate && key < minDate) || Boolean(maxDate && key > maxDate);
+          const classes = [key === selected && "is-selected", isToday && "is-today", weekday === 0 && "is-sun", weekday === 6 && "is-sat", holiday && "is-holiday", outOfRange && "is-disabled"].filter(Boolean).join(" ");
+          return <button type="button" key={key} data-date-key={key} className={classes} aria-pressed={key === selected} disabled={outOfRange}
             aria-current={isToday ? "date" : undefined} tabIndex={key === focusedDay ? 0 : -1}
             aria-label={`${year}년 ${formatDateLabel(key)}${holiday ? `, ${holiday.name}` : ""}${isToday ? ", 오늘" : ""}`}
             title={holiday?.name} onClick={() => choose(key)} onFocus={() => setFocusedDay(key)} onKeyDown={event => moveFocus(event, key)}>

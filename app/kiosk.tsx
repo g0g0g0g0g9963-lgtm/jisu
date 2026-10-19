@@ -5,7 +5,7 @@ import { kioskBookingColors } from "./lib/kiosk-booking-colors";
 import { KioskDatePicker } from "./kiosk-date-picker";
 import { dayOfMonth, formatDateLabel, formatMinutes, formatWeekday, formatWeekdayEnglish, getWorkWeek, isWeekend, minutesOf, moveDate, officeMinutesOfDay, todayKey } from "./lib/datetime";
 import { publicHolidayOf } from "./lib/holidays";
-import { floors, roomById, rooms, type Room } from "./lib/rooms";
+import { describeRoomStatus, floors, formatCapacity, roomById, rooms, type Room } from "./lib/rooms";
 import { connectKiosk, createKioskBooking, getKioskBookings, KioskError, kioskRequestId, kioskSession, type KioskBooking, type KioskDraft, type KioskSession } from "./lib/kiosk-api";
 
 const SLOT = siteConfig.booking.slotMinutes;
@@ -99,6 +99,8 @@ export default function Kiosk() {
   const [loadError, setLoadError] = useState("");
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [draft, setDraft] = useState<KioskDraft | null>(null);
+  const [roomPickerOpen, setRoomPickerOpen] = useState(false);
+  const roomPickerRef = useRef<HTMLDivElement>(null);
   const [detail, setDetail] = useState<KioskBooking | null>(null);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState("");
@@ -188,6 +190,15 @@ export default function Kiosk() {
     const timer = window.setInterval(() => setNow(new Date()), 15000);
     return () => window.clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    if (!roomPickerOpen) return;
+    const pointer = (event: PointerEvent) => { if (!roomPickerRef.current?.contains(event.target as Node)) setRoomPickerOpen(false); };
+    const keyboard = (event: KeyboardEvent) => { if (event.key === "Escape") setRoomPickerOpen(false); };
+    document.addEventListener("pointerdown", pointer);
+    document.addEventListener("keydown", keyboard);
+    return () => { document.removeEventListener("pointerdown", pointer); document.removeEventListener("keydown", keyboard); };
+  }, [roomPickerOpen]);
 
   useEffect(() => {
     if (!toast) return;
@@ -350,6 +361,11 @@ export default function Kiosk() {
   if (!session?.authorized) return <MonitorAccess state={session} error={sessionError} onConnected={setSession} onRetry={() => void checkSession()} />;
 
   const selectedRoom = draft ? roomById(draft.roomId) : detail ? roomById(detail.roomId) : undefined;
+  const roomStatus = (room: Room | undefined) => room ? describeRoomStatus(
+    (draft ? bookingGroups.get(`${room.id}/${draft.date}`) ?? [] : []).map(booking => ({ ...booking, purpose: booking.purpose ?? "" })),
+    minuteNow,
+    draft ? { isToday: draft.date === today, isPast: draft.date < today } : { isToday: false },
+  ) : { status: "unknown" as const, statusLabel: "", nextLabel: "" };
   return <div className={`kiosk-app is-${view}-view${draft ? " is-panel-open" : ""}`}>
     <header className="kiosk-topbar"><Brand /><div className="kiosk-topbar-right"><span className="kiosk-mode"><Icon name="monitor" size={17} />공용 모니터</span><span className="kiosk-live-date">{formatDateLabel(today)}<strong>{formatMinutes(minuteNow)}</strong></span><button type="button" className="kiosk-icon-button" title={fullScreen ? "전체 화면 종료" : "전체 화면"} aria-label={fullScreen ? "전체 화면 종료" : "전체 화면"} onClick={() => void fullscreen()}><Icon name="expand" /></button></div></header>
     <main className="kiosk-main" aria-label="공용 모니터 회의실 예약">
@@ -407,8 +423,30 @@ export default function Kiosk() {
       <div className="kiosk-quick-title"><div className="kiosk-quick-title-copy"><span>QUICK BOOKING</span><h2 id="kiosk-quick-title">빠른 예약</h2></div>{draft.owner.trim() && <span className="kiosk-draft-chip">작성 중</span>}<button type="button" className="kiosk-quick-collapse" data-testid="kiosk-quick-close" aria-label="빠른 예약 접기" aria-expanded={true} aria-controls="kiosk-quick-booking" disabled={saving} onClick={clearModal}><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d="m11 6-6 6 6 6m7-12-6 6 6 6" /></svg></button></div>
       <form id="kiosk-quick-form" className="kiosk-quick-form" autoComplete="off" onSubmit={submitBooking}>
         <div className="kiosk-quick-fields">
-          <section className="kiosk-quick-section"><h3 className="kiosk-section-heading"><span>1</span>회의실</h3><div className="kiosk-room-picker"><select aria-label="회의실" id="kiosk-room" data-testid="kiosk-room" value={draft.roomId} disabled={saving || uncertain} onChange={event => changeDraft({ roomId: event.target.value })}>{floors.map(level => <optgroup key={level} label={level + "층"}>{rooms.filter(room => room.floor === level).map(room => <option key={room.id} value={room.id}>{room.name} · {room.floor}F</option>)}</optgroup>)}</select><p className="kiosk-room-specs">최대 {selectedRoom?.capacity}명 · {selectedRoom?.equipment.join(" · ")}</p></div></section>
-          <section className="kiosk-quick-section"><h3 className="kiosk-section-heading"><span>2</span>예약 날짜</h3><div className="kiosk-form-row"><label htmlFor="kiosk-date"><Icon name="calendar" size={18} />날짜</label><input type="date" id="kiosk-date" data-testid="kiosk-date" value={draft.date} min={today} max={maximumDate(today)} disabled={saving || uncertain} required onChange={event => changeDraft({ date: event.target.value })} /></div></section>
+          <section className="kiosk-quick-section"><h3 className="kiosk-section-heading"><span>1</span>회의실</h3>
+            <div className="kiosk-room-picker" ref={roomPickerRef}>
+              <button type="button" className={`kiosk-room-picker-toggle${roomPickerOpen ? " open" : ""}`} data-testid="kiosk-room" aria-haspopup="dialog" aria-expanded={roomPickerOpen} aria-label={`회의실 선택: ${selectedRoom?.name ?? ""} ${selectedRoom?.floor ?? ""}층`} disabled={saving || uncertain} onClick={() => setRoomPickerOpen(current => !current)}>
+                <span className="kiosk-room-picker-copy">
+                  <span className="kiosk-room-picker-title"><span className={`kiosk-status-dot is-${roomStatus(selectedRoom).status}`} /><strong>{selectedRoom?.name}</strong><small>{selectedRoom?.floor}F</small></span>
+                  <span className="kiosk-room-picker-specs">최대 {selectedRoom?.capacity}명 · {selectedRoom?.equipment.join(" · ")}</span>
+                </span>
+                <i aria-hidden="true" />
+              </button>
+              {roomPickerOpen && <div className="kiosk-room-picker-popover" role="dialog" aria-label="회의실 선택">
+                {floors.map(level => <div className="kiosk-room-picker-floor-group" key={level}>
+                  <small>{level}F</small>
+                  {rooms.filter(room => room.floor === level).map(room => {
+                    const status = roomStatus(room);
+                    return <button type="button" key={room.id} className={draft.roomId === room.id ? "selected" : ""} disabled={saving || uncertain} onClick={() => { changeDraft({ roomId: room.id }); setRoomPickerOpen(false); }}>
+                      <span className="kiosk-room-picker-name"><span className={`kiosk-status-dot is-${status.status}`} /><strong>{room.name}</strong></span>
+                      <em>{formatCapacity(room.capacity)} · {room.equipment.slice(0, 2).join(" · ")}</em>
+                    </button>;
+                  })}
+                </div>)}
+              </div>}
+            </div>
+          </section>
+          <section className="kiosk-quick-section"><h3 className="kiosk-section-heading"><span>2</span>예약 날짜</h3><div className="kiosk-form-row"><label htmlFor="kiosk-date" className="sr-only">날짜</label><KioskDatePicker value={draft.date} onChange={date => changeDraft({ date })} label={formatDateLabel(draft.date)} minDate={today} maxDate={maximumDate(today)} /></div></section>
           <section className="kiosk-quick-section"><h3 className="kiosk-section-heading"><span>3</span>시간 선택</h3><div className="kiosk-time-fields"><label htmlFor="kiosk-start">시작 시간<select id="kiosk-start" data-testid="kiosk-start" value={draft.start} disabled={saving || uncertain} onChange={event => { const start = event.target.value; changeDraft({ start, end: minutesOf(draft.end) <= minutesOf(start) ? formatMinutes(Math.min(END, minutesOf(start) + SLOT)) : draft.end }); }}>{timeSlots.map(time => <option key={time} value={formatMinutes(time)} disabled={draft.date === today && time < nextAvailableSlot(today, START, now)}>{formatMinutes(time)}</option>)}</select></label><span>—</span><label htmlFor="kiosk-end">종료 시간<select id="kiosk-end" data-testid="kiosk-end" value={draft.end} disabled={saving || uncertain} onChange={event => changeDraft({ end: event.target.value })}>{END_TIMES.map(time => <option key={time} value={formatMinutes(time)} disabled={time <= minutesOf(draft.start)}>{formatMinutes(time)}</option>)}</select></label></div><div className="kiosk-duration-options" role="group" aria-label="이용 시간">{siteConfig.booking.durationPresetsMinutes.map(duration => <button key={duration} type="button" aria-pressed={minutesOf(draft.end) - minutesOf(draft.start) === duration} disabled={saving || uncertain || minutesOf(draft.start) + duration > END} onClick={() => changeDraft({ end: formatMinutes(minutesOf(draft.start) + duration) })}>{duration / 60}시간</button>)}<button type="button" aria-pressed={minutesOf(draft.start) === START && minutesOf(draft.end) === END} disabled={saving || uncertain} onClick={() => changeDraft({ start: formatMinutes(START), end: formatMinutes(END) })}>종일</button></div></section>
           <section className="kiosk-quick-section"><h3 className="kiosk-section-heading"><span>4</span>예약 정보</h3><div className="kiosk-name-field"><label htmlFor="kiosk-owner">예약자 이름 <em>필수</em></label><input id="kiosk-owner" data-testid="kiosk-owner" ref={nameRef} name="monitor-reservation-name" autoComplete="off" placeholder="예약하는 분의 이름을 입력해 주세요" value={draft.owner} onChange={event => changeDraft({ owner: event.target.value })} maxLength={40} required disabled={saving || uncertain} /><small>이전 이용자의 이름을 기억하거나 자동으로 채우지 않습니다.</small></div><div className="kiosk-purpose-field"><label htmlFor="kiosk-purpose">회의 목적 <span>선택</span></label><input id="kiosk-purpose" data-testid="kiosk-purpose" autoComplete="off" placeholder="예: 팀 회의" value={draft.purpose} onChange={event => changeDraft({ purpose: event.target.value })} maxLength={100} disabled={saving || uncertain} /></div></section>
           {(formError || (!uncertain && (draftConflict || draftInvalidTime || !draftRangeLoaded))) && <div className="kiosk-inline-error" role="alert">{formError || (draftConflict ? "선택한 시간에 이미 예약이 있습니다. 다른 시간을 선택해 주세요." : draftInvalidTime ? "앞으로의 날짜와 올바른 시간을 선택해 주세요." : "예약 날짜의 최신 시간표를 확인해 주세요.")}{!draftRangeLoaded && draft.date && !draftInvalidTime && <button type="button" className="kiosk-secondary" disabled={saving || uncertain || loading} onClick={() => { setSelectedDate(draft.date); if (draft.date >= week && draft.date <= endDate) void refresh(); }}>선택 날짜 시간표 확인</button>}</div>}

@@ -107,7 +107,6 @@ export default function Kiosk() {
   const [uncertain, setUncertain] = useState(false);
   const [idleWarning, setIdleWarning] = useState(false);
   const [toast, setToast] = useState("");
-  const [fullScreen, setFullScreen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const panelRef = useRef<HTMLElement>(null);
@@ -244,12 +243,6 @@ export default function Kiosk() {
     return () => { window.clearInterval(timer); document.removeEventListener("pointerdown", activity); document.removeEventListener("keydown", activity); document.removeEventListener("input", activity); };
   }, [openModal, clearModal]);
 
-  useEffect(() => {
-    const change = () => setFullScreen(Boolean(document.fullscreenElement));
-    document.addEventListener("fullscreenchange", change);
-    return () => document.removeEventListener("fullscreenchange", change);
-  }, []);
-
   const pickSlot = (room: Room, date: string, start: number) => {
     if (suppressClick.current) return;
     if (savingRef.current || uncertain) { setToast("진행 중인 예약의 저장 결과를 먼저 확인해 주세요."); return; }
@@ -353,11 +346,6 @@ export default function Kiosk() {
     requestAnimationFrame(() => scrollRef.current?.scrollTo({ left: 0, top: Math.max(0, (officeMinutesOfDay(instant) - START) / SLOT * SLOT_HEIGHT - 16), behavior: "smooth" }));
   };
 
-  const fullscreen = async () => {
-    try { if (document.fullscreenElement) await document.exitFullscreen(); else await document.documentElement.requestFullscreen(); }
-    catch { setToast("이 브라우저에서는 전체 화면을 전환할 수 없습니다."); }
-  };
-
   if (!session?.authorized) return <MonitorAccess state={session} error={sessionError} onConnected={setSession} onRetry={() => void checkSession()} />;
 
   const selectedRoom = draft ? roomById(draft.roomId) : detail ? roomById(detail.roomId) : undefined;
@@ -367,7 +355,7 @@ export default function Kiosk() {
     draft ? { isToday: draft.date === today, isPast: draft.date < today } : { isToday: false },
   ) : { status: "unknown" as const, statusLabel: "", nextLabel: "" };
   return <div className={`kiosk-app is-${view}-view${draft ? " is-panel-open" : ""}`}>
-    <header className="kiosk-topbar"><Brand /><div className="kiosk-topbar-right"><span className="kiosk-mode"><Icon name="monitor" size={17} />공용 모니터</span><span className="kiosk-live-date">{formatDateLabel(today)}<strong>{formatMinutes(minuteNow)}</strong></span><button type="button" className="kiosk-icon-button" title={fullScreen ? "전체 화면 종료" : "전체 화면"} aria-label={fullScreen ? "전체 화면 종료" : "전체 화면"} onClick={() => void fullscreen()}><Icon name="expand" /></button></div></header>
+    <header className="kiosk-topbar"><Brand /></header>
     <main className="kiosk-main" aria-label="공용 모니터 회의실 예약">
       <section className="kiosk-toolbar" aria-label="층과 주간 선택">
         <div className="kiosk-date-floor">

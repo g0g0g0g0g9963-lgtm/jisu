@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { CSSProperties, FocusEvent as ReactFocusEvent, FormEvent, KeyboardEvent as ReactKeyboardEvent, PointerEvent as ReactPointerEvent, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import siteConfig from "./config/site.json";
@@ -954,6 +954,12 @@ export default function Home() {
     let active = true;
     let timer: number | undefined;
     let delay = 1000;
+    if (window.location.pathname === '/kiosk') {
+      setCurrentUser(null);
+      setAuthReady(true);
+      setAuthError('');
+      return;
+    }
     const checkUser = async () => {
       try {
         const user = await fetchMe();

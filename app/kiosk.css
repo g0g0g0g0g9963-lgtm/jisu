@@ -75,7 +75,7 @@
 .kiosk-quick-section:first-child{padding-top:0}
 .kiosk-quick-section:last-child{padding-bottom:10px;border-bottom:0}
 .kiosk-section-heading{display:flex;align-items:center;gap:9px;margin:0 0 12px;font-size:14px;font-weight:750;line-height:22px;letter-spacing:-.25px;color:#233d60}
-.kiosk-section-heading>span{width:18px;height:18px;flex:0 0 18px;border-radius:5px;background:#17223a;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;letter-spacing:-.24px}
+.kiosk-section-heading>span{width:18px;height:18px;flex:0 0 18px;border-radius:999px;background:#17223a;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;letter-spacing:-.24px}
 .kiosk-room-picker{position:relative;min-width:0;display:flex;flex-direction:column;gap:7px;padding:0 0 12px;background:#f5f7fa;border:1px solid #dbe3ee;border-radius:9px;overflow:hidden}
 .kiosk-quick-panel input,.kiosk-quick-panel select{min-width:0;max-width:100%;min-height:44px;border:1px solid #e1e4eb;background:#fff;border-radius:10px;padding:10px 11px;color:#17223a;font:inherit;font-size:14px;box-shadow:none;transition:border-color .15s}
 .kiosk-quick-panel input:hover:not(:disabled),.kiosk-quick-panel select:hover:not(:disabled){border-color:#b8c9e0}

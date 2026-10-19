@@ -418,7 +418,7 @@ export default function Kiosk() {
               <button type="button" className={`kiosk-room-picker-toggle${roomPickerOpen ? " open" : ""}`} data-testid="kiosk-room" aria-haspopup="dialog" aria-expanded={roomPickerOpen} aria-label={`회의실 선택: ${selectedRoom?.name ?? ""} ${selectedRoom?.floor ?? ""}층`} disabled={saving || uncertain} onClick={() => setRoomPickerOpen(current => !current)}>
                 <span className="kiosk-room-picker-copy">
                   <span className="kiosk-room-picker-title"><span className={`kiosk-status-dot is-${roomStatus(selectedRoom).status}`} /><strong>{selectedRoom?.name}</strong><small>{selectedRoom?.floor}F</small></span>
-                  <span className="kiosk-room-picker-specs">최대 {selectedRoom?.capacity}명 · {selectedRoom?.equipment.join(" · ")}</span>
+                  <span className="kiosk-room-picker-specs">최대 {selectedRoom?.capacity}명 · {selectedRoom?.equipment.slice(0, 2).join(" · ")}</span>
                 </span>
                 <i aria-hidden="true" />
               </button>

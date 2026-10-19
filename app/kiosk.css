@@ -117,7 +117,28 @@
 .kiosk-date-field-value{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;min-height:40px;border:1px solid #e1e4eb;background:#fff;border-radius:10px;padding:8px 13px;font:inherit;font-size:15px;font-weight:400;color:#17223a;text-align:left}
 .kiosk-date-field-value:hover:not(:disabled){border-color:#b8c9e0}
 .kiosk-date-field-value svg{color:#637b9a;flex-shrink:0}
-.kiosk-date-field .kiosk-calendar-popover{left:0;right:0;width:auto;max-width:none}
+.kiosk-date-field .kiosk-calendar-popover{top:calc(100% + 6px);left:auto;right:0;width:262px;max-width:none;max-height:none;padding:12px;border:1px solid #dfe3e9;border-radius:9px;background:#fff;box-shadow:0 14px 30px #17223a24;color:#17223a}
+.kiosk-date-field .kiosk-calendar-head{min-height:26px;margin:0 0 10px;gap:6px}
+.kiosk-date-field .kiosk-calendar-head>button{flex:0 0 26px;width:26px;height:26px;border-radius:6px;color:#17223a}
+.kiosk-date-field .kiosk-calendar-head>button:disabled{opacity:.3}
+.kiosk-date-field .kiosk-calendar-head>button>svg{width:16px;height:16px}
+.kiosk-date-field .kiosk-calendar-head>strong{font-size:15.5px;font-weight:900;line-height:23px;color:#17223a}
+.kiosk-date-field .kiosk-calendar-head>strong em{font-style:normal;font-weight:700;color:#9aa4ba}
+.kiosk-date-field .kiosk-calendar-weekdays{gap:0;margin:0 0 5px}
+.kiosk-date-field .kiosk-calendar-weekdays>span{height:24px;font-size:11px;font-weight:900;color:#17223a}
+.kiosk-date-field .kiosk-calendar-weekdays>.is-sun{color:#c21238}
+.kiosk-date-field .kiosk-calendar-weekdays>.is-sat{color:#3d66ad}
+.kiosk-date-field .kiosk-calendar-days{gap:2px 1px}
+.kiosk-date-field .kiosk-calendar-days>button{height:32px;min-height:32px;gap:1px;padding:2px 0;border:0;border-radius:6px;color:#17223a;font-size:13.5px;font-weight:800;line-height:15px;letter-spacing:-.16px}
+.kiosk-date-field .kiosk-calendar-days>button>span{line-height:15px}
+.kiosk-date-field .kiosk-calendar-days>button>small{font-size:7.5px;font-weight:800;line-height:8px;letter-spacing:-.45px}
+.kiosk-date-field .kiosk-calendar-days>button.is-sat{color:#3d66ad}
+.kiosk-date-field .kiosk-calendar-days>button.is-sun,.kiosk-date-field .kiosk-calendar-days>button.is-holiday{color:#c21238}
+.kiosk-date-field .kiosk-calendar-days>button.is-past,.kiosk-date-field .kiosk-calendar-days>button:disabled{color:#b3bac6;opacity:1}
+.kiosk-date-field .kiosk-calendar-days>button.is-today:not(.is-selected){background:transparent;color:#17223a;font-weight:800}
+.kiosk-date-field .kiosk-calendar-days>button:hover:not(:disabled){background:#f2f4f7}
+.kiosk-date-field .kiosk-calendar-days>button.is-selected,.kiosk-date-field .kiosk-calendar-days>button.is-selected:hover{background:#fff;border:0;box-shadow:inset 0 0 0 2px #ed1639;color:#bd1235;font-weight:800}
+.kiosk-date-field .kiosk-calendar-days>button.is-selected>small{color:#ed1639}
 .kiosk-quick-panel .kiosk-time-fields{gap:10px;margin:0 0 12px;align-items:flex-end}
 .kiosk-quick-panel .kiosk-time-fields>label{gap:7px;font-size:11px;font-weight:600;color:#75869e}
 .kiosk-quick-panel .kiosk-time-fields>span{font-size:13px;color:#a7b5c8;padding-bottom:14px}

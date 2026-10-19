@@ -104,7 +104,7 @@ export function KioskDatePicker({ value, onChange, label, minDate, maxDate }: { 
         <button type="button" className="kiosk-calendar-month-prev" aria-label="이전 달" disabled={Boolean(minDate) && month <= minDate!.slice(0, 7)} onClick={() => changeMonth(-1)}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m14 6-6 6 6 6" /></svg>
         </button>
-        <strong id={`${id}-month`} aria-live="polite">{year}년 {monthNumber}월</strong>
+        <strong id={`${id}-month`} aria-live="polite">{label ? <>{monthNumber}월 <em>{year}</em></> : `${year}년 ${monthNumber}월`}</strong>
         <button type="button" className="kiosk-calendar-month-next" aria-label="다음 달" disabled={Boolean(maxDate) && month >= maxDate!.slice(0, 7)} onClick={() => changeMonth(1)}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m10 6 6 6-6 6" /></svg>
         </button>
@@ -118,7 +118,7 @@ export function KioskDatePicker({ value, onChange, label, minDate, maxDate }: { 
           const holiday = publicHolidayOf(key);
           const isToday = key === today;
           const outOfRange = Boolean(minDate && key < minDate) || Boolean(maxDate && key > maxDate);
-          const classes = [key === selected && "is-selected", isToday && "is-today", weekday === 0 && "is-sun", weekday === 6 && "is-sat", holiday && "is-holiday", outOfRange && "is-disabled"].filter(Boolean).join(" ");
+          const classes = [key === selected && "is-selected", isToday && "is-today", key < today && "is-past", weekday === 0 && "is-sun", weekday === 6 && "is-sat", holiday && "is-holiday", outOfRange && "is-disabled"].filter(Boolean).join(" ");
           return <button type="button" key={key} data-date-key={key} className={classes} aria-pressed={key === selected} disabled={outOfRange}
             aria-current={isToday ? "date" : undefined} tabIndex={key === focusedDay ? 0 : -1}
             aria-label={`${year}년 ${formatDateLabel(key)}${holiday ? `, ${holiday.name}` : ""}${isToday ? ", 오늘" : ""}`}
@@ -127,7 +127,7 @@ export function KioskDatePicker({ value, onChange, label, minDate, maxDate }: { 
           </button>;
         })}
       </div>
-      <div className="kiosk-calendar-footer"><button type="button" onClick={() => choose(today)}>오늘로 이동</button></div>
+      {!label && <div className="kiosk-calendar-footer"><button type="button" onClick={() => choose(today)}>오늘로 이동</button></div>}
     </div>}
   </div>;
 }

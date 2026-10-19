@@ -323,3 +323,9 @@
 .kiosk-drag-preview{position:absolute;left:7px;right:7px;z-index:4;pointer-events:none;display:flex;align-items:flex-start;padding:6px 9px;border:2px dashed #d9163a;border-radius:8px;background:#d9163a12;color:#b4122f;font-size:12px;font-weight:800;font-variant-numeric:tabular-nums}
 .kiosk-drag-tip{position:fixed;z-index:1400;padding:6px 12px;border-radius:999px;background:#17223a;color:#fff;font-size:12px;font-weight:700;white-space:nowrap;pointer-events:none;opacity:0;transform:translateY(3px);transition:opacity .12s,transform .12s;box-shadow:0 8px 20px #0f162847}
 .kiosk-drag-tip.on{opacity:1;transform:none}
+.kiosk-app.is-week-view .kiosk-day-headings>div{flex-direction:column;gap:1px;font-size:10.5px;line-height:1.1}
+.kiosk-app.is-week-view .kiosk-day-headings strong{font-size:15px;line-height:1.1}
+.kiosk-app.is-week-view .kiosk-day-headings small{display:none}
+.kiosk-app.is-week-view .kiosk-booking{left:3px;right:3px;padding:5px 5px;gap:1px;border-radius:6px}
+.kiosk-app.is-week-view .kiosk-booking>strong{font-size:12px;line-height:15px}
+.kiosk-app.is-week-view .kiosk-booking>time,.kiosk-app.is-week-view .kiosk-booking>span{font-size:10.5px;line-height:13px;white-space:nowrap;overflow:hidden;text-overflow:clip}

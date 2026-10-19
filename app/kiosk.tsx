@@ -14,6 +14,9 @@ const END = minutesOf(siteConfig.booking.closingTime);
 const SLOT_HEIGHT = 40;
 const KIOSK_TOUCH_HOLD_MS = 360;
 const ROOM_GAP = 10;
+const TIME_AXIS_WIDTH = 70;
+const WEEK_VISIBLE_ROOMS = 4;
+const WEEK_MIN_DAY_WIDTH = 36;
 const WEEK_HEADER_HEIGHT = 146;
 const DAY_HEADER_HEIGHT = 106;
 const timeSlots = Array.from({ length: Math.floor((END - START) / SLOT) }, (_, i) => START + i * SLOT);
@@ -133,7 +136,9 @@ export default function Kiosk() {
   const selectedHoliday = publicHolidayOf(selectedDate);
   const rangeKey = `${week}/${endDate}`;
   const currentRooms = useMemo(() => rooms.filter(room => room.floor === floor), [floor]);
-  const roomWidth = Math.max(650, dates.length * 130);
+  const [scrollWidth, setScrollWidth] = useState(0);
+  // Week view: size each room so at least WEEK_VISIBLE_ROOMS rooms fit on screen.
+  const roomWidth = Math.max(dates.length * WEEK_MIN_DAY_WIDTH, Math.floor((scrollWidth - TIME_AXIS_WIDTH - ROOM_GAP * WEEK_VISIBLE_ROOMS) / WEEK_VISIBLE_ROOMS));
   const fresh = loadedRange === rangeKey && !!lastUpdated && now.getTime() - lastUpdated.getTime() < 90000 && !loadError;
   const openModal = Boolean(draft || detail);
   const gridHeight = timeSlots.length * SLOT_HEIGHT;
@@ -208,6 +213,16 @@ export default function Kiosk() {
     const timer = window.setTimeout(() => setToast(""), 6000);
     return () => window.clearTimeout(timer);
   }, [toast]);
+
+  useEffect(() => {
+    const area = scrollRef.current;
+    if (!area) return;
+    const update = () => setScrollWidth(area.clientWidth);
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(area);
+    return () => observer.disconnect();
+  }, [session?.authorized]);
 
   const focusTime = useCallback((instant = new Date(), behavior: ScrollBehavior = "smooth") => {
     const area = scrollRef.current;
@@ -478,7 +493,7 @@ export default function Kiosk() {
       {(loadError || loadedRange === rangeKey && lastUpdated && !fresh) && <div className="kiosk-load-alert" role="alert"><div>{loadError || "최신 예약을 확인하고 있습니다."}<span>표시된 예약은 최신 상태가 아닐 수 있습니다. 확인 전에는 새 예약을 받지 않습니다.</span></div><button type="button" className="kiosk-secondary" data-testid="kiosk-retry" onClick={() => void refresh()} disabled={loading}>{loading ? "확인 중…" : "다시 확인"}</button></div>}
       <div className={`kiosk-calendar-shell${!fresh ? " is-stale" : ""}`} style={{ "--kiosk-timeline-head-height": `${headerHeight}px` } as CSSProperties}>
         <div className="kiosk-scroll" ref={scrollRef} data-testid="kiosk-scroll" data-ready={fresh && !loading ? "true" : "false"} aria-busy={loading} aria-label={`${floor}층 ${view === "week" ? "회의실별 주간" : `${formatDateLabel(selectedDate)} 일간`} 시간표. 좌우 및 위아래로 스크롤할 수 있습니다.`} onPointerDownCapture={startGesture} onPointerMoveCapture={moveGesture} onPointerUpCapture={finishGesture} onPointerCancelCapture={finishGesture}>
-          <div className="kiosk-grid" style={{ "--kiosk-room-width": `${roomWidth}px`, "--kiosk-room-gap": `${ROOM_GAP}px`, "--kiosk-days": dates.length, gridTemplateColumns: `70px repeat(${currentRooms.length}, ${view === "day" ? "minmax(0, 1fr)" : `${roomWidth}px`})`, gridTemplateRows: `${headerHeight}px ${gridHeight}px` } as CSSProperties}>
+          <div className="kiosk-grid" style={{ "--kiosk-room-width": `${roomWidth}px`, "--kiosk-room-gap": `${ROOM_GAP}px`, "--kiosk-days": dates.length, gridTemplateColumns: `${TIME_AXIS_WIDTH}px repeat(${currentRooms.length}, ${view === "day" ? "minmax(0, 1fr)" : `${roomWidth}px`})`, gridTemplateRows: `${headerHeight}px ${gridHeight}px` } as CSSProperties}>
             <div className="kiosk-time-corner"><Icon name="clock" size={18} /><span>TIME</span></div>
             {currentRooms.map((room, index) => {
               const statusKnown = fresh && today >= week && today <= endDate;

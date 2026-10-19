@@ -4472,3 +4472,8 @@ button {
 .header-account .header-nav .header-bookings-bell.booking-arrival{color:#ed1639;animation:booking-bell-shake .72s ease-in-out both}
 .header-account .header-nav .header-bookings-bell.booking-arrival svg{color:#ed1639}
 @keyframes booking-bell-shake{0%,100%{transform:rotate(0)}15%{transform:rotate(-14deg)}30%{transform:rotate(12deg)}45%{transform:rotate(-9deg)}60%{transform:rotate(6deg)}75%{transform:rotate(-3deg)}}
+
+/* 예약 수정창도 예약 확인창과 같은 중립 카드 규격으로 통일한다. */
+.edit-dialog{background:#fff;border:1px solid #dce1e9;border-top:1px solid #dce1e9;border-radius:12px;box-shadow:0 16px 42px rgb(23 34 58 / 14%);}
+.edit-dialog-head{border-bottom:1px solid #e1e6ee;padding-bottom:14px;margin-bottom:18px}
+.edit-dialog-foot{border-top:1px solid #e1e6ee;padding-top:16px}

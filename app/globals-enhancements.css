@@ -4485,3 +4485,11 @@ button {
 /* 선택안 4: 네모 대신 원형 빨간 테두리와 살짝 커지는 종 애니메이션. */
 .header-account .header-nav .header-bookings-bell.booking-arrival{border-radius:50%;animation:booking-bell-pulse 1.2s ease-in-out both}
 @keyframes booking-bell-pulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 #ed163940}50%{transform:scale(1.08);box-shadow:0 0 0 8px #ed163900}}
+/* 예약 완료 카드가 종으로 들어간 뒤 빨간 종 흔들림과 반짝임을 표시한다. */
+.header-account .header-nav .header-bookings-bell.booking-arrival{position:relative;color:#ed1639;animation:booking-bell-shake-spark .9s ease-in-out both}
+.header-account .header-nav .header-bookings-bell.booking-arrival::before,.header-account .header-nav .header-bookings-bell.booking-arrival::after{display:block!important;position:absolute;pointer-events:none;color:#ed1639;font-size:13px;line-height:1;opacity:0}
+.header-account .header-nav .header-bookings-bell.booking-arrival::before{content:'✦';top:-5px;right:-4px;animation:booking-spark-one .9s ease-out both}
+.header-account .header-nav .header-bookings-bell.booking-arrival::after{content:'✦';bottom:-3px;left:-4px;animation:booking-spark-two .9s ease-out .08s both}
+@keyframes booking-bell-shake-spark{0%,100%{transform:rotate(0);filter:brightness(1)}15%{transform:rotate(-13deg);filter:brightness(1.12)}30%{transform:rotate(11deg)}45%{transform:rotate(-8deg)}60%{transform:rotate(5deg)}75%{transform:rotate(-2deg)}50%{filter:brightness(1.22)}}
+@keyframes booking-spark-one{0%,100%{opacity:0;transform:scale(.3) translate(0,4px)}35%{opacity:1;transform:scale(1.2) translate(0,0)}70%{opacity:.5;transform:scale(.8) translate(2px,-3px)}}
+@keyframes booking-spark-two{0%,100%{opacity:0;transform:scale(.3) translate(0,-2px)}40%{opacity:.9;transform:scale(1.1)}75%{opacity:.35;transform:scale(.7) translate(-2px,2px)}}

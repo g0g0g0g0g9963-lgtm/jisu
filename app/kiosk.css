@@ -223,6 +223,12 @@
 .kiosk-scroll::-webkit-scrollbar-track,.kiosk-scroll::-webkit-scrollbar-corner{background:#f6f8fb;border-color:#f6f8fb}
 .kiosk-scroll::-webkit-scrollbar-thumb{border-color:#f6f8fb}
 
+/* Shared displays prioritize the live room overview over a notebook-like grid. */
+.kiosk-slot.is-hour{border-top-color:rgba(48,75,120,.018)}
+.kiosk-app.is-day-view .kiosk-room-title-row{justify-content:flex-start}
+.kiosk-app.is-day-view .kiosk-room-title-row>.kiosk-floor-tag{display:none}
+.kiosk-app.is-day-view .kiosk-room-title-row h2{display:-webkit-box;font-size:14px;line-height:18px;white-space:normal;-webkit-box-orient:vertical;-webkit-line-clamp:2}
+
 /* A compact but finger-friendly calendar; never clipped by the timeline. */
 .kiosk-calendar-picker{position:relative;flex:0 0 42px;width:42px;height:40px}
 .kiosk-calendar-toggle{width:42px;color:#254781;cursor:pointer}
@@ -254,3 +260,32 @@
 @media(max-width:1350px){.kiosk-app .kiosk-toolbar,.kiosk-app.is-panel-open .kiosk-toolbar{gap:14px;min-height:136px;padding-left:5px;padding-right:5px}.kiosk-date-floor{gap:23px}.kiosk-hero-date{font-size:78px}.kiosk-date-hero.is-range .kiosk-hero-date,.kiosk-hero-date.is-range{font-size:63px}.kiosk-app.is-panel-open .kiosk-toolbar{grid-template-columns:max-content minmax(184px,1fr) auto}.kiosk-app.is-panel-open .kiosk-date-floor{gap:16px}.kiosk-app.is-panel-open .kiosk-hero-date{font-size:72px}.kiosk-app.is-panel-open .kiosk-date-hero.is-range .kiosk-hero-date{font-size:58px}.kiosk-app.is-panel-open .kiosk-date-floor .kiosk-floor-tabs button{min-width:48px;font-size:14px}.kiosk-app.is-panel-open .kiosk-view-tabs>button{min-width:51px;padding-left:12px;padding-right:12px}}
 @media(max-width:1100px){.kiosk-app.is-panel-open .kiosk-toolbar{grid-template-columns:auto 1fr;grid-template-areas:"date date" "navigation views";row-gap:14px;min-height:0;padding-top:16px;padding-bottom:16px}.kiosk-app.is-panel-open .kiosk-date-floor{grid-area:date;gap:25px}.kiosk-app.is-panel-open .kiosk-date-navigation{grid-area:navigation;justify-self:start}.kiosk-app.is-panel-open .kiosk-view-tabs{grid-area:views;justify-self:end}.kiosk-app.is-panel-open .kiosk-hero-date{font-size:65px}.kiosk-app.is-panel-open .kiosk-date-hero.is-range .kiosk-hero-date{font-size:55px}.kiosk-app.is-panel-open .kiosk-week-range{display:none}}
 @media(max-height:800px){.kiosk-app .kiosk-toolbar,.kiosk-app.is-panel-open .kiosk-toolbar{min-height:126px;padding-top:16px;padding-bottom:15px;margin-bottom:13px}.kiosk-hero-date{font-size:76px}.kiosk-date-hero.is-range .kiosk-hero-date,.kiosk-hero-date.is-range{font-size:62px}.kiosk-hero-weekday{font-size:14px}.kiosk-date-hero{gap:7px}.kiosk-calendar-popover{max-height:calc(100dvh - 205px)}}
+/* Match the primary site's quick-booking card on the shared monitor. */
+.kiosk-now-label{border-radius:7px!important;padding-inline:9px!important}
+.kiosk-now-label:after{display:none!important}.kiosk-now-line{height:1px;background:#ed1639}
+.kiosk-date-field{position:relative;display:flex;align-items:center;justify-content:space-between;min-height:42px;padding:0 12px;border:1px solid #d8deea;border-radius:8px;background:#fff;color:#0f2347;font-weight:700}
+.kiosk-date-field input{position:absolute!important;inset:0;width:100%!important;height:100%!important;opacity:0;cursor:pointer}
+.kiosk-date-field svg{color:#254a91}
+.kiosk-duration-row{display:flex;align-items:center;gap:10px;margin-top:10px}
+.kiosk-duration-row>span{flex:0 0 auto;font-size:12px;font-weight:800;color:#65728b}
+.kiosk-duration-row .kiosk-duration-options{flex:1;margin:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+.kiosk-owner-team-row{display:grid;grid-template-columns:1fr 1.35fr;gap:8px}
+.kiosk-owner-team-row .kiosk-name-field{min-width:0}
+.kiosk-owner-team-row .kiosk-name-field label{display:block;margin-bottom:6px;font-size:12px;font-weight:800;color:#65728b}
+.kiosk-owner-team-row .kiosk-name-field em{color:#e50037;font-style:normal}
+.kiosk-owner-team-row .kiosk-name-field input{width:100%;box-sizing:border-box}
+.kiosk-quick-summary{display:flex!important;flex-direction:column;align-items:flex-start!important;gap:5px!important;padding:14px!important;border:1px solid #adddce!important;border-radius:8px!important;background:#eaf8f3!important;color:#064f43!important}
+.kiosk-quick-summary strong{font-size:14px;color:#08284b}
+.kiosk-quick-summary span,.kiosk-quick-summary small{font-size:12px;color:#07846d}
+.kiosk-quick-submit>.kiosk-primary{min-height:76px!important;display:flex!important;flex-direction:column;justify-content:center;gap:4px;border-radius:9px!important;background:#e50037!important}
+.kiosk-quick-submit>.kiosk-primary:disabled{background:#e50037!important;opacity:.58}
+.kiosk-submit-meta{font-size:13px;font-weight:800;line-height:1.15}
+.kiosk-quick-submit>.kiosk-primary strong{font-size:25px;line-height:1.05}
+@media(max-width:1350px){.kiosk-app{--kiosk-quick-width:400px}.kiosk-owner-team-row{grid-template-columns:1fr 1.25fr}}
+.kiosk-room-picker-exact{position:relative;padding-top:16px!important}
+.kiosk-room-picker-exact>select{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;opacity:0!important;z-index:2;cursor:pointer}
+.kiosk-room-picker-value{display:flex;align-items:center;gap:7px;color:#10294d;line-height:20px}.kiosk-room-picker-value i{width:7px;height:7px;border-radius:50%;background:#079878;flex:none}.kiosk-room-picker-value strong{font-size:14px;font-weight:800;white-space:nowrap}.kiosk-room-picker-value small{padding-left:6px;border-left:1px solid #d6dfeb;color:#61718a;font-size:12px;font-weight:750}
+.kiosk-repeat-option{display:flex;align-items:center;gap:9px;margin-top:12px;color:#192d4d;cursor:pointer}.kiosk-repeat-option input{appearance:none;width:19px;height:19px;margin:0;border:1px solid #9caabd;border-radius:2px;background:#fff;display:grid;place-items:center}.kiosk-repeat-option input:checked{background:#18253e;border-color:#18253e}.kiosk-repeat-option input:checked:after{content:"✓";font-size:14px;color:#fff;font-weight:800}.kiosk-repeat-option span{display:flex;align-items:baseline;gap:7px;font-size:13px}.kiosk-repeat-option b{font-weight:800}.kiosk-repeat-option em{font-style:normal;color:#6c7890;font-size:12px}
+.kiosk-extra-details{margin-top:13px;color:#263c5d}.kiosk-extra-details summary{cursor:pointer;font-weight:800;font-size:13px;list-style:none}.kiosk-extra-details summary::-webkit-details-marker{display:none}.kiosk-extra-details summary:after{content:"⌄";float:right;color:#66768e}.kiosk-extra-details summary span{color:#7e8ba0;font-weight:550}
+.kiosk-quick-submit>.kiosk-primary:disabled{opacity:1;background:#e50037!important;color:#fff}
+.kiosk-app.is-day-view .kiosk-grid{width:100%;min-width:0}.kiosk-app.is-day-view .kiosk-room-header,.kiosk-app.is-day-view .kiosk-room-body{min-width:0}.kiosk-app.is-day-view .kiosk-room-heading{min-width:0}.kiosk-app.is-day-view .kiosk-room-heading>div{min-width:0}.kiosk-app.is-day-view .kiosk-room-title-row h2{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.kiosk-toolbar>*{min-width:0}

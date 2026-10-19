@@ -120,12 +120,13 @@ export function registerKioskRoutes(app, { validateCreate }) {
   });
   app.post("/api/kiosk/bookings", requireMutation, (req, res) => {
     if (!req.is("application/json") || !req.body || Array.isArray(req.body)) return fail(res, 400, "invalid-request", "예약 내용을 확인해 주세요.");
-    const allowed = ["roomId", "date", "start", "end", "owner", "purpose"];
-    if (Object.keys(req.body).some(key => !allowed.includes(key)) || allowed.slice(0, 5).some(key => typeof req.body[key] !== "string") ||
+    const allowed = ["roomId", "date", "start", "end", "owner", "team", "purpose"];
+    if (Object.keys(req.body).some(key => !allowed.includes(key)) || allowed.slice(0, 6).some(key => typeof req.body[key] !== "string") ||
       (req.body.purpose !== undefined && typeof req.body.purpose !== "string")) return fail(res, 400, "invalid-request", "예약 내용을 확인해 주세요.");
     const key = req.get("idempotency-key");
     if (!UUID.test(key || "")) return fail(res, 400, "request-key-required", "예약 화면을 다시 열어 주세요.");
     const body = Object.fromEntries(allowed.map(key => [key, typeof req.body[key] === "string" ? req.body[key].trim() : ""]));
+    if (!body.team || body.team.length > 60) return fail(res, 400, "invalid-team", "본부명을 확인해 주세요.");
     const hash = digest(JSON.stringify(body));
     const prior = getKioskRequest(req.kioskDevice.id, key);
     if (prior) {
@@ -138,7 +139,7 @@ export function registerKioskRoutes(app, { validateCreate }) {
     }
     const { value, error } = validateCreate(body);
     if (error) return fail(res, 400, "invalid-booking", error);
-    const result = createBookings({ ...value, ownerId: "", ownerEmail: "", team: "", attendees: [], attendeeAccounts: [],
+    const result = createBookings({ ...value, ownerId: "", ownerEmail: "", attendees: [], attendeeAccounts: [],
       identity: { kiosk: true, deviceId: req.kioskDevice.id }, kioskRequest: { deviceId: req.kioskDevice.id, key, hash } });
     if (!result.ok) return result.reason === "idempotency-conflict"
       ? fail(res, 409, "idempotency-conflict", "이미 처리한 예약 요청입니다. 새 예약 화면을 열어 주세요.")

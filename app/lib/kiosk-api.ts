@@ -1,7 +1,7 @@
 /** Isolated transport for the shared monitor. It never uses the employee session. */
 export type KioskSession = { enabled: boolean; authorized: boolean; csrfToken?: string; preview?: boolean };
 export type KioskBooking = { id: string; roomId: string; date: string; start: string; end: string; owner: string; purpose?: string };
-export type KioskDraft = { roomId: string; date: string; start: string; end: string; owner: string; purpose: string };
+export type KioskDraft = { roomId: string; date: string; start: string; end: string; owner: string; team: string; purpose: string };
 
 export class KioskError extends Error {
   constructor(message: string, public status = 0, public uncertain = false) { super(message); }

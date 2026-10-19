@@ -350,3 +350,7 @@
 .kiosk-app.is-week-view .kiosk-booking{left:3px;right:3px;padding:5px 5px;gap:1px;border-radius:6px}
 .kiosk-app.is-week-view .kiosk-booking>strong{font-size:12px;line-height:15px}
 .kiosk-app.is-week-view .kiosk-booking>time,.kiosk-app.is-week-view .kiosk-booking>span{font-size:10.5px;line-height:13px;white-space:nowrap;overflow:hidden;text-overflow:clip}
+/* Room name strip: light blue so it stands out from the grey page background (shared monitor only). */
+.kiosk-app .kiosk-room-header .kiosk-room-heading{background:#e8f0fb}
+.kiosk-app .kiosk-room-header{border-bottom:1px solid #c9d8ee}
+.kiosk-app .kiosk-room-heading h2{color:#13284a}

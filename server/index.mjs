@@ -18,6 +18,7 @@ const port = Number(process.env.PORT ?? 3000);
 const host = process.env.HOST ?? "0.0.0.0";
 
 if (process.env.SEED_DEMO === "1") {
+  if (process.env.NODE_ENV === "production") throw new Error("운영 서버에서는 예시 예약을 자동 입력할 수 없습니다.");
   const inserted = seedDemoBookings();
   console.log(inserted > 0 ? `[seed] 예시 예약 ${inserted}건을 넣었습니다.` : "[seed] 이미 데이터가 있어 건너뜁니다.");
 }

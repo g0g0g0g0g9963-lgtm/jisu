@@ -1,73 +1,29 @@
 import crypto from "node:crypto";
-import { mkdirSync } from "node:fs";
+import { existsSync, mkdirSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { DatabaseSync, backup } from "node:sqlite";
 import { siteConfig } from "./config.mjs";
+import { validateProductionSchema } from "./db-schema-check.mjs";
 
 const dataDir = resolve(process.env.DATA_DIR ?? "./data");
 export const dataDirectory = dataDir;
-mkdirSync(dataDir, { recursive: true });
+const initializeTestSchema = process.env.NODE_ENV === "test" ||
+  (process.env.NODE_ENV === "development" && process.env.DB_INIT_DEV === "1");
+const dbPath = join(dataDir, "bookings.sqlite");
+if (!initializeTestSchema && !existsSync(dbPath)) throw new Error("DB 파일이 없습니다. 서버는 DB를 자동 생성하지 않습니다. 별도 승인된 DB 준비 절차를 확인하세요.");
+if (initializeTestSchema) mkdirSync(dataDir, { recursive: true });
 
-const db = new DatabaseSync(join(dataDir, "bookings.sqlite"));
+const db = new DatabaseSync(dbPath);
 // Shared connection keeps reservation changes and their calendar outbox atomic.
 export const database = db;
 
+if (!initializeTestSchema) validateProductionSchema(db);
 db.exec("PRAGMA journal_mode = WAL");
 db.exec("PRAGMA busy_timeout = 5000");
-db.exec(`
-  CREATE TABLE IF NOT EXISTS bookings (
-    id         TEXT PRIMARY KEY,
-    room_id    TEXT NOT NULL,
-    date       TEXT NOT NULL,
-    start      TEXT NOT NULL,
-    end        TEXT NOT NULL,
-    owner      TEXT NOT NULL,
-    team       TEXT NOT NULL DEFAULT '',
-    purpose    TEXT NOT NULL DEFAULT '회의',
-    created_at TEXT NOT NULL
-  )
-`);
-db.exec("CREATE INDEX IF NOT EXISTS idx_bookings_room_date ON bookings (room_id, date)");
-db.exec("CREATE INDEX IF NOT EXISTS idx_bookings_date ON bookings (date)");
-
-// SSO 도입으로 추가된 컬럼. 기존 DB에는 없을 수 있어 조용히 보강한다.
-const bookingColumns = db.prepare("SELECT name FROM pragma_table_info('bookings')").all().map((row) => row.name);
-if (!bookingColumns.includes("owner_email")) {
-  db.exec("ALTER TABLE bookings ADD COLUMN owner_email TEXT NOT NULL DEFAULT ''");
+if (initializeTestSchema) {
+  const { initializeDevelopmentSchema } = await import("../qa/db-test-schema.mjs");
+  initializeDevelopmentSchema(db);
 }
-// Preserve stable account identity and exact repeated-booking membership.
-if (!bookingColumns.includes("owner_id")) {
-  db.exec("ALTER TABLE bookings ADD COLUMN owner_id TEXT NOT NULL DEFAULT ''");
-}
-if (!bookingColumns.includes("series_id")) {
-  db.exec("ALTER TABLE bookings ADD COLUMN series_id TEXT");
-}
-// 참석자 목록은 JSON 배열로 보관한다.
-if (!bookingColumns.includes("attendees")) {
-  db.exec("ALTER TABLE bookings ADD COLUMN attendees TEXT NOT NULL DEFAULT '[]'");
-}
-if (!bookingColumns.includes("attendee_accounts")) {
-  db.exec("ALTER TABLE bookings ADD COLUMN attendee_accounts TEXT NOT NULL DEFAULT '[]'");
-}
-if (!bookingColumns.includes("revision")) {
-  db.exec("ALTER TABLE bookings ADD COLUMN revision INTEGER NOT NULL DEFAULT 1");
-}
-// A released ongoing reservation remains as immutable usage history.
-if (!bookingColumns.includes("ended_at")) {
-  db.exec("ALTER TABLE bookings ADD COLUMN ended_at TEXT");
-}
-// A kiosk name is self-reported, never a verified employee identity.
-if (!bookingColumns.includes("source")) {
-  db.exec("ALTER TABLE bookings ADD COLUMN source TEXT NOT NULL DEFAULT 'site'");
-}
-db.exec(`CREATE TABLE IF NOT EXISTS kiosk_requests (
-  device_id TEXT NOT NULL, request_key TEXT NOT NULL, request_hash TEXT NOT NULL,
-  result_json TEXT NOT NULL, created_at TEXT NOT NULL,
-  PRIMARY KEY(device_id, request_key)
-)`);
-db.exec(`CREATE TABLE IF NOT EXISTS kiosk_devices (
-  device_id TEXT PRIMARY KEY, expires_at INTEGER NOT NULL, revoked INTEGER NOT NULL DEFAULT 0
-)`);
 
 export function createKioskDevice(deviceId, expiresAt) {
   db.prepare("INSERT INTO kiosk_devices(device_id,expires_at) VALUES(?,?)").run(deviceId, expiresAt);
@@ -79,20 +35,6 @@ export function kioskDeviceActive(deviceId, expiresAt, now) {
 export function revokeKioskDevice(deviceId) {
   db.prepare("UPDATE kiosk_devices SET revoked=1 WHERE device_id=?").run(deviceId);
 }
-db.exec(`CREATE TABLE IF NOT EXISTS calendar_jobs (
-  booking_id TEXT PRIMARY KEY, owner_id TEXT NOT NULL, desired_json TEXT,
-  version INTEGER NOT NULL DEFAULT 1, synced_version INTEGER NOT NULL DEFAULT 0,
-  event_id TEXT, transaction_id TEXT NOT NULL, first_payload TEXT,
-  status TEXT NOT NULL DEFAULT 'pending', attempts INTEGER NOT NULL DEFAULT 0,
-  next_attempt INTEGER NOT NULL DEFAULT 0, lease_token TEXT, lease_until INTEGER NOT NULL DEFAULT 0,
-  error_code TEXT NOT NULL DEFAULT '', updated_at TEXT NOT NULL
-);
-CREATE INDEX IF NOT EXISTS idx_calendar_jobs_due ON calendar_jobs(status, next_attempt);
-CREATE INDEX IF NOT EXISTS idx_calendar_jobs_owner_updated ON calendar_jobs(owner_id,updated_at DESC);
-CREATE TABLE IF NOT EXISTS employees (id TEXT PRIMARY KEY, name TEXT NOT NULL, email TEXT NOT NULL);
-CREATE TABLE IF NOT EXISTS room_favorites (owner_id TEXT NOT NULL, room_id TEXT NOT NULL, PRIMARY KEY(owner_id,room_id));
-CREATE TABLE IF NOT EXISTS microsoft_connections (owner_id TEXT PRIMARY KEY, encrypted_tokens TEXT NOT NULL);`);
-
 const queueCalendar = (row, cancelled = false) => {
   if (!row.owner_id) return;
   // Calendar payload excludes participant details; this is an owner-only appointment.
@@ -103,20 +45,6 @@ const queueCalendar = (row, cancelled = false) => {
     version=calendar_jobs.version+1,status='pending',attempts=0,next_attempt=0,error_code='',updated_at=excluded.updated_at`)
     .run(row.id,row.owner_id,desired,crypto.randomUUID(),new Date().toISOString());
 };
-
-db.exec(`
-  CREATE TABLE IF NOT EXISTS sessions (
-    sid        TEXT PRIMARY KEY,
-    user_json  TEXT NOT NULL,
-    expires_at TEXT NOT NULL
-  )
-`);
-db.exec(`
-  CREATE TABLE IF NOT EXISTS meta (
-    key   TEXT PRIMARY KEY,
-    value TEXT NOT NULL
-  )
-`);
 
 const selectAll = db.prepare(
   "SELECT * FROM bookings ORDER BY date, start",
@@ -152,13 +80,6 @@ const selectMeta = db.prepare("SELECT value FROM meta WHERE key = ?");
 const upsertMeta = db.prepare("INSERT INTO meta (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value");
 
 // Minimal audit data only: never persist tokens, meeting purpose text or attendee names.
-db.exec(`CREATE TABLE IF NOT EXISTS booking_audit (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  at TEXT NOT NULL, action TEXT NOT NULL, booking_id TEXT NOT NULL,
-  actor_id TEXT NOT NULL, actor_name TEXT NOT NULL,
-  before_json TEXT, after_json TEXT, changed_json TEXT NOT NULL
-)`);
-db.exec("CREATE INDEX IF NOT EXISTS idx_booking_audit_action_id ON booking_audit(action, id)");
 const auditInsert = db.prepare("INSERT INTO booking_audit(at, action, booking_id, actor_id, actor_name, before_json, after_json, changed_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
 const auditSnapshot = (row) => row ? ({roomId:row.room_id, date:row.date, start:row.start, end:row.end,
   ...(row.ended_at ? {endedAt:row.ended_at} : {})}) : null;

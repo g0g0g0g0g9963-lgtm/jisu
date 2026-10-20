@@ -2,10 +2,11 @@
 import assert from "node:assert/strict";
 import crypto from "node:crypto";
 import { spawn } from "node:child_process";
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { DatabaseSync } from "node:sqlite";
+import { initializeDevelopmentSchema } from "./qa/db-test-schema.mjs";
 import net from "node:net";
 
 const root = dirname(fileURLToPath(import.meta.url));
@@ -26,6 +27,10 @@ async function start(name, extra = {}, dataOverride) {
     ADMIN_MS_EMAIL: "alice@example.invalid", ADMIN_MS_OBJECT_ID: "", BACKUP_DIR: "", BACKUP_INTERVAL_MINUTES: "0",
     TEST_FIXTURE_SSO: "0", TEST_FIXTURE_BOUNDARIES: "0", TEST_NOW: "2026-10-12T01:00:00Z",
     KIOSK_ENABLED: "1", ...extra };
+  if (env.NODE_ENV === "production" && !existsSync(resolve(data, "bookings.sqlite"))) {
+    const fixture = new DatabaseSync(resolve(data, "bookings.sqlite"));
+    try { initializeDevelopmentSchema(fixture); } finally { fixture.close(); }
+  }
   const child = spawn(process.execPath, ["--import", pathToFileURL(resolve(root, "qa-preload.mjs")).href, "server/index.mjs"],
     { cwd: root, env, windowsHide: true, stdio: ["ignore", "pipe", "pipe"] });
   children.push(child); let log = "";

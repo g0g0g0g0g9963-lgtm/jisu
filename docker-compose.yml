@@ -28,7 +28,7 @@ services:
       # 127.0.0.1 바인딩: https 역방향 프록시로만 접근 가능. http 직접 접근 차단.
       HOST: 127.0.0.1
       DATA_DIR: /app/data
-      # 첫 실행 시 예시 예약을 넣고 싶을 때만 1. (DB가 비어 있을 때만 동작)
+      # 운영 환경에서는 예시 예약 자동 입력을 허용하지 않는다.
       SEED_DEMO: ${SEED_DEMO:-0}
       # Microsoft SSO — all four values required; incomplete settings stop startup
       MS_TENANT_ID: ${MS_TENANT_ID:-}

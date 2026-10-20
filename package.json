@@ -7,10 +7,10 @@
     "node": ">=24.0.0"
   },
   "scripts": {
-    "dev:api": "node --watch server/index.mjs",
+    "dev:api": "node --env-file-if-exists=.env --watch server/index.mjs",
     "dev:web": "vite",
     "build": "vite build",
-    "start": "node server/index.mjs",
+    "start": "node --env-file-if-exists=.env server/index.mjs",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

@@ -233,26 +233,28 @@
 .kiosk-calendar-picker{position:relative;flex:0 0 42px;width:42px;height:40px}
 .kiosk-calendar-toggle{width:42px;color:#254781;cursor:pointer}
 .kiosk-calendar-toggle>svg{width:19px;height:19px}
-.kiosk-calendar-popover{position:absolute;z-index:50;top:calc(100% + 10px);right:0;width:348px;max-width:calc(100vw - 36px);max-height:calc(100dvh - 210px);overflow:auto;overscroll-behavior:contain;border:1px solid #dbe4f0;border-radius:13px;background:#fff;padding:13px;box-shadow:0 12px 34px #1c34542b;color:#233d61;text-align:center;scrollbar-width:thin;scrollbar-color:#b7c6d9 transparent}
-.kiosk-calendar-head{display:flex;align-items:center;justify-content:space-between;gap:9px;margin-bottom:8px;min-height:44px}
-.kiosk-calendar-head>button{display:flex;align-items:center;justify-content:center;flex:0 0 44px;width:44px;height:44px;border:0;border-radius:8px;background:transparent;color:#526f94;padding:0}
-.kiosk-calendar-head>button:hover{background:#f0f4fa;color:#244d81}
-.kiosk-calendar-head>strong,.kiosk-calendar-head>b{font-size:16px;font-weight:750;line-height:1.4;color:#263e5e;white-space:nowrap}
-.kiosk-calendar-head>button>svg{width:18px;height:18px}
-.kiosk-calendar-weekdays{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px;margin-bottom:5px}
-.kiosk-calendar-weekdays>span{display:flex;align-items:center;justify-content:center;height:24px;font-size:11px;font-weight:600;color:#7d8fa7}
+.kiosk-calendar-popover{position:absolute;z-index:50;top:calc(100% + 6px);right:0;width:262px;max-width:calc(100vw - 24px);max-height:calc(100dvh - 120px);overflow:auto;overscroll-behavior:contain;border:1px solid #dfe3e9;border-radius:10px;background:#fff;padding:12px;box-shadow:0 10px 30px #17223a1f;color:#17223a;text-align:center;scrollbar-width:thin;scrollbar-color:#b7c6d9 transparent}
+.kiosk-calendar-head{display:flex;align-items:center;justify-content:space-between;gap:9px;margin-bottom:8px;min-height:26px}
+.kiosk-calendar-head>button{display:flex;align-items:center;justify-content:center;flex:0 0 26px;width:26px;height:26px;border:0;border-radius:6px;background:transparent;color:#9aa4ba;padding:0}
+.kiosk-calendar-head>button:hover{background:#f2f5fa;color:#17223a}
+.kiosk-calendar-head>strong,.kiosk-calendar-head>b{font-size:14px;font-weight:900;line-height:1.4;color:#17223a;white-space:nowrap}
+.kiosk-calendar-head>strong em{color:#9aa4ba;font-style:normal;font-weight:700}
+.kiosk-calendar-head>button>svg{width:7px;height:12px}
+.kiosk-calendar-weekdays{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:1px;margin-bottom:4px}
+.kiosk-calendar-weekdays>span{display:flex;align-items:center;justify-content:center;height:22px;font-size:10px;font-weight:900;color:#8a93a6}
 .kiosk-calendar-weekdays>.is-sun{color:#d26a83}
 .kiosk-calendar-weekdays>.is-sat{color:#5d80b2}
-.kiosk-calendar-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px}
-.kiosk-calendar-days>button{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:0;height:46px;min-height:46px;padding:4px 1px;border:1px solid transparent;border-radius:7px;background:transparent;color:#3d5677;font-size:13px;font-weight:550;line-height:16px}
+.kiosk-calendar-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:1px}
+.kiosk-calendar-days>button{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;min-width:0;height:32px;min-height:32px;padding:0;border:1px solid transparent;border-radius:6px;background:transparent;color:#17223a;font-size:12px;font-weight:800;line-height:1.1}
 .kiosk-calendar-days>button>span{font-variant-numeric:tabular-nums;line-height:16px}
-.kiosk-calendar-days>button>small{display:block;max-width:100%;padding:0 1px;font-size:8px;line-height:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:inherit;font-weight:450}
+.kiosk-calendar-days>button>small{display:block;max-width:100%;padding:0 1px;font-size:7.5px;line-height:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:inherit;font-weight:800}
 .kiosk-calendar-days>button.is-sat{color:#527bb2}
 .kiosk-calendar-days>button.is-sun,.kiosk-calendar-days>button.is-holiday{color:#c55371}
-.kiosk-calendar-days>button.is-today:not(.is-selected){background:#f1f5fb;color:#315a93;font-weight:750}
+.kiosk-calendar-days>button.is-today{height:34px}
+.kiosk-calendar-days>button.is-today:not(.is-selected){background:#fff;color:#ed1639;font-weight:800}
 .kiosk-calendar-days>button:hover:not(:disabled){background:#eef3fa}
-.kiosk-calendar-days>button.is-selected,.kiosk-calendar-days>button.is-selected:hover{background:#fff1f4;border-color:#e68099;color:#cc1644;font-weight:750}
-.kiosk-calendar-days>button:disabled{opacity:.35}
+.kiosk-calendar-days>button.is-selected,.kiosk-calendar-days>button.is-selected:hover{background:#fff;border-color:transparent;color:#bd1235;font-weight:800;box-shadow:inset 0 0 0 2px #ed1639}
+.kiosk-calendar-days>button:disabled{color:#c7ccd6;opacity:1}
 .kiosk-calendar-footer{border-top:1px solid #e5ebf3;margin-top:10px;padding-top:10px}
 .kiosk-calendar-footer>button{width:100%;min-height:40px;border:0;border-radius:7px;background:#f1f5fa;color:#4b6890;font-size:12px;font-weight:600;padding:9px}
 .kiosk-calendar-footer>button:hover{background:#e8eff8;color:#254f84}
@@ -282,10 +284,148 @@
 .kiosk-submit-meta{font-size:13px;font-weight:800;line-height:1.15}
 .kiosk-quick-submit>.kiosk-primary strong{font-size:25px;line-height:1.05}
 @media(max-width:1350px){.kiosk-app{--kiosk-quick-width:400px}.kiosk-owner-team-row{grid-template-columns:1fr 1.25fr}}
-.kiosk-room-picker-exact{position:relative;padding-top:16px!important}
-.kiosk-room-picker-exact>select{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;opacity:0!important;z-index:2;cursor:pointer}
-.kiosk-room-picker-value{display:flex;align-items:center;gap:7px;color:#10294d;line-height:20px}.kiosk-room-picker-value i{width:7px;height:7px;border-radius:50%;background:#079878;flex:none}.kiosk-room-picker-value strong{font-size:14px;font-weight:800;white-space:nowrap}.kiosk-room-picker-value small{padding-left:6px;border-left:1px solid #d6dfeb;color:#61718a;font-size:12px;font-weight:750}
 .kiosk-repeat-option{display:flex;align-items:center;gap:9px;margin-top:12px;color:#192d4d;cursor:pointer}.kiosk-repeat-option input{appearance:none;width:19px;height:19px;margin:0;border:1px solid #9caabd;border-radius:2px;background:#fff;display:grid;place-items:center}.kiosk-repeat-option input:checked{background:#18253e;border-color:#18253e}.kiosk-repeat-option input:checked:after{content:"✓";font-size:14px;color:#fff;font-weight:800}.kiosk-repeat-option span{display:flex;align-items:baseline;gap:7px;font-size:13px}.kiosk-repeat-option b{font-weight:800}.kiosk-repeat-option em{font-style:normal;color:#6c7890;font-size:12px}
 .kiosk-extra-details{margin-top:13px;color:#263c5d}.kiosk-extra-details summary{cursor:pointer;font-weight:800;font-size:13px;list-style:none}.kiosk-extra-details summary::-webkit-details-marker{display:none}.kiosk-extra-details summary:after{content:"⌄";float:right;color:#66768e}.kiosk-extra-details summary span{color:#7e8ba0;font-weight:550}
 .kiosk-quick-submit>.kiosk-primary:disabled{opacity:1;background:#e50037!important;color:#fff}
 .kiosk-app.is-day-view .kiosk-grid{width:100%;min-width:0}.kiosk-app.is-day-view .kiosk-room-header,.kiosk-app.is-day-view .kiosk-room-body{min-width:0}.kiosk-app.is-day-view .kiosk-room-heading{min-width:0}.kiosk-app.is-day-view .kiosk-room-heading>div{min-width:0}.kiosk-app.is-day-view .kiosk-room-title-row h2{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.kiosk-toolbar>*{min-width:0}
+
+/* Keep the monitor header and quick form aligned with the main booking panel. */
+.kiosk-topbar-right .kiosk-live-date{margin-right:28px}
+.kiosk-quick-panel{top:var(--kiosk-header-height);padding:18px 20px 20px}
+.kiosk-quick-section{padding:18px 0}
+.kiosk-room-picker-exact{padding:14px 12px 10px!important;gap:5px}
+.kiosk-room-picker-exact:after{content:"";position:absolute;right:13px;top:23px;width:7px;height:7px;border-right:2px solid #405777;border-bottom:2px solid #405777;transform:rotate(45deg);pointer-events:none;z-index:1}
+.kiosk-room-picker-value strong{font-size:15px}
+.kiosk-room-picker-exact .kiosk-room-specs{padding:0;font-size:11px}
+.kiosk-date-field{padding:0 0 0 12px;min-height:44px;font-size:14px;font-weight:600}
+.kiosk-date-field>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kiosk-date-field .kiosk-calendar-picker{height:42px;flex-basis:42px;width:42px}
+.kiosk-date-field .kiosk-calendar-toggle{height:42px;min-height:42px;width:42px;border-radius:7px;background:transparent}
+.kiosk-date-field .kiosk-calendar-toggle:hover{background:#f0f4fa}
+.kiosk-date-field .kiosk-calendar-toggle>svg{width:18px;height:18px}
+.kiosk-date-field .kiosk-calendar-popover{z-index:80}
+.kiosk-date-field>.kiosk-date-native-input{position:absolute!important;left:0!important;top:0!important;width:1px!important;height:1px!important;min-height:1px!important;padding:0!important;border:0!important;opacity:0!important;pointer-events:none!important}
+.kiosk-quick-panel .kiosk-time-fields{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;margin-bottom:12px;align-items:end}
+.kiosk-quick-panel .kiosk-time-fields>label{gap:7px;font-size:12px;font-weight:600;color:#75869e}
+.kiosk-quick-panel .kiosk-time-fields>label select{font-size:15px;min-height:44px;padding:9px 11px}
+.kiosk-quick-panel .kiosk-time-fields>span{display:none}
+.kiosk-repeat-option{width:100%;min-height:0;margin-top:12px;padding:0;gap:9px;border:0;border-radius:0;background:transparent}
+.kiosk-repeat-option input{flex:0 0 18px;width:18px;height:18px;min-height:18px!important;padding:0!important;border-radius:3px}
+.kiosk-repeat-option span{display:flex;align-items:baseline;gap:7px;font-size:12px;line-height:1.25}
+.kiosk-repeat-option b{font-size:13px}
+.kiosk-repeat-option small{font-size:11px;color:#7a8795}
+.kiosk-duration-row{margin-top:10px}
+.kiosk-duration-options{gap:6px}
+.kiosk-duration-options>button{min-height:38px;font-size:12px;border-radius:7px}
+@media(max-width:1350px){.kiosk-topbar-right .kiosk-live-date{margin-right:18px}.kiosk-quick-panel{padding:16px 17px 18px}}
+
+/* Shared booking controls: mirror the employee panel's room/time popovers. */
+@media(max-width:1350px){.kiosk-app{--kiosk-quick-width:320px}}
+.kiosk-room-picker-shell{position:relative;min-width:0}
+.kiosk-room-picker-card{position:relative;z-index:24;overflow:visible;border:0;background:transparent;padding:0}
+.kiosk-room-picker-card .room-picker-toggle{width:100%;min-height:70px;padding:10px 13px;background:#f5f7fa;border:1px solid #d8deea;border-radius:9px;color:#182b49;text-align:left;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.kiosk-room-picker-card .room-picker-toggle:hover,.kiosk-room-picker-card .room-picker-toggle.open{background:#f5f7fa;border-color:#cbd6e5}
+.kiosk-room-picker-card .room-picker-field-copy{min-width:0;display:grid;gap:5px}
+.kiosk-room-picker-card .room-picker-field-title{min-width:0;display:flex;align-items:center;gap:7px}
+.kiosk-room-picker-card .room-picker-field-title .status-dot,.kiosk-room-picker-popover .status-dot{width:7px;height:7px;flex:0 0 7px;border-radius:50%;background:#079878}
+.kiosk-room-picker-card .room-picker-field-title strong{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#10294d;font-size:14px;font-weight:800}
+.kiosk-room-picker-card .room-picker-field-floor{padding-left:7px;border-left:1px solid #d6dfeb;color:#61718a;font-size:12px;font-weight:750;white-space:nowrap}
+.kiosk-room-picker-card .room-picker-field-specs{display:flex;flex-wrap:wrap;gap:0 6px;color:#6f839e;font-size:11px;line-height:1.35}
+.kiosk-room-picker-card .room-picker-field-specs em{font-style:normal;white-space:nowrap}
+.kiosk-room-picker-card .room-picker-toggle>i{width:8px;height:8px;flex:0 0 8px;border-right:2px solid #405777;border-bottom:2px solid #405777;transform:rotate(45deg) translateY(-2px);transition:transform .16s}
+.kiosk-room-picker-card .room-picker-toggle.open>i{transform:rotate(225deg) translate(-1px,-1px)}
+.kiosk-room-picker-popover{overflow:auto;overscroll-behavior:contain;padding:8px 10px 11px;border:1px solid #e0e5ee;border-radius:9px;background:#fff;box-shadow:0 14px 30px #17223a24;scrollbar-width:thin;scrollbar-color:#bac7d7 transparent}
+.kiosk-room-picker-popover::-webkit-scrollbar{width:7px}.kiosk-room-picker-popover::-webkit-scrollbar-thumb{border-radius:8px;background:#bac7d7}
+.kiosk-room-picker-popover .room-picker-filters{position:sticky;top:-8px;z-index:2;display:flex;gap:8px;padding:0 0 8px;border-bottom:1px solid #e5e9f0;background:#fff}
+.kiosk-room-picker-popover .room-picker-filters button{min-height:38px;padding:0 5px;border:0;border-bottom:2px solid transparent;background:transparent;color:#61718a;font:inherit;font-size:12px;font-weight:650;display:flex;align-items:center;gap:5px}
+.kiosk-room-picker-popover .room-picker-filters button[aria-pressed=true]{color:#17365e;border-bottom-color:#315989}
+.kiosk-room-picker-popover .room-picker-filters svg{width:15px;height:15px}
+.kiosk-room-picker-popover .favorite-count{display:inline-flex;min-width:16px;height:16px;align-items:center;justify-content:center;border-radius:9px;background:#eef2f8;font-size:10px}
+.kiosk-room-picker-popover .room-picker-floor-group{padding-top:9px}
+.kiosk-room-picker-popover .room-picker-floor-group+.room-picker-floor-group{margin-top:8px;border-top:1px solid #f0f2f6}
+.kiosk-room-picker-popover .room-picker-floor-group>small{display:block;margin:0 5px 5px;color:#78869a;font-size:10px;font-weight:800}
+.kiosk-room-picker-popover .room-picker-row{position:relative;display:flex;align-items:stretch;gap:4px;min-height:58px;border-radius:7px}
+.kiosk-room-picker-popover .room-picker-row:has(>button.selected),.kiosk-room-picker-popover .room-picker-row:hover{background:#eef2f7}
+.kiosk-room-picker-popover .room-picker-row>button:first-child{min-width:0;flex:1;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:3px;padding:7px 4px 7px 10px;border:0;border-radius:6px;background:transparent;color:#23334d;text-align:left}
+.kiosk-room-picker-popover .room-picker-row>button:first-child:hover,.kiosk-room-picker-popover .room-picker-row>button:first-child.selected{background:transparent}
+.kiosk-room-picker-popover .room-picker-name{min-width:0;display:flex;align-items:center;gap:7px}
+.kiosk-room-picker-popover .room-picker-name strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;font-weight:750}
+.kiosk-room-picker-popover .room-picker-row>button:first-child>em{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#74829a;font-size:10px;font-style:normal;font-weight:500}
+.kiosk-room-picker-popover .room-favorite,.kiosk-room-picker-popover .room-picker-row-map{flex:0 0 32px;width:32px;min-height:38px;align-self:center;display:flex;align-items:center;justify-content:center;padding:0;border:0;border-radius:6px;background:transparent;color:#8291a6}
+.kiosk-room-picker-popover .room-favorite svg,.kiosk-room-picker-popover .room-picker-row-map svg{width:17px;height:17px}
+.kiosk-room-picker-popover .room-favorite.is-favorite{color:#d2a62c}
+.kiosk-room-picker-popover .room-favorite:hover,.kiosk-room-picker-popover .room-picker-row-map:hover{background:#e3e9f1;color:#314f78}
+.kiosk-room-picker-popover .room-picker-empty{display:grid;justify-items:center;gap:7px;padding:22px 10px;color:#52647c;text-align:center}
+.kiosk-room-picker-popover .room-picker-empty>svg{width:22px;height:22px}.kiosk-room-picker-popover .room-picker-empty strong{font-size:12px}.kiosk-room-picker-popover .room-picker-empty p{font-size:11px;color:#8290a3}.kiosk-room-picker-popover .room-picker-empty button{border:0;background:transparent;color:#315989;font-size:11px;font-weight:700}
+.kiosk-location-backdrop{position:fixed;inset:0;z-index:150;display:grid;place-items:center;padding:20px;background:#10203a65;backdrop-filter:blur(2px)}
+.kiosk-location-dialog{position:relative;width:min(360px,100%);padding:24px;border:1px solid #dce4ef;border-radius:15px;background:#fff;box-shadow:0 18px 50px #14233a38;display:grid;justify-items:center;gap:10px;text-align:center}
+.kiosk-location-dialog>svg{width:25px;height:25px;color:#315989}.kiosk-location-dialog>strong{font-size:16px}.kiosk-location-dialog>p{color:#65758e;font-size:13px;line-height:1.6}.kiosk-location-close{position:absolute;right:10px;top:8px;border:0;background:transparent;color:#6b7b91;font-size:24px}
+.kiosk-time-picker{position:relative;min-width:0}
+.kiosk-time-picker .kiosk-time-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0;align-items:end}
+.kiosk-time-picker .kiosk-time-fields>label{min-width:0;display:flex;flex-direction:column;gap:7px;color:#6c7e97;font-size:12px;font-weight:600}
+.kiosk-time-picker .time-picker-toggle{width:100%;min-height:44px;padding:9px 12px;border:1px solid #dce4ef;border-radius:8px;background:#f5f6f9;color:#17365e;text-align:left;font:inherit;font-size:15px;font-weight:550}
+.kiosk-time-picker .time-picker-toggle:hover,.kiosk-time-picker .time-picker-toggle[aria-expanded=true]{border-color:#b8c9e0;background:#f1f4f8}
+.kiosk-time-picker-popover{overflow:auto;overscroll-behavior:contain;border:1px solid #dfe3eb;border-radius:10px;padding:12px;background:#fff;box-shadow:0 16px 36px #10182b29}
+.kiosk-time-picker-popover .time-picker-popover-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:10px}
+.kiosk-time-picker-popover .time-picker-popover-head b{color:#17223a;font-size:13px}.kiosk-time-picker-popover .time-picker-popover-head span{color:#7b8495;font-size:10.5px}
+.kiosk-time-picker-popover .time-picker-slots{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;max-height:210px;overflow-y:auto}
+.kiosk-time-picker-popover .time-picker-slots button{min-width:0;min-height:38px;padding:6px;color:#344057;background:#f5f6f9;border:0;border-radius:7px;font:inherit;font-size:12px;font-weight:700}
+.kiosk-time-picker-popover .time-picker-slots button:hover,.kiosk-time-picker-popover .time-picker-slots button.selected{color:#fff;background:#17223a}
+.kiosk-time-picker-popover>p{padding:12px 4px;color:#6c7e97;font-size:12px}
+
+/* Keep the four room columns legible when the booking panel is open. */
+.kiosk-app.is-panel-open .kiosk-main{min-width:0}
+.kiosk-app.is-panel-open .kiosk-room-header{height:100%;min-width:0}
+.kiosk-app.is-panel-open .kiosk-room-heading{height:calc(100% - 46px);min-width:0;align-items:flex-start;padding:11px 12px}
+.kiosk-app.is-panel-open.is-day-view .kiosk-room-heading{height:100%;padding:12px 12px}
+.kiosk-app.is-panel-open .kiosk-room-heading>div{width:100%;min-width:0}
+.kiosk-app.is-panel-open .kiosk-room-title-row{display:flex;align-items:center;gap:6px;min-width:0}
+.kiosk-app.is-panel-open .kiosk-room-title-row h2{min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px;letter-spacing:-.3px}
+.kiosk-app.is-panel-open .kiosk-room-title-row .kiosk-floor-tag{height:22px;padding:0 6px;font-size:10px}
+.kiosk-app.is-panel-open .kiosk-room-heading p{margin-top:5px;display:flex;flex-wrap:wrap;gap:4px;font-size:10px;line-height:1.25}
+.kiosk-app.is-panel-open .kiosk-room-heading .kiosk-room-status{position:static;inset:auto;min-height:0;white-space:normal;justify-content:flex-start}
+.kiosk-app.is-panel-open .kiosk-room-heading p em{font-style:normal}
+.kiosk-app.is-panel-open .kiosk-room-equipment{display:flex;flex-wrap:wrap;gap:3px 7px;max-width:100%;margin-top:5px;font-size:9px;line-height:1.2}
+.kiosk-app.is-panel-open .kiosk-equipment-item{white-space:nowrap;gap:3px}
+.kiosk-app.is-panel-open .kiosk-equipment-item svg{width:12px;height:12px}
+.kiosk-app.is-panel-open .kiosk-room-header,.kiosk-app.is-panel-open .kiosk-room-body{border-right-width:5px}
+@media(max-width:1100px){.kiosk-app.is-panel-open{--kiosk-quick-width:300px}.kiosk-app.is-panel-open .kiosk-main>.kiosk-toolbar{grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto auto}.kiosk-app.is-panel-open .kiosk-date-floor{gap:12px}.kiosk-app.is-panel-open .kiosk-hero-date{font-size:64px}.kiosk-app.is-panel-open .kiosk-date-navigation{justify-self:start}.kiosk-app.is-panel-open .kiosk-view-tabs{justify-self:end}}
+
+/* Keep the quick form compact so all four room columns remain in view. */
+.kiosk-app{--kiosk-quick-width:340px}
+@media(max-width:1650px){.kiosk-app{--kiosk-quick-width:320px}}
+@media(max-width:1350px){.kiosk-app{--kiosk-quick-width:300px}}
+@media(max-width:1100px){.kiosk-app.is-panel-open{--kiosk-quick-width:280px}}
+@media(max-width:1350px){.kiosk-app.is-panel-open .kiosk-room-title-row h2{max-width:none;font-size:12px;letter-spacing:-.45px}}
+.kiosk-app.is-panel-open .kiosk-submit-meta{max-width:100%;font-size:10px;line-height:1.2;white-space:normal;overflow-wrap:anywhere;text-align:center}
+.kiosk-app.is-week-view .kiosk-grid.is-week-grid{width:max-content;min-width:0}
+.kiosk-app.is-week-view .kiosk-room-header,.kiosk-app.is-week-view .kiosk-room-body{min-width:0}
+@media(max-width:1350px){.kiosk-app.is-week-view .kiosk-day-headings>div{flex-direction:column;gap:0;font-size:9px;line-height:11px}.kiosk-app.is-week-view .kiosk-day-headings>div strong{font-size:12px;line-height:14px}.kiosk-app.is-week-view .kiosk-day-headings>div small{display:none}.kiosk-app.is-week-view .kiosk-booking{left:2px;right:2px;padding:2px 1px;gap:0;border-radius:3px}.kiosk-app.is-week-view .kiosk-booking>strong{font-size:7px;line-height:9px;text-align:center;text-overflow:clip}.kiosk-app.is-week-view .kiosk-booking>time,.kiosk-app.is-week-view .kiosk-booking>small{display:none}}
+
+/* Match the main site's full-height quick-booking dock and responsive width. */
+.kiosk-app{--kiosk-quick-width:min(420px,calc(100vw - 24px))}
+.kiosk-app.is-panel-open{--kiosk-quick-width:min(420px,calc(100vw - 24px))}
+.kiosk-app.is-panel-open .kiosk-topbar{padding-right:calc(var(--kiosk-quick-width) + 24px)}
+.kiosk-app.is-panel-open .kiosk-quick-panel{top:0;padding:24px}
+.kiosk-app.is-panel-open .kiosk-quick-title{height:76px;min-height:76px;flex:0 0 76px}
+.kiosk-app.is-panel-open .kiosk-quick-fields{margin-top:0}
+.kiosk-app.is-panel-open .kiosk-quick-section:first-child{padding-top:24px}
+@media(max-width:1150px){.kiosk-app.is-panel-open .kiosk-topbar{padding-right:calc(var(--kiosk-quick-width) + 16px)}.kiosk-app.is-panel-open .kiosk-quick-panel{padding:16px}.kiosk-app.is-panel-open .kiosk-quick-section:first-child{padding-top:18px}}
+
+/* Keep room details readable and complete in the narrow four-column kiosk grid. */
+.kiosk-app .kiosk-room-heading{padding:8px 12px;align-items:flex-start}
+.kiosk-app .kiosk-room-heading>div{gap:3px}
+.kiosk-app .kiosk-room-title-row{width:100%;gap:6px}
+.kiosk-app .kiosk-room-title-row h2{max-width:none;font-size:16px;line-height:19px;letter-spacing:-.35px}
+.kiosk-app .kiosk-room-title-row .kiosk-floor-tag{height:18px;padding:0 5px;font-size:10px}
+.kiosk-app .kiosk-room-heading .kiosk-room-status{position:static;inset:auto;width:100%;max-width:100%;min-height:0;margin:0;gap:5px;flex-wrap:wrap;overflow:visible;white-space:normal;font-size:11px;line-height:15px}
+.kiosk-app .kiosk-room-heading .kiosk-room-status>b{font-size:11px;line-height:15px}
+.kiosk-app .kiosk-room-heading .kiosk-room-status>span{font-size:11px;line-height:15px;white-space:normal}
+.kiosk-app .room-equipment-chips{flex-wrap:wrap;align-items:flex-start;gap:0 3px;overflow:visible}
+.kiosk-app .room-equipment-chip.equipment-secondary{display:inline-flex}
+.kiosk-app .room-equipment-chip.equipment-wide-more,.kiosk-app .room-equipment-chip.equipment-compact-more{display:none}
+.kiosk-app .room-equipment-chip{min-height:20px;padding:2px 3px;font-size:10px}
+.kiosk-app .room-equipment-chip>span{overflow:visible;text-overflow:clip}
+.kiosk-app .room-equipment-chip>svg{width:12px;height:12px}
+.kiosk-app.is-panel-open .kiosk-room-title-row h2{font-size:16px}
+@media(max-width:1350px){.kiosk-app .kiosk-room-title-row h2,.kiosk-app.is-panel-open .kiosk-room-title-row h2{font-size:15px;letter-spacing:-.35px}}

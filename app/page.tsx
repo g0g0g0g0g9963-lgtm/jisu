@@ -97,7 +97,7 @@ type Toast = {
   detail: string;
   time: string;
   /** 예약 완료만 상단 알림으로 이동한다. 수정·취소 안내는 제자리에 남긴다. */
-  kind?: "booking" | "notice";
+  kind?: "booking" | "notice" | "deletion";
 };
 
 const OWNER_STORAGE_KEY = "bdo-meeting-owner";
@@ -814,6 +814,7 @@ export default function Home() {
   // 일정표를 최대한 넓게 볼 수 있도록 빠른 예약은 항상 접힌 상태로 시작한다.
   // 사용자가 펼친 뒤 입력한 값은 패널을 다시 접어도 그대로 남는다.
   const [bookingPanelOpen, setBookingPanelOpen] = useState(false);
+  const [recentBookingsOpen, setRecentBookingsOpen] = useState(false);
   const [slotDrag, setSlotDrag] = useState<SlotDrag | null>(null);
   const [keyboardSelection, setKeyboardSelection] = useState<SlotSelection | null>(null);
   const [selectionFeedback, setSelectionFeedback] = useState("");
@@ -874,7 +875,7 @@ export default function Home() {
 
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const flyTimer = window.setTimeout(() => {
-      const bell = document.querySelector<HTMLElement>(".header-bookings-bell");
+      const bell = document.querySelector<SVGSVGElement>(".header-bookings-bell > svg");
       const card = document.querySelector<HTMLElement>(".booking-complete-dialog");
       if (!bell || !card || reduceMotion) return;
       const bellBounds = bell.getBoundingClientRect();
@@ -883,7 +884,7 @@ export default function Home() {
         x: bellBounds.left + bellBounds.width / 2 - (cardBounds.left + cardBounds.width / 2),
         y: bellBounds.top + bellBounds.height / 2 - (cardBounds.top + cardBounds.height / 2),
       });
-    }, 1800);
+    }, 2300);
     const finishTimer = window.setTimeout(() => {
       setToast(null);
       setToastFlight(null);
@@ -894,6 +895,12 @@ export default function Home() {
       window.clearTimeout(flyTimer);
       window.clearTimeout(finishTimer);
     };
+  }, [toast]);
+
+  useEffect(() => {
+    if (!toast || toast.kind !== "deletion") return;
+    const timer = window.setTimeout(() => setToast(null), 1500);
+    return () => window.clearTimeout(timer);
   }, [toast]);
 
   useEffect(() => {
@@ -1338,6 +1345,18 @@ export default function Home() {
     ...upcomingMyBookings.map((booking) => ({ booking, upcoming: true })),
     ...pastMyBookings.map((booking) => ({ booking, upcoming: false })),
   ];
+  const recentBookingChoices = useMemo(() => {
+    const seen = new Set<string>();
+    return [...myBookings]
+      .sort((a, b) => `${b.date}${b.start}`.localeCompare(`${a.date}${a.start}`))
+      .filter((booking) => {
+        const key = JSON.stringify([booking.roomId, booking.start, booking.end, booking.purpose, booking.team ?? ""]);
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
+      .slice(0, 5);
+  }, [myBookings]);
 
   const selectFloor = (nextFloor: number) => {
     setFloor(nextFloor);
@@ -1346,7 +1365,7 @@ export default function Home() {
     if (roomById(selectedId)?.floor !== nextFloor) {
       setSelectedId(rooms.find((room) => room.floor === nextFloor)?.id ?? selectedId);
     }
-    setNotice("");
+    setNotice("최근 예약 정보 불러오기 완료. 예약 날짜를 확인한 뒤 예약해 주세요.");
   };
 
   const selectRoom = (room: Room) => {
@@ -1355,6 +1374,36 @@ export default function Home() {
     setRoomPickerOpen(false);
     setFloor(room.floor);
     setNotice("");
+  };
+
+  const reuseBooking = (booking: Booking) => {
+    const room = roomById(booking.roomId);
+    if (room) {
+      setSelectedId(room.id);
+      setFloor(room.floor);
+    }
+    // 날짜는 현재 입력값을 유지하고 회의실·시간·목적·참석 정보만 복사한다.
+    // 기존 일정 날짜까지 그대로 복제해 중복 예약하는 일을 막는다.
+    setSlot((current) => ({ ...current, start: booking.start, end: booking.end }));
+    const minutes = minutesOf(booking.end) - minutesOf(booking.start);
+    setDuration(bookingDefaults.durationPresetsMinutes.includes(minutes) ? minutes : 0);
+    setAllDay(booking.start === bookingDefaults.allDayStart && booking.end === bookingDefaults.allDayEnd);
+    if (!currentUser) setOwner(booking.owner);
+    setTeam(booking.team ?? "");
+    setPurpose(booking.purpose ?? "");
+    setAttendees([...(booking.attendees ?? [])]);
+    setAttendeeAccounts([...(booking.attendeeAccounts ?? [])]);
+    setAttendeeDraft("");
+    setExtraDetailsOpen(Boolean(booking.purpose || booking.attendees?.length || booking.attendeeAccounts?.length));
+    setRepeatWeekly(false);
+    setTimeNeedsPick(false);
+    setRecentBookingsOpen(false);
+    setBookingPanelOpen(true);
+    setDraftActive(true);
+    setNotice("");
+    setFilledNotice({ title: "최근 예약 내용을 불러왔어요", detail: "날짜를 확인한 뒤 예약해 주세요" });
+    if (filledTimer.current !== null) window.clearTimeout(filledTimer.current);
+    filledTimer.current = window.setTimeout(() => setFilledNotice(null), 2200);
   };
 
   /** 같은 요청에서 생성된 반복 예약만 함께 선택한다. 과거 데이터는 개별 예약이다. */
@@ -1388,6 +1437,7 @@ export default function Home() {
           text: ended.length ? `삭제 ${deletedCount}건 · 사용 기록 보존 ${ended.length}건` : `예약 ${deletedCount}건을 삭제했습니다.`,
           detail: ended.length ? "종료한 예약은 지난 내역에서 확인할 수 있습니다." : "내 예약",
           time: ended.length === 1 ? `${ended[0].end}부터 예약 가능` : "",
+          kind: "deletion",
         });
       }
     } catch {
@@ -1488,6 +1538,7 @@ export default function Home() {
         text: result.booking?.endedAt ? "남은 시간을 해제하고 사용 기록을 남겼습니다." : "예약을 삭제했습니다.",
         detail: roomIdentity(roomById(editDraft.roomId)),
         time: result.booking?.endedAt ? `${result.booking.end}부터 예약 가능` : formatDateLabel(editDraft.date),
+        kind: "deletion",
       });
     } catch {
       setEditNotice("삭제 결과를 확인하지 못했습니다. 예약 목록을 확인한 뒤 다시 시도해 주세요.");
@@ -2128,7 +2179,6 @@ export default function Home() {
               >
                 <BellIcon />
                 <span>내 예약</span>
-                {upcomingMyBookings.length > 0 && <span className="header-bookings-dot" aria-hidden="true" />}
               </button>
             </span>
           </nav>
@@ -2611,6 +2661,24 @@ export default function Home() {
                 이건 남아서 '아직 안 끝났다'를 계속 말한다. */}
             <div className="booking-title-state">{draftActive && <span className="draft-chip">작성 중</span>}</div>
           </div>
+          {recentBookingChoices.length > 0 && <div className={`recent-booking-picker ${recentBookingsOpen ? "open" : ""}`}>
+            <button type="button" className="recent-booking-trigger" aria-expanded={recentBookingsOpen} aria-controls="recent-booking-options" onClick={() => {
+              setRecentBookingsOpen((open) => !open);
+              setRoomPickerOpen(false);
+              setTimePickerOpen(null);
+              setBookingDateCalendarOpen(false);
+            }}>↻ <span>최근 예약 다시하기</span><ChevronIcon direction="next" /></button>
+            {recentBookingsOpen && <div className="recent-booking-options" id="recent-booking-options" role="listbox" aria-label="최근 예약 선택">
+              {recentBookingChoices.map((booking) => {
+                const room = roomById(booking.roomId);
+                return <button type="button" role="option" key={booking.id} onClick={() => reuseBooking(booking)}>
+                  <strong>{room ? `${room.floor}층 · ${room.name}` : "회의실"}</strong>
+                  <span>{formatDateLabel(booking.date)} · {booking.start}–{booking.end}</span>
+                  <small>{booking.purpose || "회의"}{booking.team ? ` · ${booking.team}` : ""}</small>
+                </button>;
+              })}
+            </div>}
+          </div>}
           <div className="booking-section-heading booking-room-heading">
             <span>1</span><b>회의실</b>
           </div>

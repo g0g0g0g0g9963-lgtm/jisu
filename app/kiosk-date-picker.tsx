@@ -18,11 +18,12 @@ const monthShift = (value: string, direction: number) => {
 };
 
 /** Calendar navigation for viewing reservations, independent of booking date limits. */
-export function KioskDatePicker({ value, onChange }: { value: string; onChange: (date: string) => void }) {
+export function KioskDatePicker({ value, onChange, minDate, maxDate }: { value: string; onChange: (date: string) => void; minDate?: string; maxDate?: string }) {
   const selected = dateKey(value);
   const [open, setOpen] = useState(false);
   const [month, setMonth] = useState(selected.slice(0, 7));
   const [focusedDay, setFocusedDay] = useState(selected);
+  const [popoverPosition, setPopoverPosition] = useState<{ top: number; left: number } | null>(null);
   const wrapper = useRef<HTMLDivElement>(null);
   const toggle = useRef<HTMLButtonElement>(null);
   const pendingFocus = useRef(false);
@@ -61,6 +62,25 @@ export function KioskDatePicker({ value, onChange }: { value: string; onChange: 
   }, [open, close]);
 
   useEffect(() => {
+    if (!open) { setPopoverPosition(null); return; }
+    const place = () => {
+      const anchor = wrapper.current?.getBoundingClientRect();
+      const popover = wrapper.current?.querySelector<HTMLElement>(".kiosk-calendar-popover");
+      if (!anchor || !popover) return;
+      const width = Math.min(popover.offsetWidth || 348, window.innerWidth - 16);
+      const height = popover.offsetHeight || 380;
+      setPopoverPosition({
+        left: Math.max(8, Math.min(anchor.right - width, window.innerWidth - width - 8)),
+        top: Math.max(8, Math.min(anchor.bottom + 6, window.innerHeight - height - 8)),
+      });
+    };
+    const frame = window.requestAnimationFrame(place);
+    window.addEventListener("resize", place);
+    document.addEventListener("scroll", place, true);
+    return () => { window.cancelAnimationFrame(frame); window.removeEventListener("resize", place); document.removeEventListener("scroll", place, true); };
+  }, [open, month]);
+
+  useEffect(() => {
     if (!open || !pendingFocus.current) return;
     const button = wrapper.current?.querySelector<HTMLButtonElement>(`button[data-date-key="${focusedDay}"]`);
     if (button) { pendingFocus.current = false; button.focus({ preventScroll: true }); }
@@ -92,16 +112,16 @@ export function KioskDatePicker({ value, onChange }: { value: string; onChange: 
         if (open) { close(); return; }
         setMonth(selected.slice(0, 7)); setFocusedDay(selected); pendingFocus.current = true; setOpen(true);
       }}>
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <rect x="4" y="5" width="16" height="16" rx="3" /><path d="M8 3v4m8-4v4M4 11h16" /><path d="M8 15h2" />
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true" focusable="false">
+        <rect x="2.5" y="4.25" width="15" height="13.25" rx="2.5" stroke="currentColor" strokeWidth="1.6" /><path d="M2.5 8.25h15" stroke="currentColor" strokeWidth="1.6" /><path d="M6.75 2.5v3.25M13.25 2.5v3.25" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /><rect x="5.75" y="10.75" width="3.25" height="3.25" rx="1" fill="#e50037" />
       </svg>
     </button>
-    {open && <div className="kiosk-calendar-popover" id={id} role="dialog" aria-labelledby={`${id}-month`}>
+    {open && <div className="kiosk-calendar-popover" id={id} role="dialog" aria-labelledby={`${id}-month`} style={popoverPosition ? { position: "fixed", top: popoverPosition.top, left: popoverPosition.left, right: "auto" } : undefined}>
       <div className="kiosk-calendar-head">
         <button type="button" className="kiosk-calendar-month-prev" aria-label="이전 달" onClick={() => changeMonth(-1)}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m14 6-6 6 6 6" /></svg>
         </button>
-        <strong id={`${id}-month`} aria-live="polite">{year}년 {monthNumber}월</strong>
+        <strong id={`${id}-month`} aria-live="polite"><span>{monthNumber}월</span> <em>{year}</em></strong>
         <button type="button" className="kiosk-calendar-month-next" aria-label="다음 달" onClick={() => changeMonth(1)}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m10 6 6 6-6 6" /></svg>
         </button>
@@ -115,15 +135,15 @@ export function KioskDatePicker({ value, onChange }: { value: string; onChange: 
           const holiday = publicHolidayOf(key);
           const isToday = key === today;
           const classes = [key === selected && "is-selected", isToday && "is-today", weekday === 0 && "is-sun", weekday === 6 && "is-sat", holiday && "is-holiday"].filter(Boolean).join(" ");
+          const outsideRange = Boolean(minDate && key < minDate || maxDate && key > maxDate);
           return <button type="button" key={key} data-date-key={key} className={classes} aria-pressed={key === selected}
             aria-current={isToday ? "date" : undefined} tabIndex={key === focusedDay ? 0 : -1}
             aria-label={`${year}년 ${formatDateLabel(key)}${holiday ? `, ${holiday.name}` : ""}${isToday ? ", 오늘" : ""}`}
-            title={holiday?.name} onClick={() => choose(key)} onFocus={() => setFocusedDay(key)} onKeyDown={event => moveFocus(event, key)}>
+            title={holiday?.name} disabled={outsideRange} onClick={() => choose(key)} onFocus={() => setFocusedDay(key)} onKeyDown={event => moveFocus(event, key)}>
             <span>{index + 1}</span>{(holiday || isToday) && <small>{holiday?.calendarLabel ?? "오늘"}</small>}
           </button>;
         })}
       </div>
-      <div className="kiosk-calendar-footer"><button type="button" onClick={() => choose(today)}>오늘로 이동</button></div>
     </div>}
   </div>;
 }

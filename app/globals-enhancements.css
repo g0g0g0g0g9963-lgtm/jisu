@@ -1834,7 +1834,6 @@ button {
 .header-account .header-nav .header-bookings-bell:hover{color:#17223a;background:#f1f4f9}
 .header-account .header-nav .header-bookings-bell:focus-visible{outline:2px solid #304b78;outline-offset:2px}
 .header-account .header-nav .header-bookings-bell svg{width:21px;height:21px}
-.header-account .header-nav .header-bookings-dot{position:absolute;top:7px;right:7px;width:7px;height:7px;background:#ed1639;border:2px solid #fff;border-radius:50%;box-sizing:content-box}
 
 /* 종 바로 아래에서 열리는 간결한 예약 알림. */
 .header-account .header-bookings-wrap{position:relative;display:flex;align-items:center}
@@ -2352,22 +2351,19 @@ button {
 }
 
 .header-account .header-nav .header-bookings-bell.booking-arrival {
-  animation: booking-bell-arrival .72s cubic-bezier(.2, .8, .2, 1) both;
+  color: #ed1639;
 }
 
+.header-account .header-nav .header-bookings-bell.booking-arrival::before,
 .header-account .header-nav .header-bookings-bell.booking-arrival::after {
-  content: "";
-  position: absolute;
-  inset: 4px;
-  border: 2px solid #ed1639;
-  border-radius: 50%;
-  animation: booking-bell-ring .72s ease-out both;
+  content: none !important;
+  display: none !important;
 }
 
-.header-account .header-nav .header-bookings-bell.booking-arrival .header-bookings-dot {
-  animation: booking-dot-pop .72s cubic-bezier(.2, .8, .2, 1) both;
+.header-account .header-nav .header-bookings-bell.booking-arrival > svg {
+  color: #ed1639;
+  animation: booking-bell-nod .62s cubic-bezier(.2, .7, .25, 1) both;
 }
-
 @keyframes booking-complete-card-in {
   from { opacity: 0; transform: translate(-50%, calc(-50% + 10px)) scale(.97); }
   to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
@@ -2394,22 +2390,11 @@ button {
   to { background: #17223a00; }
 }
 
-@keyframes booking-bell-arrival {
-  0%, 100% { color: #304b78; transform: rotate(0); }
-  24% { color: #ed1639; transform: rotate(-12deg) scale(1.08); }
-  48% { transform: rotate(10deg) scale(1.08); }
-  72% { transform: rotate(-5deg); }
-}
-
-@keyframes booking-bell-ring {
-  from { opacity: .65; transform: scale(.45); }
-  to { opacity: 0; transform: scale(1.55); }
-}
-
-@keyframes booking-dot-pop {
-  0% { transform: scale(0); }
-  45% { transform: scale(1.5); }
-  100% { transform: scale(1); }
+@keyframes booking-bell-nod {
+  0%, 100% { transform: rotate(0); }
+  28% { transform: rotate(-10deg); }
+  56% { transform: rotate(5deg); }
+  78% { transform: rotate(-2deg); }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -2419,8 +2404,7 @@ button {
   .booking-toast-layer.is-flying .booking-toast.early-dialog.booking-complete-dialog,
   .booking-toast-layer.is-flying.booking-complete-layer,
   .header-account .header-nav .header-bookings-bell.booking-arrival,
-  .header-account .header-nav .header-bookings-bell.booking-arrival::after,
-  .header-account .header-nav .header-bookings-bell.booking-arrival .header-bookings-dot {
+  .header-account .header-nav .header-bookings-bell.booking-arrival > svg {
     animation: none;
   }
 }
@@ -4467,29 +4451,42 @@ button {
 /* 작은 확인창은 동일한 중립 카드 스타일을 사용한다. */
 .early-dialog,.cancel-dialog,.booking-detail-dialog{border-top:1px solid var(--premium-line);}
 
-/* 예약 완료 시 빨간 종만 흔들고 기존 빨간 점 배지는 사용하지 않는다. */
-.header-account .header-nav .header-bookings-dot{display:none!important}
-.header-account .header-nav .header-bookings-bell.booking-arrival{color:#ed1639;animation:booking-bell-shake .72s ease-in-out both}
-.header-account .header-nav .header-bookings-bell.booking-arrival svg{color:#ed1639}
-@keyframes booking-bell-shake{0%,100%{transform:rotate(0)}15%{transform:rotate(-14deg)}30%{transform:rotate(12deg)}45%{transform:rotate(-9deg)}60%{transform:rotate(6deg)}75%{transform:rotate(-3deg)}}
-
 /* 예약 수정창도 예약 확인창과 같은 중립 카드 규격으로 통일한다. */
 .edit-dialog{background:#fff;border:1px solid #dce1e9;border-top:1px solid #dce1e9;border-radius:12px;box-shadow:0 16px 42px rgb(23 34 58 / 14%);}
 .edit-dialog-head{border-bottom:1px solid #e1e6ee;padding-bottom:14px;margin-bottom:18px}
 .edit-dialog-foot{border-top:1px solid #e1e6ee;padding-top:16px}
 
-/* 예약 알림은 빨간 점 없이 종 버튼 외곽선만 강조한다. */
-.header-account .header-nav .header-bookings-bell.booking-arrival{border:1px solid #ed1639;background:#fff;color:#ed1639;animation:booking-bell-shake .72s ease-in-out both}
-.header-account .header-nav .header-bookings-bell.booking-arrival::after{display:none!important}
+/* 삭제 확인 문구를 버튼 옆에 끼워 넣지 않고, 위쪽 전체 폭에 배치한다. */
+.edit-dialog-foot:has(> p){
+  flex-wrap:wrap;
+  justify-content:flex-end;
+  align-items:center;
+  row-gap:12px;
+}
+.edit-dialog-foot:has(> p) > p{
+  flex:1 0 100%;
+  min-width:0;
+  margin:0;
+  color:#6b768e;
+  font-size:12px;
+  font-weight:600;
+  line-height:1.55;
+  overflow-wrap:anywhere;
+}
+.edit-dialog-foot:has(> p) > button{
+  flex:0 0 auto;
+  min-width:68px;
+  white-space:nowrap;
+}
 
-/* 선택안 4: 네모 대신 원형 빨간 테두리와 살짝 커지는 종 애니메이션. */
-.header-account .header-nav .header-bookings-bell.booking-arrival{border-radius:50%;animation:booking-bell-pulse 1.2s ease-in-out both}
-@keyframes booking-bell-pulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 #ed163940}50%{transform:scale(1.08);box-shadow:0 0 0 8px #ed163900}}
-/* 예약 완료 카드가 종으로 들어간 뒤 빨간 종 흔들림과 반짝임을 표시한다. */
-.header-account .header-nav .header-bookings-bell.booking-arrival{position:relative;color:#ed1639;animation:booking-bell-shake-spark .9s ease-in-out both}
-.header-account .header-nav .header-bookings-bell.booking-arrival::before,.header-account .header-nav .header-bookings-bell.booking-arrival::after{display:block!important;position:absolute;pointer-events:none;color:#ed1639;font-size:13px;line-height:1;opacity:0}
-.header-account .header-nav .header-bookings-bell.booking-arrival::before{content:'✦';top:-5px;right:-4px;animation:booking-spark-one .9s ease-out both}
-.header-account .header-nav .header-bookings-bell.booking-arrival::after{content:'✦';bottom:-3px;left:-4px;animation:booking-spark-two .9s ease-out .08s both}
-@keyframes booking-bell-shake-spark{0%,100%{transform:rotate(0);filter:brightness(1)}15%{transform:rotate(-13deg);filter:brightness(1.12)}30%{transform:rotate(11deg)}45%{transform:rotate(-8deg)}60%{transform:rotate(5deg)}75%{transform:rotate(-2deg)}50%{filter:brightness(1.22)}}
-@keyframes booking-spark-one{0%,100%{opacity:0;transform:scale(.3) translate(0,4px)}35%{opacity:1;transform:scale(1.2) translate(0,0)}70%{opacity:.5;transform:scale(.8) translate(2px,-3px)}}
-@keyframes booking-spark-two{0%,100%{opacity:0;transform:scale(.3) translate(0,-2px)}40%{opacity:.9;transform:scale(1.1)}75%{opacity:.35;transform:scale(.7) translate(-2px,2px)}}
+/* 빠른예약의 최근 예약은 입력값을 복사하기 전에 항목을 확인할 수 있게 한다. */
+.booking-panel .recent-booking-picker{position:relative;margin:0 16px 12px;z-index:30}
+.booking-panel .recent-booking-trigger{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:34px;padding:6px 10px;border:1px solid #dce3ee;border-radius:8px;background:#f7f9fc;color:#34496b;font-family:inherit;font-size:12px;font-weight:600;line-height:1.35;cursor:pointer}
+.booking-panel .recent-booking-trigger:hover,.booking-panel .recent-booking-picker.open .recent-booking-trigger{background:#edf3fb;border-color:#b9c9e0}
+.booking-panel .recent-booking-trigger>svg{width:12px;height:12px;transform:rotate(90deg)}
+.booking-panel .recent-booking-picker.open .recent-booking-trigger>svg{transform:rotate(-90deg)}
+.booking-panel .recent-booking-options{position:absolute;top:calc(100% + 6px);left:0;right:0;display:grid;gap:4px;max-height:min(300px,45vh);overflow:auto;padding:6px;border:1px solid #d9e1ed;border-radius:10px;background:#fff;box-shadow:0 12px 28px #17223a24}
+.booking-panel .recent-booking-options>button{display:grid;gap:3px;width:100%;padding:9px 10px;text-align:left;border:0;border-radius:7px;background:#fff;color:#23334d;font:inherit;cursor:pointer}
+.booking-panel .recent-booking-options>button:hover,.booking-panel .recent-booking-options>button:focus-visible{background:#f0f5fb;outline:none}
+.booking-panel .recent-booking-options strong{font-size:12px}
+.booking-panel .recent-booking-options span,.booking-panel .recent-booking-options small{color:#687790;font-size:11px}

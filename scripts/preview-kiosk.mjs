@@ -15,12 +15,12 @@ await new Promise(r => socket.listen(0, '127.0.0.1', r));
 const port = socket.address().port;
 await new Promise(r => socket.close(r));
 const upstream = `http://127.0.0.1:${port}`;
-const code = randomBytes(32).toString('hex');
+const sessionSecret = randomBytes(32).toString('hex');
 const env = { ...process.env, NODE_ENV: 'development', ALLOW_ANONYMOUS: '1',
   HOST: '127.0.0.1', PORT: String(port), DATA_DIR: data, CLIENT_DIR: resolve(root, 'dist'),
   MS_TENANT_ID: '', MS_CLIENT_ID: '', MS_CLIENT_SECRET: '', APP_BASE_URL: '',
-  MICROSOFT_TOKEN_KEY: '', ADMIN_MS_EMAIL: '', ADMIN_MS_OBJECT_ID: '', SESSION_SECRET: '',
-  KIOSK_ENABLED: '1', KIOSK_PAIRING_CODE: code, BACKUP_DIR: '', BACKUP_INTERVAL_MINUTES: '0',
+  MICROSOFT_TOKEN_KEY: '', ADMIN_MS_EMAIL: '', ADMIN_MS_OBJECT_ID: '', SESSION_SECRET: sessionSecret,
+  KIOSK_ENABLED: '1', BACKUP_DIR: '', BACKUP_INTERVAL_MINUTES: '0',
   SEED_DEMO: '0' };
 
 // The preview includes fictitious records so room/week grouping can be inspected immediately.
@@ -50,11 +50,9 @@ for (let n = 0; n < 100; n++) {
   await new Promise(r => setTimeout(r, 100));
 }
 if (!ready) { child.kill(); throw Error('Preview server not ready'); }
-const pair = await fetch(upstream + '/api/kiosk/session', { method: 'POST',
-  headers: { 'Content-Type': 'application/json', Origin: upstream, 'X-Kiosk-Action': 'pair' },
-  body: JSON.stringify({code}) });
-if (!pair.ok) { child.kill(); throw Error('Preview device pairing failed'); }
-const cookie = pair.headers.getSetCookie().find(v => v.startsWith('bdo-kiosk-device='))?.split(';')[0];
+const session = await fetch(upstream + '/api/kiosk/session');
+if (!session.ok || !(await session.json()).authorized) { child.kill(); throw Error('Preview session failed'); }
+const cookie = session.headers.getSetCookie().find(v => v.startsWith('bdo-kiosk-device='))?.split(';')[0];
 if (!cookie) { child.kill(); throw Error('Preview session not received'); }
 
 // The ephemeral proxy supplies only this isolated test device's cookie, never an employee session.

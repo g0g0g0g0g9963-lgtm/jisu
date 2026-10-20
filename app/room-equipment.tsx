@@ -15,13 +15,13 @@ export function EquipmentSymbol({ item }: { item: string }) {
 }
 
 /** 실제 등록 장비만 표시하며, 보조 장비인 스크린은 주요 장비 뒤에 둔다. */
-export function RoomEquipment({ room }: { room: Room }) {
+export function RoomEquipment({ room, showAll = false }: { room: Room; showAll?: boolean }) {
   const id = useId();
   const panelRef = useRef<HTMLDivElement | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const [open, setOpen] = useState(false);
   const equipment = [...new Set(room.equipment)].sort((a, b) => Number(equipmentIcon(a) === "SCREEN") - Number(equipmentIcon(b) === "SCREEN"));
-  const visible = equipment.slice(0, siteConfig.timeline.equipmentPreviewLimit);
+  const visible = showAll ? equipment : equipment.slice(0, siteConfig.timeline.equipmentPreviewLimit);
   const remaining = equipment.length - visible.length;
 
   useLayoutEffect(() => {

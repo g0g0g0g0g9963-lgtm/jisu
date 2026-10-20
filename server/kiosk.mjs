@@ -15,10 +15,10 @@ function dateValue(value) {
   return Number.isFinite(at) && new Date(at).toISOString().slice(0, 10) === value ? at : NaN;
 }
 
-/** Separate, least-privilege device access. This never creates a personal SSO session. */
+/** Public shared-display access. This never creates a personal SSO session. */
 export function registerKioskRoutes(app, { validateCreate }) {
   const requested = process.env.KIOSK_ENABLED === "1";
-  const pairingCode = (process.env.KIOSK_PAIRING_CODE || "").trim();
+  const signingKey = (process.env.SESSION_SECRET || "").trim() || crypto.randomBytes(32).toString("hex");
   const production = process.env.NODE_ENV === "production";
   const configuredBase = (process.env.APP_BASE_URL || "").trim();
   let base = null;
@@ -28,10 +28,10 @@ export function registerKioskRoutes(app, { validateCreate }) {
       if (["http:", "https:"].includes(parsed.protocol) && !parsed.username && !parsed.password && parsed.pathname === "/" && !parsed.search && !parsed.hash) base = parsed;
     } catch { /* Invalid configuration fails closed. */ }
   }
-  const enabled = requested && pairingCode.length >= 32 && pairingCode.length <= 256 &&
+  const enabled = requested &&
     (!configuredBase || Boolean(base)) && (!production || base?.protocol === "https:");
   const secure = base?.protocol === "https:" || production;
-  const sign = value => crypto.createHmac("sha256", pairingCode).update("kiosk-v1:" + value).digest("base64url");
+  const sign = value => crypto.createHmac("sha256", signingKey).update("kiosk-v1:" + value).digest("base64url");
   const csrf = token => sign("csrf:" + token);
   const cookie = (res, value, age = SESSION_MS / 1000) => res.append("Set-Cookie",
     `${COOKIE}=${value}; Path=/api/kiosk; HttpOnly; SameSite=Strict; Max-Age=${age}${secure ? "; Secure" : ""}`);
@@ -77,6 +77,14 @@ export function registerKioskRoutes(app, { validateCreate }) {
   };
   const requireMutation = (req, res, next) => sameOrigin(req) && equal(req.get("x-kiosk-csrf"), csrf(req.kioskDevice.token))
     ? next() : fail(res, 403, "kiosk-csrf", "공용 모니터 화면을 새로 열고 다시 시도해 주세요.");
+  const createDeviceSession = res => {
+    const payload = { id: crypto.randomUUID(), exp: Date.now() + SESSION_MS };
+    const encoded = Buffer.from(JSON.stringify(payload)).toString("base64url");
+    const token = encoded + "." + sign(encoded);
+    createKioskDevice(payload.id, payload.exp);
+    cookie(res, token);
+    return { token, csrfToken: csrf(token) };
+  };
 
   app.use("/api/kiosk", (_req, res, next) => {
     res.setHeader("Cache-Control", "no-store");
@@ -84,26 +92,16 @@ export function registerKioskRoutes(app, { validateCreate }) {
     next();
   });
   app.get("/api/kiosk/session", (req, res) => {
-    const session = enabled ? readSession(req) : null;
-    res.json({ enabled, authorized: Boolean(session), ...(session ? { csrfToken: csrf(session.token) } : {}) });
-  });
-  app.post("/api/kiosk/session", requireEnabled, (req, res) => {
-    if (!sameOrigin(req) || req.get("x-kiosk-action") !== "pair" || !req.is("application/json")) {
-      return fail(res, 403, "kiosk-origin", "공용 모니터 화면에서 연결해 주세요.");
+    if (!enabled) return res.json({ enabled: false, authorized: false });
+    let session = readSession(req);
+    if (!session) {
+      if (limited("device:" + (req.ip || "unknown"), 100, 60 * 60_000)) {
+        res.setHeader("Retry-After", "3600");
+        return fail(res, 429, "device-rate-limit", "모니터 연결 요청이 많습니다. 잠시 후 다시 열어 주세요.");
+      }
+      session = createDeviceSession(res);
     }
-    if (limited("pair:" + (req.ip || "unknown"), 5, 15 * 60_000)) {
-      res.setHeader("Retry-After", "900");
-      return fail(res, 429, "pairing-rate-limit", "연결 시도가 많습니다. 15분 뒤 다시 시도해 주세요.");
-    }
-    if (typeof req.body?.code !== "string" || req.body.code.length > 256 || !equal(digest(req.body.code.trim()), digest(pairingCode))) {
-      return fail(res, 401, "pairing-failed", "연결 코드를 확인해 주세요.");
-    }
-    const payload = { id: crypto.randomUUID(), exp: Date.now() + SESSION_MS };
-    const encoded = Buffer.from(JSON.stringify(payload)).toString("base64url");
-    const token = encoded + "." + sign(encoded);
-    createKioskDevice(payload.id, payload.exp);
-    cookie(res, token);
-    return res.json({ enabled: true, authorized: true, csrfToken: csrf(token) });
+    res.json({ enabled: true, authorized: true, csrfToken: session.csrfToken ?? csrf(session.token) });
   });
   app.use("/api/kiosk", requireEnabled, requireDevice);
   app.delete("/api/kiosk/session", requireMutation, (req, res) => {

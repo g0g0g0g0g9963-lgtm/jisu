@@ -24,7 +24,6 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 }
 
 export const kioskSession = () => request<KioskSession>("/session");
-export const connectKiosk = (code: string) => request<KioskSession>("/session", { method: "POST", headers: { "Content-Type": "application/json", "X-Kiosk-Action": "pair" }, body: JSON.stringify({ code }) });
 export const getKioskBookings = async (from: string, to: string) => {
   const data = await request<{ bookings: KioskBooking[]; at: string }>(`/bookings?${new URLSearchParams({ from, to })}`);
   if (!Array.isArray(data.bookings) || data.bookings.some(item => !item || typeof item.id !== "string" || typeof item.roomId !== "string" || typeof item.date !== "string" || typeof item.start !== "string" || typeof item.end !== "string" || typeof item.owner !== "string")) throw new KioskError("예약 정보 형식을 확인할 수 없습니다. 새로고침해 주세요.");

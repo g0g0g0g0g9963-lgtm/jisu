@@ -11,7 +11,6 @@ const root = dirname(fileURLToPath(import.meta.url));
 const run = resolve(root, 'data-qa-kiosk-ui', String(Date.now()));
 mkdirSync(run, { recursive: true });
 const fixedNow = '2026-10-12T01:00:00Z';
-const pairingCode = 'synthetic-kiosk-ui-pairing-code-' + randomUUID();
 const results = [], errors = [], children = [];
 const personalSources = ['app/page.tsx', 'app/globals.css'];
 const personalHashes = personalSources.map(path => createHash('sha256').update(readFileSync(resolve(root, path))).digest('hex'));
@@ -31,7 +30,7 @@ async function start() {
     MS_TENANT_ID: 'qa-tenant', MS_CLIENT_ID: 'qa-client', MS_CLIENT_SECRET: 'qa-only', APP_BASE_URL: base,
     ADMIN_MS_EMAIL: 'alice@example.invalid', ADMIN_MS_OBJECT_ID: '', BACKUP_DIR: resolve(data, 'backups'),
     BACKUP_INTERVAL_MINUTES: '0', TEST_FIXTURE_SSO: '0', TEST_FIXTURE_BOUNDARIES: '0', TEST_NOW: fixedNow,
-    KIOSK_ENABLED: '1', KIOSK_PAIRING_CODE: pairingCode };
+    KIOSK_ENABLED: '1' };
   const child = spawn(process.execPath, ['--import', pathToFileURL(resolve(root, 'qa-preload.mjs')).href, 'server/index.mjs'],
     { cwd: root, env, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
   children.push(child);
@@ -63,15 +62,15 @@ async function staffLogin() {
   return end.response.headers.getSetCookie().find(value => value.startsWith('bdo-session=') && !value.startsWith('bdo-session=;')).split(';')[0];
 }
 async function fixtureSession() {
-  const result = await request('/api/kiosk/session', { method: 'POST', body: { code: pairingCode },
-    headers: { Origin: server.base, 'X-Kiosk-Action': 'pair' } });
+  const result = await request('/api/kiosk/session');
   assert.equal(result.status, 200, result.text);
+  assert.equal(result.json.authorized, true);
   return { cookie: result.response.headers.getSetCookie().find(value => value.startsWith('bdo-kiosk-device=')).split(';')[0], csrf: result.json.csrfToken };
 }
 async function create(session, roomId, date, start, end, owner) {
   const result = await request('/api/kiosk/bookings', { method: 'POST', cookie: session.cookie,
     headers: { Origin: server.base, 'X-Kiosk-CSRF': session.csrf, 'Idempotency-Key': randomUUID() },
-    body: { roomId, date, start, end, owner, purpose: '공용 모니터 화면 시험용 가상 예약' } });
+    body: { roomId, date, start, end, owner, team: 'QA 본부', purpose: '공용 모니터 화면 시험용 가상 예약' } });
   assert.equal(result.status, 201, result.text);
   return result.json.created[0];
 }
@@ -92,6 +91,20 @@ async function closePanel() {
   await page.getByTestId('kiosk-quick-close').click();
   await page.getByTestId('kiosk-quick-panel').waitFor({ state: 'hidden' });
 }
+async function selectRoom(roomId) {
+  await page.getByTestId('kiosk-room').click();
+  await page.locator(`.room-picker-row[data-room="${roomId}"] > button:first-child`).click();
+}
+async function selectTime(testId, value) {
+  await page.getByTestId(testId).click();
+  await page.locator('.kiosk-time-picker-popover [role="option"]').filter({ hasText: value }).click();
+}
+async function selectBookingDate(value) {
+  await page.locator('.kiosk-date-field .kiosk-calendar-toggle').click();
+  await page.locator(`.kiosk-calendar-days button[data-date-key="${value}"]`).click();
+}
+async function bookingDateValue() { return page.getByTestId('kiosk-date').evaluate(element => element.value); }
+async function selectedTimeValue(testId) { return (await page.getByTestId(testId).textContent()).trim(); }
 async function visibleDates(roomId = '9-c1') {
   return page.locator(`[data-testid="kiosk-slot"][data-room="${roomId}"]`).evaluateAll(elements => [...new Set(elements.map(element => element.dataset.date))]);
 }
@@ -195,12 +208,8 @@ try {
   page.on('request', request => { if (/\/api\/admin\//.test(request.url())) protectedRequests.push(request.url()); });
   const initial = await page.goto(server.base + '/kiosk?preview=1');
   record('Separate public kiosk shell is available without bypassing employee login', initial.status() === 200);
-  await page.getByTestId('kiosk-connect-code').waitFor();
-  record('Microsoft administrator cookie does not automatically authorize a shared terminal', await page.getByTestId('kiosk-scroll').count() === 0);
-  await page.getByTestId('kiosk-connect-code').fill(pairingCode);
-  await page.getByTestId('kiosk-connect-submit').click();
   await ready();
-  record('Explicit device pairing opens the shared-monitor schedule', await page.getByTestId('kiosk-scroll').isVisible());
+  record('The shared-monitor schedule opens without a connection-code form', await page.getByTestId('kiosk-scroll').isVisible() && await page.getByTestId('kiosk-connect-code').count() === 0);
   record('The removed heading, guidance, preview note, sync status and regular refresh controls are absent',
     await page.getByRole('heading', { name: '회의실 예약', exact: true }).count() === 0 &&
     await page.getByText('실제 예약에 반영되지 않음', { exact: false }).count() === 0 &&
@@ -216,6 +225,7 @@ try {
     await page.locator('.kiosk-footer').getByText('현재 시간', { exact: false }).count() > 0 &&
     await page.locator('.kiosk-footer').getByText('예약자 이름은 매번 직접 입력합니다.', { exact: true }).count() === 1);
   record('Floor starts at 9F with four separate room groups', (await page.getByTestId('kiosk-room-header').count()) === 4);
+  await page.getByTestId('kiosk-view-week').click();
   record('The large selected date, day/week switch and calendar are available with week view as default',
     await page.getByTestId('kiosk-hero-date').isVisible() && await page.getByTestId('kiosk-calendar-toggle').isVisible() &&
     await page.getByTestId('kiosk-view-week').getAttribute('aria-pressed') === 'true' &&
@@ -369,11 +379,11 @@ try {
   await page.getByTestId('kiosk-quick-open').click();
   await page.getByTestId('kiosk-quick-panel').waitFor();
   record('The rail opens a docked right panel with a blank required name, not a blocking dialog', await page.getByTestId('kiosk-quick-panel').evaluate(element => element.tagName === 'ASIDE') && await page.getByTestId('kiosk-owner').inputValue() === '' && await page.getByTestId('kiosk-owner').getAttribute('required') !== null && await page.getByRole('dialog').count() === 0);
-  await page.getByTestId('kiosk-room').selectOption('12-big');
-  await page.getByTestId('kiosk-date').fill('2026-10-15');
-  await page.getByTestId('kiosk-start').selectOption('15:00');
-  await page.getByTestId('kiosk-end').selectOption('16:00');
-  record('The quick panel lets visitors choose a room, date and time without a grid selection', await page.getByTestId('kiosk-room').inputValue() === '12-big' && await page.getByTestId('kiosk-date').inputValue() === '2026-10-15' && await page.getByTestId('kiosk-start').inputValue() === '15:00' && await page.getByTestId('kiosk-end').inputValue() === '16:00');
+  await selectRoom('12-big');
+  await selectBookingDate('2026-10-15');
+  await selectTime('kiosk-start', '15:00');
+  await selectTime('kiosk-end', '16:00');
+  record('The quick panel lets visitors choose a room, date and time without a grid selection', await page.getByTestId('kiosk-room').getAttribute('data-selected-room') === '12-big' && await bookingDateValue() === '2026-10-15' && await selectedTimeValue('kiosk-start') === '15:00' && await selectedTimeValue('kiosk-end') === '16:00');
   await page.getByTestId('kiosk-owner').fill('이전 빠른 예약 방문자');
   await page.getByTestId('kiosk-purpose').fill('다음 방문자에게 남기지 않음');
   await closePanel();
@@ -396,7 +406,7 @@ try {
   await page.getByTestId('kiosk-detail-dialog').waitFor({ state: 'hidden' });
 
   await (await slot()).click(); await page.getByTestId('kiosk-quick-panel').waitFor();
-  record('A grid tap opens the right panel with the chosen room, date and start time', await page.getByTestId('kiosk-room').inputValue() === '9-c2' && await page.getByTestId('kiosk-date').inputValue() === '2026-10-12' && await page.getByTestId('kiosk-start').inputValue() === '14:00');
+  record('A grid tap opens the right panel with the chosen room, date and start time', await page.getByTestId('kiosk-room').getAttribute('data-selected-room') === '9-c2' && await bookingDateValue() === '2026-10-12' && await selectedTimeValue('kiosk-start') === '14:00');
   record('Every booking starts with a blank name despite a logged-in employee cookie', (await page.getByTestId('kiosk-owner').inputValue()) === '');
   record('Name field is explicitly required', await page.getByTestId('kiosk-owner').getAttribute('required') !== null);
   await page.screenshot({ path: resolve(run, 'kiosk-empty-name-form-1366.png'), fullPage: true });
@@ -461,7 +471,7 @@ try {
   record('Lost success response explicitly explains uncertain storage and freezes the draft', await page.getByTestId('kiosk-owner').isDisabled() && await page.getByTestId('kiosk-start').isDisabled());
   record('An uncertain reservation locks room and date changes while keeping explicit close available', await page.getByTestId('kiosk-room').isDisabled() && await page.getByTestId('kiosk-date').isDisabled() && await page.getByTestId('kiosk-quick-close').isEnabled());
   await (await slot('9-c4', '2026-10-15', '15:00')).click();
-  record('A grid tap cannot replace an unresolved quick-booking draft', await page.getByTestId('kiosk-owner').inputValue() === '응답 유실 시험자' && await page.getByTestId('kiosk-room').inputValue() === '9-c3' && await page.getByTestId('kiosk-date').inputValue() === '2026-10-14');
+  record('A grid tap cannot replace an unresolved quick-booking draft', await page.getByTestId('kiosk-owner').inputValue() === '응답 유실 시험자' && await page.getByTestId('kiosk-room').getAttribute('data-selected-room') === '9-c3' && await bookingDateValue() === '2026-10-14');
   await page.getByTestId('kiosk-submit').click();
   await page.getByTestId('kiosk-quick-panel').waitFor({ state: 'hidden' });
   const afterRetry = await request('/api/kiosk/bookings?from=2026-10-12&to=2026-10-18', { cookie: fixture.cookie });
@@ -604,8 +614,8 @@ try {
   const disconnect = await context.request.delete(server.base + '/api/kiosk/session', { headers: { Origin: server.base, 'X-Kiosk-CSRF': activeDevice.csrfToken } });
   record('The real server revokes the connected test device', disconnect.status() === 200);
   await wakeRefresh();
-  await page.getByTestId('kiosk-connect-code').waitFor();
-  record('Revoked device access clears the calendar and quick-booking name before reconnecting', await page.getByTestId('kiosk-scroll').count() === 0 && await page.getByTestId('kiosk-owner').count() === 0);
+  await page.waitForFunction(() => document.querySelector('[data-testid="kiosk-scroll"]')?.getAttribute('data-ready') === 'true');
+  record('A revoked device silently receives a fresh public monitor session', await page.getByTestId('kiosk-scroll').isVisible() && await page.getByTestId('kiosk-owner').count() === 0);
   record('The shared screen never requests administrator APIs', protectedRequests.length === 0);
   record('Personal employee page and global styles remain unchanged during kiosk regression', personalSources.every((path, index) => createHash('sha256').update(readFileSync(resolve(root, path))).digest('hex') === personalHashes[index]));
   record('No browser runtime exceptions', errors.length === 0);
